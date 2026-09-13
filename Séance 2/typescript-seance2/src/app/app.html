@@ -1,0 +1,39 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('type-erasure') {
+          <app-type-erasure></app-type-erasure>
+        }
+        @case ('tooling-cli') {
+          <app-tooling-cli></app-tooling-cli>
+        }
+        @case ('types-primitives') {
+          <app-types-primitives></app-types-primitives>
+        }
+        @case ('scope-mutability') {
+          <app-scope-mutability></app-scope-mutability>
+        }
+        @case ('flow-operators') {
+          <app-flow-operators></app-flow-operators>
+        }
+        @case ('functions') {
+          <app-functions></app-functions>
+        }
+        @case ('arrays-tuples') {
+          <app-arrays-tuples></app-arrays-tuples>
+        }
+        @case ('objects-interfaces') {
+          <app-objects-interfaces></app-objects-interfaces>
+        }
+        @case ('exercises') {
+          <app-exercises-lab></app-exercises-lab>
+        }
+      }
+    </main>
+  </div>
+</div>
