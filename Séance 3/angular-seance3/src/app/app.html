@@ -1,0 +1,36 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('mpa-vs-spa') {
+          <app-mpa-vs-spa></app-mpa-vs-spa>
+        }
+        @case ('tree-explorer') {
+          <app-tree-explorer></app-tree-explorer>
+        }
+        @case ('bootstrap-flow') {
+          <app-bootstrap-flow></app-bootstrap-flow>
+        }
+        @case ('standalone-anatomy') {
+          <app-standalone-anatomy></app-standalone-anatomy>
+        }
+        @case ('template-bindings') {
+          <app-template-bindings></app-template-bindings>
+        }
+        @case ('view-encapsulation') {
+          <app-view-encapsulation></app-view-encapsulation>
+        }
+        @case ('cli-terminal') {
+          <app-cli-terminal></app-cli-terminal>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>
