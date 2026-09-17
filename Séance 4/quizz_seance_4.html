@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz POO & Web — DOM, CSS & Intégration Responsive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+      --bg-page: #090d16;
+      --bg-ambient-1: rgba(49, 120, 198, 0.16);
+      --bg-ambient-2: rgba(124, 58, 237, 0.14);
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
+      --brand-blue: #3178c6;
+      --brand-indigo: #6366f1;
+      --brand-purple: #7c3aed;
+      --brand-gradient: linear-gradient(135deg, #3178c6 0%, #6366f1 50%, #7c3aed 100%);
+
+      --opt-bg: rgba(255, 255, 255, 0.03);
+      --opt-border: rgba(255, 255, 255, 0.08);
+      --opt-hover-bg: rgba(255, 255, 255, 0.06);
+      --opt-hover-border: rgba(99, 102, 241, 0.45);
+
+      --correct-bg: rgba(16, 185, 129, 0.12);
+      --correct-border: #10b981;
+      --correct-text: #34d399;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+
+      --incorrect-bg: rgba(239, 68, 68, 0.12);
+      --incorrect-border: #ef4444;
+      --incorrect-text: #f87171;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+
+      --hint-bg: rgba(245, 158, 11, 0.08);
+      --hint-border: rgba(245, 158, 11, 0.25);
+      --hint-text: #fbbf24;
+
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --code-border: rgba(255, 255, 255, 0.12);
+      --code-color: #38bdf8;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8fafc;
+      --bg-ambient-1: rgba(49, 120, 198, 0.08);
+      --bg-ambient-2: rgba(124, 58, 237, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+
+      --opt-bg: #ffffff;
+      --opt-border: #e2e8f0;
+      --opt-hover-bg: #f8fafc;
+      --opt-hover-border: #3178c6;
+
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --correct-text: #065f46;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+
+      --incorrect-bg: #fef2f2;
+      --incorrect-border: #ef4444;
+      --incorrect-text: #991b1b;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+
+      --hint-bg: #fffbeb;
+      --hint-border: #fde68a;
+      --hint-text: #92400e;
+
+      --code-bg: #f1f5f9;
+      --code-border: #cbd5e1;
+      --code-color: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image:
+        radial-gradient(circle at 12% 10%, var(--bg-ambient-1) 0%, transparent 45%),
+        radial-gradient(circle at 88% 90%, var(--bg-ambient-2) 0%, transparent 45%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-main);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .keyboard-badge {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    @media (min-width: 640px) {
+      .keyboard-badge { display: inline-flex; align-items: center; gap: 6px; }
+    }
+
+    .header-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .course-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 9999px;
+      background: rgba(49, 120, 198, 0.12);
+      color: #60a5fa;
+      border: 1px solid rgba(49, 120, 198, 0.3);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #60a5fa;
+      box-shadow: 0 0 10px #60a5fa;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .quiz-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 16px;
+      font-weight: 500;
+    }
+
+    .tags-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-muted);
+    }
+
+    .progress-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-q-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-score-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .progress-track {
+      background: #e2e8f0;
+    }
+
+    .progress-bar-fill {
+      background: var(--brand-gradient);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(49, 120, 198, 0.5);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .q-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-index-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #60a5fa;
+      background: rgba(49, 120, 198, 0.12);
+      border: 1px solid rgba(49, 120, 198, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+    }
+
+    .q-category-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .q-text {
+      font-size: 18.5px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text-main);
+      margin-bottom: 22px;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-color);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #38bdf8;
+      overflow-x: auto;
+      text-align: left;
+    }
+    [data-theme="light"] .code-box {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0369a1;
+    }
+
+    .hint-container {
+      margin-bottom: 22px;
+    }
+
+    .hint-btn {
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      color: var(--hint-text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hint-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .hint-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--hint-text);
+      line-height: 1.5;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .hint-body.open {
+      display: block;
+    }
+
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 18px;
+      border: 2px solid var(--opt-border);
+      background: var(--opt-bg);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      position: relative;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--opt-hover-border);
+      background: var(--opt-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .opt-key-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--opt-border);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .opt-content {
+      flex: 1;
+      padding-top: 4px;
+      line-height: 1.5;
+    }
+
+    .opt-status-icon {
+      font-size: 18px;
+      margin-left: 8px;
+      display: none;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    .option-btn.selected-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .option-btn.selected-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.selected-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--incorrect-border) !important;
+      background: var(--incorrect-bg) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+    .option-btn.selected-incorrect .opt-key-circle {
+      background: var(--incorrect-badge-bg);
+      color: var(--incorrect-badge-text);
+    }
+    .option-btn.selected-incorrect .opt-status-icon {
+      display: inline-block;
+      color: var(--incorrect-text);
+    }
+
+    .option-btn.revealed-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      border-style: dashed;
+    }
+    .option-btn.revealed-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.revealed-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.dimmed {
+      opacity: 0.45;
+    }
+
+    .feedback-card {
+      display: none;
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .feedback-card.correct {
+      background: var(--correct-bg);
+      border-left: 4px solid var(--correct-border);
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+      border-right: 1px solid rgba(16, 185, 129, 0.2);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .feedback-card.incorrect {
+      background: var(--incorrect-bg);
+      border-left: 4px solid var(--incorrect-border);
+      border-top: 1px solid rgba(239, 68, 68, 0.2);
+      border-right: 1px solid rgba(239, 68, 68, 0.2);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .feedback-header {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .feedback-card.correct .feedback-header { color: var(--correct-text); }
+    .feedback-card.incorrect .feedback-header { color: var(--incorrect-text); }
+
+    .feedback-body {
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    [data-theme="light"] .feedback-body {
+      color: #334155;
+    }
+
+    .action-bar {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(49, 120, 198, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(49, 120, 198, 0.55);
+    }
+
+    .results-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .results-trophy {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .results-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle-wrapper {
+      margin: 24px auto;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-percent-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .results-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .stat-num.good { color: #10b981; }
+    .stat-num.bad { color: #ef4444; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn-secondary {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--opt-hover-bg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .review-container {
+      display: none;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .review-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-item {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .review-item-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .review-item-title {
+      font-weight: 600;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-item-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--card-border);
+    }
+    .review-item-body.open {
+      display: block;
+      padding-top: 14px;
+    }
+
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="quiz-container">
+  <div class="top-bar">
+    <div class="keyboard-badge">
+      <span>⌨️ Raccourcis : [A-D] ou [1-4] · [Entrée] · [I]</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Basculer le thème">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-text">Mode clair</span>
+    </button>
+  </div>
+
+  <div class="header-hero">
+    <div class="course-badge">
+      <span class="badge-dot"></span>
+      Programmation Orientée Objet · EAFC Colfontaine
+    </div>
+    <h1 class="quiz-title">Séance 4 — DOM, CSS & Intégration Responsive</h1>
+    <p class="quiz-subtitle">Arborescence DOM · Modèle de boîte · Spécificité CSS · Flexbox · Grille Bootstrap 5 · Intégration Angular</p>
+    <div class="tags-row">
+      <span class="tag-pill">DOM</span>
+      <span class="tag-pill">CSS3</span>
+      <span class="tag-pill">Flexbox</span>
+      <span class="tag-pill">Bootstrap 5</span>
+      <span class="tag-pill">Angular</span>
+      <span class="tag-pill">28 questions</span>
+    </div>
+
+    <div class="progress-section" id="progress-container">
+      <div class="progress-header">
+        <span class="progress-q-label" id="progress-q-label">Question 1 sur 28</span>
+        <span class="progress-score-pill" id="progress-score-pill">Score : 0/0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="question-card">
+    <div class="q-meta-bar">
+      <span class="q-index-badge" id="q-index-badge">Question 01</span>
+      <span class="q-category-tag" id="q-category-tag">Architecture Web & DOM</span>
+      <span style="font-size: 12px; color: var(--text-dim);" id="q-counter">1 / 28</span>
+    </div>
+
+    <div class="q-text" id="q-text"></div>
+
+    <div class="hint-container">
+      <button class="hint-btn" id="hint-toggle-btn" type="button">
+        <span>💡</span>
+        <span id="hint-btn-label">Afficher un indice</span>
+      </button>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <div class="feedback-card" id="feedback-card">
+      <div class="feedback-header" id="feedback-header"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="next-btn" id="next-btn" style="display: none;">
+        <span id="next-btn-text">Question suivante</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card results-card" id="results-card" style="display: none;">
+    <div class="results-trophy" id="results-icon">🏆</div>
+    <h2 class="results-title" id="results-title">Quiz terminé !</h2>
+
+    <div class="score-circle-wrapper">
+      <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <path stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path id="circle-score-stroke" stroke="url(#scoreGrad)" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3178c6" />
+            <stop offset="50%" stop-color="#6366f1" />
+            <stop offset="100%" stop-color="#7c3aed" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-percent-val" id="score-percent-text">0%</div>
+    </div>
+
+    <p class="results-message" id="results-message"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num good" id="stat-correct">0</div>
+        <div class="stat-label">Bonnes réponses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-incorrect">0</div>
+        <div class="stat-label">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">28</div>
+        <div class="stat-label">Questions</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="next-btn" id="restart-btn" type="button">
+        <span>🔄 Recommencer le quiz</span>
+      </button>
+      <button class="btn-secondary" id="toggle-review-btn" type="button">
+        <span>📋 Voir le corrigé complet</span>
+      </button>
+    </div>
+
+    <div class="review-container" id="review-container">
+      <div class="review-header">Détail des questions et explications</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  {
+    "number": 1,
+    "category": "Architecture Web & DOM",
+    "question": "Lorsqu'un navigateur Web charge un fichier HTML, il génère une structure en mémoire vive appelée le DOM. Quelle affirmation décrit le mieux la relation entre le HTML et le DOM ?",
+    "hint": "Considérez le passage d'une description textuelle à une structure d'objets en programmation orientée objet.",
+    "options": [
+      {
+        "label": "A",
+        "text": "Le DOM est une copie statique du fichier HTML stockée sur le disque dur pour accélérer le rendu.",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "Il n'y a aucune différence technique, car le navigateur affiche directement le texte HTML sans transformation.",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "Le DOM est une instance vivante d'objets dérivant de classes comme `HTMLElement`, tandis que le HTML n'est qu'un fichier texte source.",
+        "isCorrect": true
+      },
+      {
+        "label": "D",
+        "text": "Le HTML est le langage de programmation qui permet de modifier le DOM en temps réel.",
+        "isCorrect": false
+      }
+    ],
+    "answer": "C",
+    "rationale": "Le navigateur analyse (parse) le balisage HTML pour instancier un arbre d'objets en mémoire vive (le DOM). Ces objets exposent des propriétés et méthodes manipulables en TypeScript/JavaScript."
+  },
+  {
+    "number": 2,
+    "category": "HTML5 & Sémantique",
+    "question": "Parmi les balises suivantes, laquelle N'EST PAS une balise sémantique (c'est un conteneur générique neutre sans valeur descriptive pour le contenu) ?",
+    "hint": "Cherchez la balise qui n'apporte aucune signification structurelle aux moteurs de recherche ou aux lecteurs d'écran.",
+    "options": [
+      {
+        "label": "A",
+        "text": "`<article>`",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "`<div>`",
+        "isCorrect": true
+      },
+      {
+        "label": "C",
+        "text": "`<main>`",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "`<nav>`",
+        "isCorrect": false
+      }
+    ],
+    "answer": "B",
+    "rationale": "Contrairement à `<article>`, `<main>` ou `<nav>` qui indiquent explicitement le rôle du contenu, `<div>` n'a aucune valeur sémantique propre ; il s'agit d'un simple conteneur générique de division."
+  },
+  {
+    "number": 3,
+    "category": "Sélecteurs & Spécificité CSS",
+    "question": "En CSS, le mécanisme qui détermine quelle règle de style l'emporte lorsque plusieurs sélecteurs ciblent le même élément s'appelle la ___.",
+    "hint": "Ce terme est directement associé au système de calcul de points et de poids (balise, classe, identifiant).",
+    "options": [
+      {
+        "label": "A",
+        "text": "spécificité (ou cascade)",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "transclusion d'éléments",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "compilation modulaire",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "propagation descendante",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "La spécificité CSS (Specificity) calcule le poids hiérarchique d'un sélecteur (en fonction des balises, classes et identifiants) pour arbitrer les conflits de styles."
+  },
+  {
+    "number": 4,
+    "category": "Modèle de Boîte CSS",
+    "question": "Une boîte possède les propriétés suivantes : `width: 200px`, `padding: 20px` et `border: 2px`. Si la propriété `box-sizing` est réglée sur `content-box`, quelle sera la largeur totale réelle occupée par cet élément ?",
+    "hint": "N'oubliez pas que le padding et la bordure s'appliquent des deux côtés (gauche et droite) de la boîte.",
+    "options": [
+      {
+        "label": "A",
+        "text": "222 px",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "244 px",
+        "isCorrect": true
+      },
+      {
+        "label": "C",
+        "text": "200 px",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "240 px",
+        "isCorrect": false
+      }
+    ],
+    "answer": "B",
+    "rationale": "En mode `content-box`, la largeur déclarée correspond uniquement au contenu. La largeur totale vaut : 200px (width) + 2 × 20px (padding) + 2 × 2px (border) = 244px."
+  },
+  {
+    "number": 5,
+    "category": "Modèle de Boîte CSS",
+    "question": "Dans le modèle de boîte CSS, quelle est la distinction fondamentale entre le `padding` et la `margin` ?",
+    "hint": "Visualisez la bordure comme une frontière entre le monde intérieur et le monde extérieur de l'élément.",
+    "options": [
+      {
+        "label": "A",
+        "text": "Le padding n'accepte que des valeurs positives, alors que la margin accepte des valeurs négatives.",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "La margin est toujours colorée par le fond de l'élément, contrairement au padding qui reste transparent.",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "Le padding est utilisé pour les éléments de type bloc, alors que la margin est réservée aux éléments en ligne.",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "Le padding crée de l'espace à l'intérieur de la bordure, tandis que la margin crée de l'espace à l'extérieur de celle-ci.",
+        "isCorrect": true
+      }
+    ],
+    "answer": "D",
+    "rationale": "Le `padding` est la marge interne (entre le contenu et la bordure, colorée par l'arrière-plan), tandis que la `margin` est la marge externe (séparant l'élément de ses voisins, toujours transparente)."
+  },
+  {
+    "number": 6,
+    "category": "Mise en Page Flexbox",
+    "question": "Parmi les propositions suivantes, quel ensemble regroupe les propriétés clés d'un conteneur Flexbox pour gérer la distribution et l'alignement de ses enfants ?",
+    "hint": "Considérez les axes principal et secondaire ainsi que l'espacement moderne entre éléments flexibles.",
+    "options": [
+      {
+        "label": "A",
+        "text": "`justify-content`, `align-items` et `gap`",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "`float`, `clear` et `vertical-align`",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "`margin-collapse`, `box-sizing` et `z-index`",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "`text-align`, `white-space` et `overflow`",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "`justify-content` gère l'axe principal, `align-items` gère l'axe secondaire (perpendiculaire), et `gap` applique un espacement régulier entre les flex items."
+  },
+  {
+    "number": 7,
+    "category": "Bootstrap & Mobile-First",
+    "question": "Expliquez pourquoi Bootstrap utilise une approche 'mobile-first' pour son système de grille responsive.",
+    "hint": "Réfléchissez au fonctionnement des Media Queries basées sur `min-width`.",
+    "options": [
+      {
+        "label": "A",
+        "text": "Pour forcer les smartphones à exécuter JavaScript avant le moteur de rendu CSS.",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "Les styles par défaut ciblent les petits écrans sans média query (`min-width: 0`), puis s'enrichissent progressivement via `min-width` pour les écrans plus larges.",
+        "isCorrect": true
+      },
+      {
+        "label": "C",
+        "text": "Pour interdire l'utilisation d'ordinateurs portables et de bureaux sur les applications Angular modernes.",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "Parce que les navigateurs mobiles ne supportent pas le modèle de boîte `border-box`.",
+        "isCorrect": false
+      }
+    ],
+    "answer": "B",
+    "rationale": "L'approche 'mobile-first' permet d'avoir un affichage optimisé et épuré par défaut sur smartphone, puis d'ajouter des spécifications de colonnes (`sm`, `md`, `lg`, etc.) au fur et à mesure que l'écran s'élargit via `@media (min-width: ...)`."
+  },
+  {
+    "number": 8,
+    "category": "Grille Responsive Bootstrap",
+    "question": "Un développeur souhaite qu'une rangée Bootstrap affiche 3 cartes par ligne sur ordinateur portable (largeur ≥ 992 px), mais qu'elles s'empilent verticalement sur smartphone. Quelles classes doit-il appliquer à chaque colonne ?",
+    "hint": "Rappelez-vous que la grille Bootstrap est basée sur un total de 12 unités.",
+    "options": [
+      {
+        "label": "A",
+        "text": "`col-3 col-md-12`",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "`col-lg-3`",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "`col-4 col-sm-12`",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "`col-12 col-lg-4`",
+        "isCorrect": true
+      }
+    ],
+    "answer": "D",
+    "rationale": "`col-12` occupe la totalité des 12 unités sur petit écran (1 colonne par ligne), et `col-lg-4` alloue 4 unités sur grand écran (12 / 4 = 3 colonnes par ligne à partir du breakpoint `lg` ≥ 992px)."
+  },
+  {
+    "number": 9,
+    "category": "Intégration Angular",
+    "question": "Pour intégrer la feuille de styles CSS de Bootstrap dans un projet Angular de manière globale et permanente, dans quel fichier et tableau de configuration doit-on déclarer son chemin ?",
+    "hint": "C'est le fichier de configuration principal du CLI situé à la racine du projet.",
+    "options": [
+      {
+        "label": "A",
+        "text": "Dans le tableau `styles` du fichier `angular.json`.",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "Dans le tableau `dependencies` du fichier `package.json`.",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "Dans le tableau `compilerOptions` du fichier `tsconfig.json`.",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "Dans les balises `<head>` du fichier `main.ts`.",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "Le fichier `angular.json` gère les options de build. Ajouter le chemin du CSS Bootstrap dans la section `architect > build > options > styles` permet au compilateur Angular de l'inclure dans les bundles finaux."
+  },
+  {
+    "number": 10,
+    "category": "Utilitaires Bootstrap",
+    "question": "Quelle classe utilitaire Bootstrap permet de définir une marge basse (margin-bottom) de 16 px (1 rem) sur un élément ?",
+    "hint": "Considérez la convention de nommage standard de Bootstrap {propriété}{côté}-{taille}.",
+    "options": [
+      {
+        "label": "A",
+        "text": "`ml-3`",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "`mb-3`",
+        "isCorrect": true
+      },
+      {
+        "label": "C",
+        "text": "`pb-3`",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "`m-bottom-16`",
+        "isCorrect": false
+      }
+    ],
+    "answer": "B",
+    "rationale": "Dans Bootstrap 5, `m` désigne la marge, `b` désigne bottom (le bas), et le palier `3` correspond par défaut à `$spacer` (1 rem, soit 16px)."
+  },
+  {
+    "number": 11,
+    "category": "Formulaires & Accessibilité",
+    "question": "Parmi les propositions suivantes, quelle association de pratiques garantit à la fois le bon style visuel Bootstrap et une accessibilité exemplaire pour un champ de saisie ?",
+    "hint": "L'accessibilité exige un lien programmatique fort entre l'intitulé et le champ de saisie.",
+    "options": [
+      {
+        "label": "A",
+        "text": "Classe `.form-label` sur `<label>`, classe `.form-control` sur `<input>`, et liaison via `for=\"idChamp\"`.",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "Suppression des `<label>` au profit d'un attribut `placeholder` avec la classe `.form-control`.",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "Utilisation d'une balise `<span>` stylisée avec `.btn-check` et sans aucun identifiant.",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "Ajout de la classe `.table` sur le formulaire et désactivation des étiquettes.",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "Un formulaire accessible doit relier l'étiquette `<label>` au champ `<input>` via l'attribut `for` et l'`id`. Bootstrap habille ces éléments respectivement avec `.form-label` et `.form-control`."
+  },
+  {
+    "number": 12,
+    "category": "Modèle de Boîte CSS",
+    "question": "Pourquoi est-il fortement recommandé d'utiliser `box-sizing: border-box` lors de la création de mises en page complexes, comme le fait Bootstrap par défaut ?",
+    "hint": "Imaginez deux colonnes avec `width: 50%` recevant chacune du padding : comment éviter qu'elles ne se brisent sur deux lignes ?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Cela permet de rendre les images automatiquement responsives sans déclarer de règle CSS.",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "Cela accélère le téléchargement des polices de caractères Google Fonts.",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "Cela force tous les éléments inline à devenir des conteneurs Flexbox.",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "Cela permet aux propriétés width et height d'englober le padding et la bordure, évitant les débordements inattendus.",
+        "isCorrect": true
+      }
+    ],
+    "answer": "D",
+    "rationale": "Avec `border-box`, `width` spécifie la largeur visible totale (contenu + padding + bordure). Cela élimine les calculs manuels fastidieux et empêche les colonnes de déborder."
+  },
+  {
+    "number": 13,
+    "category": "Flux HTML (Block vs Inline)",
+    "question": "Un élément HTML de type ___ (comme `<span>` ou `<a>`) ne prend que la largeur nécessaire à son contenu et ne provoque aucun saut de ligne automatique.",
+    "hint": "C'est l'opposé du comportement d'un élément 'bloc' (block).",
+    "options": [
+      {
+        "label": "A",
+        "text": "en ligne (inline)",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "flottant (float)",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "statique (static)",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "grille (grid-cell)",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "Les éléments `inline` se placent dans le flux horizontal du texte sans générer de retour chariot, et ignorent les propriétés de dimensions `width` et `height`."
+  },
+  {
+    "number": 14,
+    "category": "Grille Responsive Bootstrap",
+    "question": "Dans le système de grille Bootstrap, quelle classe fondamentale doit être utilisée pour centrer horizontalement le contenu tout en lui appliquant des marges latérales automatiques ?",
+    "hint": "C'est la classe structurelle maîtresse qui englobe les éléments `.row`.",
+    "options": [
+      {
+        "label": "A",
+        "text": "`.col-center`",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "`.row-centered`",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "`.navbar`",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "`.container`",
+        "isCorrect": true
+      }
+    ],
+    "answer": "D",
+    "rationale": "La classe `.container` définit un conteneur réactif avec une largeur maximale (`max-width`) adaptée aux différents écrans et centré via `margin-left: auto; margin-right: auto`."
+  },
+  {
+    "number": 15,
+    "category": "POO & Architecture DOM",
+    "question": "Quelle chaîne d'héritage reflète fidèlement la structure orientée objet d'un élément HTML standard du DOM comme `HTMLDivElement` ?",
+    "hint": "Pensez aux classes socles du navigateur pour gérer les événements (`EventTarget`) et les nœuds de l'arbre (`Node`).",
+    "options": [
+      {
+        "label": "A",
+        "text": "`HTMLDivElement` hérite directement de `CSSStyleDeclaration`.",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "`HTMLDivElement` -> `HTMLElement` -> `Element` -> `Node` -> `EventTarget` -> `Object`.",
+        "isCorrect": true
+      },
+      {
+        "label": "C",
+        "text": "`HTMLDivElement` -> `Document` -> `Window` -> `DOMTokenList`.",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "`HTMLDivElement` n'hérite d'aucune classe car le DOM est une simple chaîne de caractères.",
+        "isCorrect": false
+      }
+    ],
+    "answer": "B",
+    "rationale": "Le DOM est un modèle orienté objet d'école : `EventTarget` apporte la gestion des événements (`addEventListener`), `Node` gère la navigation dans l'arbre, `Element` gère les balises et attributs, et `HTMLElement` ajoute les fonctionnalités HTML communes."
+  },
+  {
+    "number": 16,
+    "category": "Spécificité CSS",
+    "question": "Quel est le score de spécificité (poids) d'un sélecteur CSS combinant une balise et une classe, tel que `div.carte` ?",
+    "hint": "Additionnez les points standard : balise = 1 (0-0-1), classe = 10 (0-1-0).",
+    "options": [
+      {
+        "label": "A",
+        "text": "20",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "11 (ou 0-1-1)",
+        "isCorrect": true
+      },
+      {
+        "label": "C",
+        "text": "2",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "101",
+        "isCorrect": false
+      }
+    ],
+    "answer": "B",
+    "rationale": "La balise (`div`) confère 1 point et la classe (`.carte`) apporte 10 points. Le score cumulé de spécificité est donc de 11 (vecteur 0-0-1-1)."
+  },
+  {
+    "number": 17,
+    "category": "Mise en Page Flexbox",
+    "question": "En CSS Flexbox, quelle propriété permet de contrôler l'alignement des éléments sur l'axe secondaire (cross axis, perpendiculaire à la direction principale) ?",
+    "hint": "Elle est systématiquement utilisée pour centrer verticalement des éléments dans une rangée flexible.",
+    "options": [
+      {
+        "label": "A",
+        "text": "`align-items`",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "`justify-content`",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "`flex-direction`",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "`flex-wrap`",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "`align-items` gère l'alignement transversal (axe secondaire). Par exemple, avec `flex-direction: row`, `align-items: center` centre les éléments sur la hauteur."
+  },
+  {
+    "number": 18,
+    "category": "Composants Angular",
+    "question": "Dans le framework Angular, un composant réunit techniquement les trois piliers du Web sous forme d'un trio de fichiers. Quelle association décrit fidèlement ce rôle ?",
+    "hint": "Pensez aux fichiers générés par la commande `ng generate component`.",
+    "options": [
+      {
+        "label": "A",
+        "text": "Template HTML (structure & vue), feuille CSS/SCSS (présentation visuelle) et classe TypeScript (logique & état).",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "Fichier `angular.json` (structure), fichier XML (vue) et script Bash (logique).",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "Fichier `package.json` (styles), Dockerfile (structure) et script SQL (logique).",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "Fichier `index.html` (unique vue globale) et script jQuery (manipulation directe).",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "Un composant Angular encapsule sa structure (template HTML), son apparence (CSS encapsulé) et son comportement applicatif (classe TypeScript décorée avec `@Component`)."
+  },
+  {
+    "number": 19,
+    "category": "Composants Bootstrap",
+    "question": "Quelle classe utilitaire Bootstrap permet d'ajouter une ombre portée discrète et élégante (box-shadow légère) sur une carte ?",
+    "hint": "Cherchez le terme anglais signifiant 'ombre' couplé au modificateur 'small'.",
+    "options": [
+      {
+        "label": "A",
+        "text": "`border-dark`",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "`glow`",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "`shadow-sm`",
+        "isCorrect": true
+      },
+      {
+        "label": "D",
+        "text": "`card-elevation`",
+        "isCorrect": false
+      }
+    ],
+    "answer": "C",
+    "rationale": "Bootstrap propose les classes d'ombre `shadow-none`, `shadow-sm`, `shadow` et `shadow-lg` pour apporter du relief visuel aux conteneurs."
+  },
+  {
+    "number": 20,
+    "category": "Mise en Page Flexbox",
+    "question": "En utilisant Flexbox, que se produit-il lorsqu'on applique `justify-content: space-between` sur un conteneur horizontal ?",
+    "hint": "Pensez au positionnement des tout premiers et tout derniers éléments par rapport aux bords.",
+    "options": [
+      {
+        "label": "A",
+        "text": "Tous les éléments sont regroupés au centre exact du conteneur sans aucun écart.",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "Les éléments s'étirent verticalement pour remplir toute la hauteur disponible.",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "Chaque élément reçoit un espace égal avant lui et après lui, y compris aux extrémités.",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "Le premier élément est collé au bord de début, le dernier au bord de fin, et l'espace restant est réparti équitablement entre les autres.",
+        "isCorrect": true
+      }
+    ],
+    "answer": "D",
+    "rationale": "`justify-content: space-between` colle les premier et dernier éléments aux extrémités du conteneur et répartit de manière uniforme l'espace disponible entre les éléments intermédiaires."
+  },
+  {
+    "number": 21,
+    "category": "Utilitaires Bootstrap",
+    "question": "Pour supprimer totalement et immédiatement toute marge externe sur les quatre côtés d'un élément Bootstrap, quelle classe utilitaire applique-t-on ?",
+    "hint": "Utilisez le préfixe de la propriété 'margin' suivi de la valeur minimale '0'.",
+    "options": [
+      {
+        "label": "A",
+        "text": "`m-0`",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "`p-0`",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "`no-margin`",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "`mx-auto`",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "La classe `m-0` applique `margin: 0 !important;` sur tous les côtés de l'élément (`p-0` correspondrait à la suppression du padding interne)."
+  },
+  {
+    "number": 22,
+    "category": "Grille Responsive Bootstrap",
+    "question": "Quelle est la largeur minimale d'écran (point d'arrêt ou breakpoint) à partir de laquelle s'activent les classes préfixées `col-md-*` dans Bootstrap 5 ?",
+    "hint": "Ce point d'arrêt cible typiquement les tablettes en orientation portrait.",
+    "options": [
+      {
+        "label": "A",
+        "text": "≥ 576 px (breakpoint sm)",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "≥ 768 px (breakpoint md)",
+        "isCorrect": true
+      },
+      {
+        "label": "C",
+        "text": "≥ 992 px (breakpoint lg)",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "≥ 1200 px (breakpoint xl)",
+        "isCorrect": false
+      }
+    ],
+    "answer": "B",
+    "rationale": "Le breakpoint `md` (Medium) débute à partir de 768px (`@media (min-width: 768px)`). Le palier `sm` débute à 576px et `lg` à 992px."
+  },
+  {
+    "number": 23,
+    "category": "Flux HTML (Block vs Inline)",
+    "question": "Parmi les propositions suivantes, quelle affirmation est FAUSSE concernant le comportement naturel des éléments de type bloc (block) en HTML ?",
+    "hint": "Pensez aux balises de bloc comme `<div>` ou `<p>` par opposition aux balises `<span>`.",
+    "options": [
+      {
+        "label": "A",
+        "text": "Ils occupent par défaut 100% de la largeur disponible de leur conteneur parent.",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "Ils provoquent automatiquement un saut de ligne avant et après leur affichage.",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "Ils ignorent totalement les propriétés CSS width et height ainsi que les marges verticales.",
+        "isCorrect": true
+      },
+      {
+        "label": "D",
+        "text": "Ils acceptent les marges internes (padding) et externes (margin) sur tous leurs côtés.",
+        "isCorrect": false
+      }
+    ],
+    "answer": "C",
+    "rationale": "L'affirmation C est fausse : ce sont les éléments en ligne (`inline`) qui ignorent `width`, `height` et les marges verticales. Les éléments blocs les respectent pleinement !"
+  },
+  {
+    "number": 24,
+    "category": "Grille Responsive Bootstrap",
+    "question": "Dans le système de grille Bootstrap, que se produit-il si la somme des unités de colonnes déclarées dans une même balise `.row` dépasse 12 ?",
+    "hint": "Pensez au comportement de retour à la ligne automatique (`flex-wrap: wrap`).",
+    "options": [
+      {
+        "label": "A",
+        "text": "Le navigateur bloque le rendu et affiche une erreur fatale dans la console.",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "Toutes les colonnes sont écrasées pour être forcées à tenir sur une seule ligne.",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "Les colonnes excédentaires passent automatiquement à la ligne suivante.",
+        "isCorrect": true
+      },
+      {
+        "label": "D",
+        "text": "Seules les 12 premières colonnes s'affichent, les suivantes sont masquées via `display: none`.",
+        "isCorrect": false
+      }
+    ],
+    "answer": "C",
+    "rationale": "Une `.row` Bootstrap applique `flex-wrap: wrap`. Dès que le cumul des colonnes dépasse 12 unités sur un même breakpoint, les colonnes suivantes passent naturellement à la ligne."
+  },
+  {
+    "number": 25,
+    "category": "Composants Bootstrap",
+    "question": "Dans Bootstrap, quelle classe est utilisée pour donner une couleur rouge à un bouton, signifiant généralement une action destructrice ou critique (ex: supprimer) ?",
+    "hint": "C'est un mot anglais signifiant 'danger'.",
+    "options": [
+      {
+        "label": "A",
+        "text": "`btn-danger`",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "`btn-warning`",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "`btn-error`",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "`btn-alert`",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "La palette sémantique de Bootstrap utilise `btn-danger` pour le rouge d'alerte, `btn-warning` pour le jaune d'attention et `btn-success` pour le vert de validation."
+  },
+  {
+    "number": 26,
+    "category": "Spécificité CSS",
+    "question": "Soit les règles CSS : `.menu { color: blue; }` et `#entete { color: red; }` ciblant le même élément `<nav class=\"menu\" id=\"entete\">`. De quelle couleur sera affiché le texte et pourquoi ?",
+    "hint": "Comparez le poids d'un sélecteur d'identifiant (#) par rapport à un sélecteur de classe (.).",
+    "options": [
+      {
+        "label": "A",
+        "text": "Rouge, car l'identifiant `#entete` a une spécificité de 100, supérieure à celle de la classe `.menu` qui ne vaut que 10.",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "Violet, car le navigateur mélange harmonieusement les couleurs des règles en conflit.",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "Bleu, car les classes ont toujours la priorité sur les identifiants en CSS moderne.",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "Noir, car le conflit de style annule les deux déclarations au profit de la couleur par défaut.",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "Un identifiant (`#entete`) possède une spécificité de 100 (0-1-0-0), alors qu'une classe (`.menu`) n'a qu'un poids de 10 (0-0-1-0). La règle rouge l'emporte donc sans équivoque."
+  },
+  {
+    "number": 27,
+    "category": "Grille Responsive Bootstrap",
+    "question": "À quoi sert la classe utilitaire `.g-3` appliquée à une rangée `.row` dans une grille Bootstrap ?",
+    "hint": "Pensez au terme anglais 'gutter' qui désigne les gouttières d'espacement entre les colonnes.",
+    "options": [
+      {
+        "label": "A",
+        "text": "À limiter la ligne à un nombre strict de 3 colonnes au maximum.",
+        "isCorrect": false
+      },
+      {
+        "label": "B",
+        "text": "À appliquer un espacement (gutter) uniforme entre les colonnes et entre les lignes de la grille.",
+        "isCorrect": true
+      },
+      {
+        "label": "C",
+        "text": "À transformer la grille en galerie photo animée de 3 colonnes.",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "À définir une police de caractères de taille 3 pour tout le texte de la rangée.",
+        "isCorrect": false
+      }
+    ],
+    "answer": "B",
+    "rationale": "Les classes de gouttières `g-*` (gutter) définissent l'espacement horizontal et vertical entre les colonnes Bootstrap sans avoir à manipuler manuellement les paddings ou marges."
+  },
+  {
+    "number": 28,
+    "category": "Affichage & Flux CSS",
+    "question": "En CSS, quelle valeur de `display` permet à un élément de rester aligné sur la même ligne que le texte tout en acceptant des propriétés explicites de dimensions (`width` / `height`) et de marges verticales ?",
+    "hint": "C'est une valeur hybride combinant les atouts des éléments en ligne et des éléments de type bloc.",
+    "options": [
+      {
+        "label": "A",
+        "text": "`display: inline-block;`",
+        "isCorrect": true
+      },
+      {
+        "label": "B",
+        "text": "`display: block-inline;`",
+        "isCorrect": false
+      },
+      {
+        "label": "C",
+        "text": "`display: flex-inline;`",
+        "isCorrect": false
+      },
+      {
+        "label": "D",
+        "text": "`display: inline-flexbox;`",
+        "isCorrect": false
+      }
+    ],
+    "answer": "A",
+    "rationale": "`display: inline-block` offre le compromis parfait : l'élément s'intègre horizontalement dans le flux de la ligne sans forcer de saut de ligne, tout en respectant les dimensions `width`, `height`, `padding` et `margin` verticaux."
+  }
+];
+
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+let userAnswers = [];
+
+// Échappe les caractères HTML réservés pour éviter que le navigateur ne crée de véritables nœuds DOM
+function escapeHtml(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Formate les extraits de code inline, guillemets et blocs de code ```ts
+function formatCode(text) {
+  if (!text) return '';
+
+  // 1. Échappement préalable des balises et chevrons HTML
+  let formatted = escapeHtml(text);
+
+  // 2. Blocs de code multi-lignes ```ts ... ``` (supporte \r?\n et espaces facultatifs)
+  formatted = formatted.replace(/```(?:ts|typescript|js|html|css)?\s*?\r?\n([\s\S]*?)```/g, '<pre class="code-box"><code>$1</code></pre>');
+
+  // 3. Code inline entre backticks `...`
+  formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-term">$1</span>');
+
+  // 4. Mots-clés isolés entre quotes '...', SANS capturer les apostrophes françaises
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])'([a-zA-Z0-9_\-\.\/@\(\)=]+)'/g, '<span class="code-term">$1</span>');
+
+  const parts = formatted.split(/(<pre[\s\S]*?<\/pre>)/g);
+  return parts.map(part => {
+    if (part.startsWith('<pre')) return part;
+    return part.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  }).join('');
+}
+
+// Initialisation
+function init() {
+  setupTheme();
+  setupKeyboard();
+  renderQuestion(0);
+
+  document.getElementById('next-btn').addEventListener('click', handleNext);
+  document.getElementById('restart-btn').addEventListener('click', handleRestart);
+  document.getElementById('toggle-review-btn').addEventListener('click', handleToggleReview);
+  document.getElementById('hint-toggle-btn').addEventListener('click', toggleHint);
+}
+
+// Gestion du Thème Clair / Sombre
+function setupTheme() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const text = document.getElementById('theme-text');
+
+  const saved = localStorage.getItem('poo_quiz_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+
+  toggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('poo_quiz_theme', next);
+    updateThemeUI(next);
+  });
+
+  function updateThemeUI(t) {
+    if (t === 'dark') {
+      icon.textContent = '☀️';
+      text.textContent = 'Mode clair';
+    } else {
+      icon.textContent = '🌙';
+      text.textContent = 'Mode sombre';
+    }
+  }
+}
+
+// Affichage d'une question
+function renderQuestion(index) {
+  answered = false;
+  const q = quizData[index];
+
+  const progressPct = ((index) / quizData.length) * 100;
+  document.getElementById('progress-fill').style.width = progressPct + '%';
+  document.getElementById('progress-q-label').textContent = `Question ${index + 1} sur ${quizData.length}`;
+  document.getElementById('progress-score-pill').textContent = index > 0
+    ? `Score : ${correctCount}/${index} (${Math.round((correctCount / index) * 100)}%)`
+    : `Score : 0/0`;
+
+  document.getElementById('q-index-badge').textContent = `Question ${index < 9 ? '0' + (index + 1) : index + 1}`;
+  document.getElementById('q-category-tag').textContent = q.category || 'Web & CSS';
+  document.getElementById('q-counter').textContent = `${index + 1} / ${quizData.length}`;
+
+  document.getElementById('q-text').innerHTML = formatCode(q.question);
+
+  const hintBody = document.getElementById('hint-body');
+  hintBody.innerHTML = formatCode(q.hint);
+  hintBody.classList.remove('open');
+  document.getElementById('hint-btn-label').textContent = "Afficher un indice";
+
+  const fcard = document.getElementById('feedback-card');
+  fcard.style.display = 'none';
+  fcard.className = 'feedback-card';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'none';
+  if (index === quizData.length - 1) {
+    document.getElementById('next-btn-text').textContent = "Voir mes résultats 🎉";
+  } else {
+    document.getElementById('next-btn-text').textContent = "Question suivante";
+  }
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, optIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.type = 'button';
+    btn.dataset.idx = optIdx;
+    btn.innerHTML = `
+      <span class="opt-key-circle">${opt.label}</span>
+      <span class="opt-content">${formatCode(opt.text)}</span>
+      <span class="opt-status-icon"></span>
+    `;
+
+    btn.addEventListener('click', () => selectOption(optIdx));
+    grid.appendChild(btn);
+  });
+}
+
+// Sélection d'une option
+function selectOption(selectedIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizData[currentQ];
+  const selectedOpt = q.options[selectedIdx];
+  const isCorrect = selectedOpt.isCorrect;
+  userAnswers[currentQ] = selectedIdx;
+
+  if (isCorrect) {
+    correctCount++;
+  }
+
+  const optionBtns = document.querySelectorAll('.option-btn');
+  optionBtns.forEach(btn => btn.disabled = true);
+
+  const selectedBtn = optionBtns[selectedIdx];
+  const selectedStatus = selectedBtn.querySelector('.opt-status-icon');
+
+  if (isCorrect) {
+    selectedBtn.classList.add('selected-correct');
+    selectedStatus.textContent = '✓';
+  } else {
+    selectedBtn.classList.add('selected-incorrect');
+    selectedStatus.textContent = '✕';
+
+    const correctIdx = q.options.findIndex(o => o.isCorrect);
+    if (correctIdx !== -1) {
+      const correctBtn = optionBtns[correctIdx];
+      correctBtn.classList.add('revealed-correct');
+      const correctStatus = correctBtn.querySelector('.opt-status-icon');
+      correctStatus.textContent = '✓';
+    }
+  }
+
+  optionBtns.forEach(btn => {
+    if (!btn.classList.contains('selected-correct') &&
+        !btn.classList.contains('selected-incorrect') &&
+        !btn.classList.contains('revealed-correct')) {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  const fcard = document.getElementById('feedback-card');
+  const fheader = document.getElementById('feedback-header');
+  const fbody = document.getElementById('feedback-body');
+
+  fcard.style.display = 'block';
+
+  if (isCorrect) {
+    fcard.className = 'feedback-card correct';
+    fheader.innerHTML = '<span>✓</span> <span>Excellente réponse !</span>';
+    fbody.innerHTML = `<strong>Justification :</strong> ${formatCode(q.rationale)}`;
+  } else {
+    fcard.className = 'feedback-card incorrect';
+    fheader.innerHTML = `<span>✕</span> <span>Ce n'est pas tout à fait ça. La bonne réponse est l'option ${q.answer}.</span>`;
+    fbody.innerHTML = `<strong>Explication :</strong> ${formatCode(q.rationale)}`;
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'flex';
+  nextBtn.focus();
+}
+
+function toggleHint() {
+  const hintBody = document.getElementById('hint-body');
+  const label = document.getElementById('hint-btn-label');
+  hintBody.classList.toggle('open');
+  label.textContent = hintBody.classList.contains('open') ? "Masquer l'indice" : "Afficher un indice";
+}
+
+// Question suivante avec garde de sécurité anti-saut
+function handleNext() {
+  if (!answered) return;
+  currentQ++;
+  if (currentQ < quizData.length) {
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+// Écran des scores et résultats
+function showResults() {
+  document.getElementById('question-card').style.display = 'none';
+  document.getElementById('progress-container').style.display = 'none';
+  document.getElementById('results-card').style.display = 'block';
+
+  const total = quizData.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  const stroke = document.getElementById('circle-score-stroke');
+  stroke.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+  document.getElementById('score-percent-text').textContent = `${pct}%`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-incorrect').textContent = total - correctCount;
+  document.getElementById('stat-total').textContent = total;
+
+  const msgEl = document.getElementById('results-message');
+  const iconEl = document.getElementById('results-icon');
+
+  if (pct >= 90) {
+    iconEl.textContent = '🏆';
+    msgEl.innerHTML = `<strong>Excellente maîtrise !</strong> Vous maîtrisez parfaitement l'arborescence du DOM, le modèle de boîte CSS, les calculs de spécificité, Flexbox et le système de grille Bootstrap 5 !`;
+    launchConfetti();
+  } else if (pct >= 75) {
+    iconEl.textContent = '🚀';
+    msgEl.innerHTML = `<strong>Très bon travail !</strong> Les notions fondamentales du Web responsive, de la grille de 12 colonnes et de l'intégration dans Angular sont bien assimilées. Une lecture rapide du corrigé vous permettra de viser le 100%.`;
+    launchConfetti();
+  } else if (pct >= 50) {
+    iconEl.textContent = '👍';
+    msgEl.innerHTML = `<strong>Bases en place !</strong> La distinction entre balises sémantiques, flexbox et boîtes est comprise, mais plusieurs subtilités de calcul (content-box vs border-box, spécificité) méritent d'être consolidées.`;
+  } else {
+    iconEl.textContent = '📚';
+    msgEl.innerHTML = `<strong>En cours d'apprentissage !</strong> Prenez le temps de revoir les diapositives sur le DOM, les breakpoints Bootstrap et les calculs de spécificité CSS avant de retenter le test !`;
+  }
+}
+
+// Corrigé interactif complet
+function handleToggleReview() {
+  const container = document.getElementById('review-container');
+  const btn = document.getElementById('toggle-review-btn');
+  const list = document.getElementById('review-list');
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    btn.innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  } else {
+    container.style.display = 'block';
+    btn.innerHTML = '<span>Masquer le corrigé ▴</span>';
+
+    list.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const userIdx = userAnswers[qIdx];
+      const isGood = userIdx !== undefined && q.options[userIdx].isCorrect;
+
+      const card = document.createElement('div');
+      card.className = 'review-item';
+
+      const cleanPrompt = q.question.replace(/```[\s\S]*?```/g, '[Code]').replace(/`/g, '');
+      const shortPrompt = cleanPrompt.length > 70 ? cleanPrompt.substring(0, 70) + '...' : cleanPrompt;
+
+      const header = document.createElement('div');
+      header.className = 'review-item-header';
+      header.innerHTML = `
+        <div class="review-item-title">
+          <span>${isGood ? '✅' : '❌'}</span>
+          <span><strong>Q${qIdx + 1}.</strong> ${escapeHtml(shortPrompt)}</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);">Détails ▾</span>
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'review-item-body';
+
+      let optionsHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
+      q.options.forEach((opt, oIdx) => {
+        const wasUser = oIdx === userIdx;
+        const wasCorrect = opt.isCorrect;
+        let borderCol = 'var(--opt-border)';
+        let bgCol = 'transparent';
+        let badge = '';
+
+        if (wasCorrect) {
+          borderCol = '#10b981';
+          bgCol = 'rgba(16, 185, 129, 0.08)';
+          badge = ' <strong style="color: #10b981;">(Bonne réponse)</strong>';
+        }
+        if (wasUser && !wasCorrect) {
+          borderCol = '#ef4444';
+          bgCol = 'rgba(239, 68, 68, 0.08)';
+          badge = ' <strong style="color: #ef4444;">(Votre choix)</strong>';
+        }
+
+        optionsHtml += `
+          <div style="padding: 10px 14px; border: 1px solid ${borderCol}; background: ${bgCol}; border-radius: 8px; font-size: 13.5px;">
+            <div><strong>${opt.label}.</strong> ${formatCode(opt.text)}${badge}</div>
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+
+      body.innerHTML = `
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 8px;">${formatCode(q.question)}</div>
+        ${optionsHtml}
+        <div style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #6366f1; font-size: 13px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">Explication :</strong> ${formatCode(q.rationale)}
+        </div>
+      `;
+
+      header.addEventListener('click', () => {
+        body.classList.toggle('open');
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+  }
+}
+
+// Recommencer
+function handleRestart() {
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+  userAnswers = [];
+
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('review-container').style.display = 'none';
+  document.getElementById('toggle-review-btn').innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  document.getElementById('progress-container').style.display = 'block';
+  document.getElementById('question-card').style.display = 'block';
+
+  renderQuestion(0);
+}
+
+// Raccourcis Clavier
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+
+    if (document.getElementById('results-card').style.display === 'block') {
+      if (e.key === 'Enter') handleRestart();
+      return;
+    }
+
+    if (answered) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      return;
+    }
+
+    const q = quizData[currentQ];
+    if (!q) return;
+
+    let targetIdx = -1;
+    if (key === 'A' || key === '1') targetIdx = 0;
+    else if (key === 'B' || key === '2') targetIdx = 1;
+    else if (key === 'C' || key === '3') targetIdx = 2;
+    else if (key === 'D' || key === '4') targetIdx = 3;
+
+    if (targetIdx >= 0 && targetIdx < q.options.length) {
+      e.preventDefault();
+      selectOption(targetIdx);
+    }
+
+    if (key === 'H' || key === 'I') {
+      e.preventDefault();
+      toggleHint();
+    }
+  });
+}
+
+// Animation Confettis
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#3178c6', '#6366f1', '#7c3aed', '#10b981', '#fbbf24', '#38bdf8'];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.015 + 0.008
+    });
+  }
+
+  let animId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25;
+      p.alpha -= p.decay;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  loop();
+}
+
+init();
+</script>
+</body>
+</html>
