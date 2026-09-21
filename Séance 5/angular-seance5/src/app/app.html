@@ -1,0 +1,39 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('memory-model') {
+          <app-memory-visualizer></app-memory-visualizer>
+        }
+        @case ('aliasing-pitfall') {
+          <app-aliasing-visualizer></app-aliasing-visualizer>
+        }
+        @case ('class-vs-instance') {
+          <app-construction-site></app-construction-site>
+        }
+        @case ('instance-vs-static') {
+          <app-instance-vs-static-inspector></app-instance-vs-static-inspector>
+        }
+        @case ('encapsulation-invariants') {
+          <app-crash-test-bank></app-crash-test-bank>
+        }
+        @case ('visibility-parameter-properties') {
+          <app-syntax-deconstructor></app-syntax-deconstructor>
+        }
+        @case ('getters-setters-tell-dont-ask') {
+          <app-thermostat-rectangle-workbench></app-thermostat-rectangle-workbench>
+        }
+        @case ('advanced-mechanisms') {
+          <app-solar-system-enum></app-solar-system-enum>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>
