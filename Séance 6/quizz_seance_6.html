@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz POO — L'Héritage en TypeScript</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      --bg-page: #090d16;
+      --bg-ambient-1: rgba(49, 120, 198, 0.16);
+      --bg-ambient-2: rgba(124, 58, 237, 0.14);
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --brand-blue: #3178c6;
+      --brand-indigo: #6366f1;
+      --brand-purple: #7c3aed;
+      --brand-gradient: linear-gradient(135deg, #3178c6 0%, #6366f1 50%, #7c3aed 100%);
+      
+      --opt-bg: rgba(255, 255, 255, 0.03);
+      --opt-border: rgba(255, 255, 255, 0.08);
+      --opt-hover-bg: rgba(255, 255, 255, 0.06);
+      --opt-hover-border: rgba(99, 102, 241, 0.45);
+      
+      --correct-bg: rgba(16, 185, 129, 0.12);
+      --correct-border: #10b981;
+      --correct-text: #34d399;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: rgba(239, 68, 68, 0.12);
+      --incorrect-border: #ef4444;
+      --incorrect-text: #f87171;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: rgba(245, 158, 11, 0.08);
+      --hint-border: rgba(245, 158, 11, 0.25);
+      --hint-text: #fbbf24;
+      
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --code-border: rgba(255, 255, 255, 0.12);
+      --code-color: #38bdf8;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8fafc;
+      --bg-ambient-1: rgba(49, 120, 198, 0.08);
+      --bg-ambient-2: rgba(124, 58, 237, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --opt-bg: #ffffff;
+      --opt-border: #e2e8f0;
+      --opt-hover-bg: #f8fafc;
+      --opt-hover-border: #3178c6;
+      
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --correct-text: #065f46;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: #fef2f2;
+      --incorrect-border: #ef4444;
+      --incorrect-text: #991b1b;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: #fffbeb;
+      --hint-border: #fde68a;
+      --hint-text: #92400e;
+      
+      --code-bg: #f1f5f9;
+      --code-border: #cbd5e1;
+      --code-color: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image: 
+        radial-gradient(circle at 12% 10%, var(--bg-ambient-1) 0%, transparent 45%),
+        radial-gradient(circle at 88% 90%, var(--bg-ambient-2) 0%, transparent 45%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-main);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* Barre supérieure */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .keyboard-badge {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    @media (min-width: 640px) {
+      .keyboard-badge { display: inline-flex; align-items: center; gap: 6px; }
+    }
+
+    /* En-tête */
+    .header-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .course-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 9999px;
+      background: rgba(49, 120, 198, 0.12);
+      color: #60a5fa;
+      border: 1px solid rgba(49, 120, 198, 0.3);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #60a5fa;
+      box-shadow: 0 0 10px #60a5fa;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .quiz-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 16px;
+      font-weight: 500;
+    }
+
+    .tags-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-muted);
+    }
+
+    /* Section Progression */
+    .progress-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-q-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-score-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .progress-track {
+      background: #e2e8f0;
+    }
+
+    .progress-bar-fill {
+      background: var(--brand-gradient);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(49, 120, 198, 0.5);
+    }
+
+    /* Carte Principale */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .q-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-index-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #60a5fa;
+      background: rgba(49, 120, 198, 0.12);
+      border: 1px solid rgba(49, 120, 198, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+    }
+
+    .q-category-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .q-text {
+      font-size: 18.5px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text-main);
+      margin-bottom: 22px;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-color);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #38bdf8;
+      overflow-x: auto;
+      text-align: left;
+    }
+    [data-theme="light"] .code-box {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0369a1;
+    }
+
+    /* Indice */
+    .hint-container {
+      margin-bottom: 22px;
+    }
+
+    .hint-btn {
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      color: var(--hint-text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hint-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .hint-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--hint-text);
+      line-height: 1.5;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .hint-body.open {
+      display: block;
+    }
+
+    /* Grille des Options */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 18px;
+      border: 2px solid var(--opt-border);
+      background: var(--opt-bg);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      position: relative;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--opt-hover-border);
+      background: var(--opt-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .opt-key-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--opt-border);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .opt-content {
+      flex: 1;
+      padding-top: 4px;
+      line-height: 1.5;
+    }
+
+    .opt-status-icon {
+      font-size: 18px;
+      margin-left: 8px;
+      display: none;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    /* États des Options */
+    .option-btn.selected-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .option-btn.selected-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.selected-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--incorrect-border) !important;
+      background: var(--incorrect-bg) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+    .option-btn.selected-incorrect .opt-key-circle {
+      background: var(--incorrect-badge-bg);
+      color: var(--incorrect-badge-text);
+    }
+    .option-btn.selected-incorrect .opt-status-icon {
+      display: inline-block;
+      color: var(--incorrect-text);
+    }
+
+    .option-btn.revealed-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      border-style: dashed;
+    }
+    .option-btn.revealed-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.revealed-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.dimmed {
+      opacity: 0.45;
+    }
+
+    /* Carte de Feedback */
+    .feedback-card {
+      display: none;
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .feedback-card.correct {
+      background: var(--correct-bg);
+      border-left: 4px solid var(--correct-border);
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+      border-right: 1px solid rgba(16, 185, 129, 0.2);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .feedback-card.incorrect {
+      background: var(--incorrect-bg);
+      border-left: 4px solid var(--incorrect-border);
+      border-top: 1px solid rgba(239, 68, 68, 0.2);
+      border-right: 1px solid rgba(239, 68, 68, 0.2);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .feedback-header {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .feedback-card.correct .feedback-header { color: var(--correct-text); }
+    .feedback-card.incorrect .feedback-header { color: var(--incorrect-text); }
+
+    .feedback-body {
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    [data-theme="light"] .feedback-body {
+      color: #334155;
+    }
+
+    /* Barre d'Action */
+    .action-bar {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(49, 120, 198, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(49, 120, 198, 0.55);
+    }
+
+    /* Écran de Résultats */
+    .results-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .results-trophy {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .results-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle-wrapper {
+      margin: 24px auto;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-percent-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .results-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .stat-num.good { color: #10b981; }
+    .stat-num.bad { color: #ef4444; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn-secondary {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--opt-hover-bg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Vue Corrigé */
+    .review-container {
+      display: none;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .review-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-item {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .review-item-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .review-item-title {
+      font-weight: 600;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-item-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--card-border);
+    }
+    .review-item-body.open {
+      display: block;
+      padding-top: 14px;
+    }
+
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="quiz-container">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="keyboard-badge">
+      <span>⌨️ Raccourcis : [A-D] ou [1-4] · [Entrée] · [I]</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Basculer le thème">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-text">Mode clair</span>
+    </button>
+  </div>
+
+  <!-- Header Hero -->
+  <div class="header-hero">
+    <div class="course-badge">
+      <span class="badge-dot"></span>
+      Programmation Orientée Objet · EAFC Colfontaine
+    </div>
+    <h1 class="quiz-title">Séance 6 — L'Héritage en TypeScript</h1>
+    <p class="quiz-subtitle">Relation « est-un » · Syntaxe extends & super() · Modificateur protected · Redéfinition override · Fragile Base Class · Héritage vs Composition</p>
+    <div class="tags-row">
+      <span class="tag-pill">TypeScript</span>
+      <span class="tag-pill">POO</span>
+      <span class="tag-pill">Héritage</span>
+      <span class="tag-pill">extends & super()</span>
+      <span class="tag-pill">override & protected</span>
+      <span class="tag-pill">25 questions</span>
+    </div>
+
+    <!-- Progress section -->
+    <div class="progress-section" id="progress-container">
+      <div class="progress-header">
+        <span class="progress-q-label" id="progress-q-label">Question 1 sur 25</span>
+        <span class="progress-score-pill" id="progress-score-pill">Score : 0/0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Question Card -->
+  <div class="card" id="question-card">
+    <div class="q-meta-bar">
+      <span class="q-index-badge" id="q-index-badge">Question 01</span>
+      <span class="q-category-tag" id="q-category-tag">Fondements de l'Héritage</span>
+      <span style="font-size: 12px; color: var(--text-dim);" id="q-counter">1 / 25</span>
+    </div>
+
+    <div class="q-text" id="q-text"></div>
+
+    <div class="hint-container">
+      <button class="hint-btn" id="hint-toggle-btn" type="button">
+        <span>💡</span>
+        <span id="hint-btn-label">Afficher un indice</span>
+      </button>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <!-- Feedback card -->
+    <div class="feedback-card" id="feedback-card">
+      <div class="feedback-header" id="feedback-header"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="next-btn" id="next-btn" style="display: none;">
+        <span id="next-btn-text">Question suivante</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div class="card results-card" id="results-card" style="display: none;">
+    <div class="results-trophy" id="results-icon">🏆</div>
+    <h2 class="results-title" id="results-title">Quiz terminé !</h2>
+    
+    <div class="score-circle-wrapper">
+      <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <path stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path id="circle-score-stroke" stroke="url(#scoreGrad)" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3178c6" />
+            <stop offset="50%" stop-color="#6366f1" />
+            <stop offset="100%" stop-color="#7c3aed" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-percent-val" id="score-percent-text">0%</div>
+    </div>
+
+    <p class="results-message" id="results-message"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num good" id="stat-correct">0</div>
+        <div class="stat-label">Bonnes réponses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-incorrect">0</div>
+        <div class="stat-label">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">25</div>
+        <div class="stat-label">Questions</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="next-btn" id="restart-btn" type="button">
+        <span>🔄 Recommencer le quiz</span>
+      </button>
+      <button class="btn-secondary" id="toggle-review-btn" type="button">
+        <span>📋 Voir le corrigé complet</span>
+      </button>
+    </div>
+
+    <div class="review-container" id="review-container">
+      <div class="review-header">Détail des questions et explications</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  {
+    "number": 1,
+    "category": "Fondements de l'Héritage",
+    "question": "Quel principe conceptuel fondamental doit impérativement être vérifié avant d'établir une relation d'héritage entre deux classes métier ?",
+    "hint": "Pensez au test d'appartenance sémantique (« est-un » vs « a-un »).",
+    "options": [
+      {"label": "A", "text": "La relation « a-un » (composition) : la classe fille doit contenir une instance de la classe mère.", "isCorrect": false},
+      {"label": "B", "text": "La relation taxonomique « est-un » (is-a) : toute instance de la classe dérivée doit être un cas particulier valide de la classe mère.", "isCorrect": true},
+      {"label": "C", "text": "L'identité de structure : les deux classes doivent posséder exactement le même nombre de champs privés.", "isCorrect": false},
+      {"label": "D", "text": "La conformité d'interface : la classe mère doit obligatoirement être déclarée avec le mot-clé `interface`.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "L'héritage modélise une relation « est-un » (ex: un `CompteEpargne` est un `CompteBancaire`). Si la relation relève de la possession « a-un » (une `Voiture` a un `Moteur`), il faut impérativement privilégier la composition."
+  },
+  {
+    "number": 2,
+    "category": "Syntaxe & extends",
+    "question": "En TypeScript, quel mot-clé permet à une classe d'hériter de l'état et des comportements d'une classe parente ?",
+    "hint": "C'est le terme anglais standard signifiant 'étend'.",
+    "options": [
+      {"label": "A", "text": "`implements`", "isCorrect": false},
+      {"label": "B", "text": "`inherits`", "isCorrect": false},
+      {"label": "C", "text": "`extends`", "isCorrect": true},
+      {"label": "D", "text": "`derives`", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "Le mot-clé `extends` formalise la relation d'héritage entre classes. `implements` sert quant à lui à respecter un contrat d'interface sans hériter d'implémentation."
+  },
+  {
+    "number": 3,
+    "category": "Constructeur Dérivé & super()",
+    "question": "Soit le code suivant :\n\n```ts\nclass Vehicule {\n  constructor(public marque: string) {}\n}\n\nclass Voiture extends Vehicule {\n  constructor(marque: string, public portes: number) {\n    this.portes = portes;\n    super(marque);\n  }\n}\n```\n\nQue va-t-il se produire lors de la compilation de ce code TypeScript ?",
+    "hint": "Portez une attention critique à l'ordre d'accès à `this` par rapport à l'appel de `super()`.",
+    "options": [
+      {"label": "A", "text": "Le code compile avec succès et génère l'objet sans aucune anomalie.", "isCorrect": false},
+      {"label": "B", "text": "Une erreur de compilation se produit car `super()` doit obligatoirement être appelé avant tout accès à `this`.", "isCorrect": true},
+      {"label": "C", "text": "Une erreur se produit car une sous-classe ne peut pas ajouter de propriétés dans son constructeur.", "isCorrect": false},
+      {"label": "D", "text": "Le compilateur inverse silencieusement les deux lignes pour sécuriser la mémoire.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "En TypeScript (et JavaScript moderne), dans le constructeur d'une classe dérivée, l'appel à `super()` initialise l'instance parente. Il doit strictement précéder tout accès ou assignation utilisant `this`."
+  },
+  {
+    "number": 4,
+    "category": "Contrôle d'Accès (protected)",
+    "question": "Quelle est la différence essentielle entre le modificateur de visibilité `private` et le modificateur `protected` ?",
+    "hint": "Considérez l'accessibilité accordée aux membres de la famille (classes dérivées).",
+    "options": [
+      {"label": "A", "text": "`protected` rend le membre accessible partout dans l'application sans instanciation.", "isCorrect": false},
+      {"label": "B", "text": "`private` autorise l'accès aux classes dérivées, tandis que `protected` l'interdit formellement.", "isCorrect": false},
+      {"label": "C", "text": "`protected` autorise l'accès au sein de la classe et de toutes ses classes dérivées, tout en restant hermétique à l'extérieur.", "isCorrect": true},
+      {"label": "D", "text": "`protected` est un alias de `public` réservé aux attributs en lecture seule (`readonly`).", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "Un membre `private` est rigoureusement inaccessible en dehors du corps textuel de sa propre classe. `protected` étend cet accès aux sous-classes héritières tout en protégeant la donnée du reste du monde."
+  },
+  {
+    "number": 5,
+    "category": "Redéfinition Sécurisée (override)",
+    "question": "Quel est le bénéfice majeur du mot-clé `override` (associé à la règle TypeScript `noImplicitOverride`) lors de la redéfinition d'une méthode ?",
+    "hint": "Pensez aux conséquences d'une faute de frappe ou d'un renommage dans la classe parente.",
+    "options": [
+      {"label": "A", "text": "Forcer le Garbage Collector à supprimer la méthode parente du tas.", "isCorrect": false},
+      {"label": "B", "text": "Garantir au compilateur qu'une méthode de même signature existe bien chez le parent, évitant les erreurs silencieuses.", "isCorrect": true},
+      {"label": "C", "text": "Empêcher toute future sous-classe d'écraser à nouveau cette méthode.", "isCorrect": false},
+      {"label": "D", "text": "Rendre l'exécution de la méthode obligatoirement asynchrone.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Le mot-clé `override` documente l'intention contractuelle de redéfinir une méthode. Si la méthode parente est renommée ou supprimée ultérieurement, le compilateur TypeScript lève immédiatement une erreur salvatrice."
+  },
+  {
+    "number": 6,
+    "category": "Délégation & super.methode()",
+    "question": "Lorsqu'une classe fille redéfinit une méthode, comment peut-elle invoquer l'implémentation originelle de sa classe parente pour enrichir son comportement ?",
+    "hint": "Faites appel à la référence vers l'étage hiérarchique supérieur.",
+    "options": [
+      {"label": "A", "text": "`parent.methode()`", "isCorrect": false},
+      {"label": "B", "text": "`super.methode()`", "isCorrect": true},
+      {"label": "C", "text": "`this.base.methode()`", "isCorrect": false},
+      {"label": "D", "text": "`super()::methode()`", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "`super.methode()` permet d'exécuter la logique éprouvée de la classe de base, évitant ainsi les duplications de code lors d'une spécialisation."
+  },
+  {
+    "number": 7,
+    "category": "Polymorphisme de Sous-Typage",
+    "question": "Soit la hiérarchie : `class CompteEpargne extends CompteBancaire`. Pourquoi la déclaration `const c: CompteBancaire = new CompteEpargne('BE01', 500, 0.02);` est-elle valide ?",
+    "hint": "C'est l'essence du principe de substitution : le type général accueille tout sous-type particulier.",
+    "options": [
+      {"label": "A", "text": "Parce que TypeScript transforme dynamiquement le compte épargne en type primitif.", "isCorrect": false},
+      {"label": "B", "text": "Parce qu'une instance de classe dérivée « est-un » représentant valide du type parent (sous-typage polymorphique).", "isCorrect": true},
+      {"label": "C", "text": "Parce que TypeScript désactive la vérification des types dès que l'opérateur 'new' est invoqué.", "isCorrect": false},
+      {"label": "D", "text": "Parce que `CompteBancaire` hérite automatiquement des attributs spécifiques de `CompteEpargne`.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Grâce au polymorphisme de sous-typage, une variable typée avec une classe de base peut manipuler n'importe quelle instance dérivée, garantissant une flexibilité d'architecture remarquable."
+  },
+  {
+    "number": 8,
+    "category": "Pièges & Fragile Base Class",
+    "question": "Qu'appelle-t-on le problème de la « classe de base fragile » (Fragile Base Class Problem) ?",
+    "hint": "Imaginez qu'une retouche anodine à la racine d'un arbre fasse tomber toutes ses branches.",
+    "options": [
+      {"label": "A", "text": "Une fuite de mémoire provoquée par un constructeur comportant plus de 5 paramètres.", "isCorrect": false},
+      {"label": "B", "text": "Le fait qu'une modification apparemment inoffensive dans la classe de base puisse altérer ou casser le fonctionnement des classes dérivées.", "isCorrect": true},
+      {"label": "C", "text": "L'impossibilité de compiler une classe parente possédant des méthodes privées.", "isCorrect": false},
+      {"label": "D", "text": "Une erreur survenant lorsque deux classes filles portent le même nom de fichier.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Le couplage fort induit par l'héritage rend les classes filles tributaires des moindres détails d'implémentation de la classe mère. Une altération interne de la base peut corrompre silencieusement les invariants des dérivées."
+  },
+  {
+    "number": 9,
+    "category": "Opérateur instanceof",
+    "question": "Soit la chaîne `class Chien extends Animal`. Que retourne l'expression `rex instanceof Animal` si `rex` a été instancié via `new Chien('Rex')` ?",
+    "hint": "L'opérateur analyse l'ensemble de la chaîne prototypale de l'objet.",
+    "options": [
+      {"label": "A", "text": "`false`, car rex appartient strictement et exclusivement à la classe Chien.", "isCorrect": false},
+      {"label": "B", "text": "`true`, car la chaîne de prototypes de Chien remonte bien jusqu'à Animal.", "isCorrect": true},
+      {"label": "C", "text": "`undefined`, car cet opérateur ne s'applique qu'aux types primitifs.", "isCorrect": false},
+      {"label": "D", "text": "Une exception 'TypeError' car Animal n'est pas une classe abstraite.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "`instanceof` remonte la chaîne de prototypes (`__proto__`). Comme `Chien.prototype` hérite de `Animal.prototype`, le résultat est indéniablement `true`."
+  },
+  {
+    "number": 10,
+    "category": "Anti-Patterns d'Héritage",
+    "question": "Qu'est-ce que « l'héritage par commodité » (convenience inheritance), considéré comme un anti-pattern ?",
+    "hint": "Pensez au fait d'hériter uniquement pour 'voler' du code existant sans lien logique métier.",
+    "options": [
+      {"label": "A", "text": "Hériter d'une classe uniquement pour en récupérer quelques méthodes pratiques, sans relation sémantique « est-un » légitime.", "isCorrect": true},
+      {"label": "B", "text": "Déclarer toutes les méthodes d'une sous-classe avec le mot-clé 'static'.", "isCorrect": false},
+      {"label": "C", "text": "Initialiser une classe fille sans aucun paramètre dans son constructeur.", "isCorrect": false},
+      {"label": "D", "text": "Utiliser des getters à la place d'attributs publics dans une classe de base.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "Hériter par simple opportunité (ex: faire hériter `Pile` de `Array` ou `Avion` de `Oiseau`) pollue l'objet de méthodes parasites inappropriées, détruit le modèle métier et viole le principe de substitution."
+  },
+  {
+    "number": 11,
+    "category": "Modélisation Métier Bancaire",
+    "question": "Dans une hiérarchie bancaire avec `CompteBancaire` et `CompteEpargne`, pourquoi la méthode `calculerInterets()` doit-elle appartenir à `CompteEpargne` et non à `CompteBancaire` ?",
+    "hint": "Pensez aux caractéristiques universelles d'un compte par rapport aux spécificités d'un produit d'épargne.",
+    "options": [
+      {"label": "A", "text": "Parce que TypeScript interdit d'effectuer des calculs mathématiques dans une classe mère.", "isCorrect": false},
+      {"label": "B", "text": "Parce que les intérêts sont une spécificité métier propre à l'épargne qui n'a aucun sens pour un compte courant classique.", "isCorrect": true},
+      {"label": "C", "text": "Pour empêcher le solde d'être manipulé via des getters/setters.", "isCorrect": false},
+      {"label": "D", "text": "Parce que la classe parente ne doit contenir que des variables d'environnement.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "La classe de base doit rassembler uniquement les invariants et opérations communes à tous les comptes (`solde`, `deposer`, `retirer`). Tout comportement particulier doit être logé dans sa sous-classe respective."
+  },
+  {
+    "number": 12,
+    "category": "Constructeur Implicite",
+    "question": "Si une classe fille n'écrit aucun `constructor` explicite dans son corps, quel est le comportement par défaut de TypeScript ?",
+    "hint": "Comment les paramètres transmis à l'instanciation parviennent-ils à la classe mère ?",
+    "options": [
+      {"label": "A", "text": "Le compilateur signale une erreur fatale imposant la présence d'un constructeur.", "isCorrect": false},
+      {"label": "B", "text": "Un constructeur par défaut est généré automatiquement, propageant tous les arguments à `super()`.", "isCorrect": true},
+      {"label": "C", "text": "L'objet est initialisé sans jamais appeler le constructeur de la classe parente.", "isCorrect": false},
+      {"label": "D", "text": "Toutes les propriétés de l'instance parente sont initialisées avec la valeur 'null'.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "TypeScript synthétise automatiquement un constructeur par défaut équivalent à `constructor(...args: any[]) { super(...args); }`, assurant ainsi l'initialisation transparente de la classe de base."
+  },
+  {
+    "number": 13,
+    "category": "Syntaxe & Parameter Properties",
+    "question": "Soit le code suivant :\n\n```ts\nclass Personnage {\n  constructor(protected nom: string, protected pv: number) {}\n}\n\nclass Guerrier extends Personnage {\n  constructor(nom: string, pv: number, public armure: number) {\n    super(nom, pv);\n  }\n}\n```\n\nPourquoi `nom` et `pv` ne portent-ils pas de modificateur d'accès (`public` ou `protected`) dans `Guerrier` ?",
+    "hint": "Réfléchissez à qui a la responsabilité de déclarer ces champs d'instance.",
+    "options": [
+      {"label": "A", "text": "C'est un oubli syntaxique qui provoquera une erreur à l'exécution.", "isCorrect": false},
+      {"label": "B", "text": "Pour ne pas redéclarer inutilement des propriétés d'instance déjà créées et gérées par `Personnage`.", "isCorrect": true},
+      {"label": "C", "text": "Parce que TypeScript interdit l'usage de modificateurs d'accès dans les classes filles.", "isCorrect": false},
+      {"label": "D", "text": "Pour transformer `nom` et `pv` en propriétés statiques temporaires.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Ajouter un modificateur d'accès comme `protected` devant `nom` créerait un masquage de propriété (shadowing). En restant de simples paramètres, ils servent uniquement à alimenter le constructeur parent via `super(nom, pv)`."
+  },
+  {
+    "number": 14,
+    "category": "Héritage Simple vs Multiple",
+    "question": "En TypeScript, une classe peut-elle hériter directement de deux classes mères différentes via la syntaxe `class C extends A, B` ?",
+    "hint": "Songez au fameux 'problème du diamant' et aux limitations structurelles du JavaScript.",
+    "options": [
+      {"label": "A", "text": "Oui, TypeScript supporte nativement l'héritage multiple de classes complètes.", "isCorrect": false},
+      {"label": "B", "text": "Non, TypeScript n'autorise que l'héritage simple de classes (une seule mère), mais autorise l'implémentation de multiples interfaces.", "isCorrect": true},
+      {"label": "C", "text": "Oui, à condition que les classes A et B ne partagent aucune méthode de même nom.", "isCorrect": false},
+      {"label": "D", "text": "Oui, mais uniquement dans les modules déclarés avec l'extension '.d.ts'.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "TypeScript et JavaScript imposent l'héritage simple pour les classes afin d'éviter les ambiguïtés structurelles (diamant de l'héritage). En revanche, une classe peut implémenter un nombre illimité d'interfaces (`implements I1, I2`)."
+  },
+  {
+    "number": 15,
+    "category": "Invariants & Principe de Substitution",
+    "question": "Lorsqu'une classe fille redéfinit une méthode de sa classe mère, comment doit-elle se comporter vis-à-vis des invariants du parent ?",
+    "hint": "Considérez les attentes d'un client externe qui consomme l'objet via son type parent.",
+    "options": [
+      {"label": "A", "text": "Elle peut librement enfreindre ou assouplir les invariants du parent pour simplifier son code.", "isCorrect": false},
+      {"label": "B", "text": "Elle doit impérativement respecter l'ensemble des invariants de la classe de base, tout en pouvant ajouter des règles plus strictes.", "isCorrect": true},
+      {"label": "C", "text": "Elle doit désactiver les validations de la classe mère pour optimiser les performances de calcul.", "isCorrect": false},
+      {"label": "D", "text": "Les invariants sont automatiquement ignorés dès lors qu'on utilise le mot-clé `override`.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Selon le principe de substitution de Liskov (LSP), une sous-classe doit honorer tous les engagements et invariants de sa classe parente pour pouvoir s'y substituer sans créer d'effets de bord imprévus."
+  },
+  {
+    "number": 16,
+    "category": "Masquage de Propriétés (Shadowing)",
+    "question": "Quel risque encourt un développeur lorsqu'une classe fille redéclare un champ avec le même nom qu'un champ public de sa classe mère ?",
+    "hint": "Considérez les conflits de valeur et les écrasements dans l'instance unique du tas.",
+    "options": [
+      {"label": "A", "text": "Le compilateur fusionne les deux valeurs dans un tuple immuable.", "isCorrect": false},
+      {"label": "B", "text": "Le masquage (shadowing) peut écraser ou désynchroniser la propriété, menant à des bugs d'exécution subtils.", "isCorrect": true},
+      {"label": "C", "text": "La mémoire de la pile sature immédiatement avec une erreur 'Stack Overflow'.", "isCorrect": false},
+      {"label": "D", "text": "Le champ de la classe mère est automatiquement converti en constante privée.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Le shadowing (masquage de propriété) crée des ambiguïtés critiques sur la source de vérité de l'attribut. C'est un anti-pattern à proscrire au profit d'une spécialisation propre des méthodes."
+  },
+  {
+    "number": 17,
+    "category": "Encapsulation & Visibilité",
+    "question": "Pourquoi est-il déconseillé de remplacer aveuglément tous les membres `private` d'une classe mère par `protected` ?",
+    "hint": "Que devient l'encapsulation si n'importe quelle classe dérivée peut modifier les entrailles du parent sans passer par ses contrôles ?",
+    "options": [
+      {"label": "A", "text": "Parce que le modificateur `protected` ralentit considérablement la compilation TypeScript.", "isCorrect": false},
+      {"label": "B", "text": "Parce que cela brise l'encapsulation stricte, permettant aux sous-classes de court-circuiter les validations et de corrompre l'état interne.", "isCorrect": true},
+      {"label": "C", "text": "Parce que TypeScript convertit automatiquement les champs protected en variables globales.", "isCorrect": false},
+      {"label": "D", "text": "Parce que les méthodes asynchrones ne peuvent pas interagir avec des attributs protected.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Ouvrir les données en `protected` permet aux sous-classes de muter les variables internes (ex: modifier directement le solde sans passer par `deposer()` ou `retirer()`), risquant ainsi de rompre les invariants de la classe de base."
+  },
+  {
+    "number": 18,
+    "category": "Modélisation Bancaire Spécialisée",
+    "question": "Soit `CompteCourant` héritant de `CompteBancaire`. Ce compte autorise un découvert maximal de 500 €. Où et comment cette logique de découvert doit-elle être intégrée ?",
+    "hint": "Quelle méthode est en charge d'interdire ou d'autoriser la sortie de fonds ?",
+    "options": [
+      {"label": "A", "text": "Dans le constructeur de `CompteBancaire` en ajoutant une condition sur le nom du titulaire.", "isCorrect": false},
+      {"label": "B", "text": "Dans la redéfinition avec `override` de la méthode `retirer(montant: number)` au sein de `CompteCourant`.", "isCorrect": true},
+      {"label": "C", "text": "Dans une fonction globale exportée à l'extérieur des classes.", "isCorrect": false},
+      {"label": "D", "text": "Dans un getter statique `get decouvertMax()` non rattaché aux instances.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Redéfinir `retirer()` permet à `CompteCourant` de personnaliser la validation (ex: `if (montant > this._solde + this._decouvertAutorise) throw new Error(...)`) tout en conservant le reste des fonctionnalités héritées."
+  },
+  {
+    "number": 19,
+    "category": "Architecture & Modèles Purs",
+    "question": "Dans une application Web moderne (comme un projet Angular ou une API Node.js), quel est l'intérêt d'isoler des modèles métier purs avec héritage indépendamment des frameworks ?",
+    "hint": "Songez à la facilité de tester des règles de gestion sans avoir besoin de simuler un navigateur ou des composants visuels.",
+    "options": [
+      {"label": "A", "text": "Garantir une logique métier 100% testable unitairement, réutilisable et découplée des détails d'affichage du framework.", "isCorrect": true},
+      {"label": "B", "text": "Permettre au compilateur de désactiver le Garbage Collector pour aller plus vite.", "isCorrect": false},
+      {"label": "C", "text": "Forcer les templates HTML à compiler en ligne de commande.", "isCorrect": false},
+      {"label": "D", "text": "Supprimer définitivement l'usage de TypeScript dans le frontend.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "Les modèles du domaine (Domain Models) encapsulent les invariants et les comportements métier. En restant 'purs' (sans dépendance vers Angular, React ou le DOM), ils sont testables en quelques millisecondes et pérennes."
+  },
+  {
+    "number": 20,
+    "category": "Contrat de Constructeur",
+    "question": "Que se produit-il si la classe parente impose deux arguments obligatoires dans son constructeur et que la classe dérivée omet de les lui transmettre dans son appel `super()` ?",
+    "hint": "TypeScript inspecte minutieusement les contrats de signatures de fonctions.",
+    "options": [
+      {"label": "A", "text": "TypeScript complète les paramètres manquants avec la valeur 0.", "isCorrect": false},
+      {"label": "B", "text": "Le compilateur TypeScript lève une erreur exigeant le respect strict des arguments attendus par `super()`.", "isCorrect": true},
+      {"label": "C", "text": "La classe fille s'exécute normalement en initialisant les variables parentes à `undefined`.", "isCorrect": false},
+      {"label": "D", "text": "Le constructeur de la classe mère est purement et simplement ignoré.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "L'appel `super(...)` est soumis aux règles de typage rigoureuses de TypeScript : les arguments doivent correspondre en nombre et en types à la signature du constructeur parent."
+  },
+  {
+    "number": 21,
+    "category": "Redéfinition vs Surcharge",
+    "question": "Quelle distinction fondamentale sépare la redéfinition de méthode (method overriding) de la surcharge de méthode (method overloading) ?",
+    "hint": "L'un remplace l'implémentation chez l'enfant, l'autre offre plusieurs signatures au sein d'une même portée.",
+    "options": [
+      {"label": "A", "text": "Ce sont deux synonymes parfaits désignant le même concept.", "isCorrect": false},
+      {"label": "B", "text": "L'overriding remplace le comportement d'une méthode parente dans une sous-classe, tandis que l'overloading propose plusieurs signatures d'une même méthode.", "isCorrect": true},
+      {"label": "C", "text": "L'overriding ne fonctionne qu'avec les types primitifs, l'overloading avec les objets.", "isCorrect": false},
+      {"label": "D", "text": "L'overriding est interdit en TypeScript, seul l'overloading est autorisé.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "L'overriding (redéfinition) adapte une méthode héritée dans une classe fille. L'overloading (surcharge) documente différentes manières d'appeler une même méthode en faisant varier le type ou le nombre d'arguments."
+  },
+  {
+    "number": 22,
+    "category": "Couplage Fort en POO",
+    "question": "Pourquoi qualifie-t-on l'héritage de « couplage fort » (tight coupling) en génie logiciel ?",
+    "hint": "Considérez le degré d'intimité entre la classe fille et le fonctionnement interne de sa mère.",
+    "options": [
+      {"label": "A", "text": "Parce que la classe dérivée dépend intimement des choix structurels, invariants et noms internes de sa classe parente.", "isCorrect": true},
+      {"label": "B", "text": "Parce qu'il est physiquement impossible d'instancier une classe dérivée plus d'une fois.", "isCorrect": false},
+      {"label": "C", "text": "Parce que les classes dérivées sont obligatoirement stockées dans la pile plutôt que dans le tas.", "isCorrect": false},
+      {"label": "D", "text": "Parce que deux classes liées par héritage doivent impérativement être compilées dans des fichiers distincts.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "L'héritage forme une liaison en 'boîte blanche' : la sous-classe est sensible à la moindre réorganisation interne du parent, ce qui limite l'évolutivité si la hiérarchie devient trop profonde."
+  },
+  {
+    "number": 23,
+    "category": "Vocabulaire & Taxonomie POO",
+    "question": "Dans la déclaration `class Chat extends Felin`, quelle terminologie décrit fidèlement le rôle respectif de `Felin` et de `Chat` ?",
+    "hint": "Songez aux appellations usuelles : mère/fille, base/dérivée, superclasse/sous-classe.",
+    "options": [
+      {"label": "A", "text": "`Felin` est la sous-classe (fille), et `Chat` est la superclasse (mère).", "isCorrect": false},
+      {"label": "B", "text": "`Felin` est la superclasse (classe mère ou de base), et `Chat` est la sous-classe (classe fille ou dérivée).", "isCorrect": true},
+      {"label": "C", "text": "`Felin` est une interface concrète, et `Chat` est un module statique.", "isCorrect": false},
+      {"label": "D", "text": "`Felin` est une fabrique d'objets, et `Chat` est un singleton immuable.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "La classe étendue (`Felin`) est la superclasse, classe mère ou classe de base. La classe qui hérite (`Chat`) est désignée sous les termes de sous-classe, classe fille ou classe dérivée."
+  }
+];
+
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+let userAnswers = [];
+
+// Formate le code inline, les guillemets et les blocs de code ```ts
+function formatCode(text) {
+  if (!text) return '';
+  
+  // 1. Blocs de code multi-lignes ```ts ... ```
+  let formatted = text.replace(/```(?:ts|typescript|js)?\n([\s\S]*?)```/g, '<pre class="code-box"><code>$1</code></pre>');
+  
+  // 2. Code inline entre backticks `...`
+  formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-term">$1</span>');
+  
+  // 3. Mots-clés isolés entre quotes '...', sans capturer les apostrophes françaises
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])'([a-zA-Z0-9_\-\.\/@\(\)=]+)'/g, '<span class="code-term">$1</span>');
+  
+  const parts = formatted.split(/(<pre[\s\S]*?<\/pre>)/g);
+  return parts.map(part => {
+    if (part.startsWith('<pre')) return part;
+    return part.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  }).join('');
+}
+
+// Initialisation
+function init() {
+  setupTheme();
+  setupKeyboard();
+  renderQuestion(0);
+  
+  document.getElementById('next-btn').addEventListener('click', handleNext);
+  document.getElementById('restart-btn').addEventListener('click', handleRestart);
+  document.getElementById('toggle-review-btn').addEventListener('click', handleToggleReview);
+  document.getElementById('hint-toggle-btn').addEventListener('click', toggleHint);
+}
+
+// Gestion du Thème Clair / Sombre
+function setupTheme() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const text = document.getElementById('theme-text');
+  
+  const saved = localStorage.getItem('poo_quiz_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+  
+  toggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('poo_quiz_theme', next);
+    updateThemeUI(next);
+  });
+  
+  function updateThemeUI(t) {
+    if (t === 'dark') {
+      icon.textContent = '☀️';
+      text.textContent = 'Mode clair';
+    } else {
+      icon.textContent = '🌙';
+      text.textContent = 'Mode sombre';
+    }
+  }
+}
+
+// Rendu d'une question
+function renderQuestion(index) {
+  answered = false;
+  const q = quizData[index];
+  
+  // Barre de progression
+  const progressPct = ((index) / quizData.length) * 100;
+  document.getElementById('progress-fill').style.width = progressPct + '%';
+  document.getElementById('progress-q-label').textContent = `Question ${index + 1} sur ${quizData.length}`;
+  document.getElementById('progress-score-pill').textContent = index > 0 
+    ? `Score : ${correctCount}/${index} (${Math.round((correctCount / index) * 100)}%)` 
+    : `Score : 0/0`;
+
+  // Métadonnées
+  document.getElementById('q-index-badge').textContent = `Question ${index < 9 ? '0' + (index + 1) : index + 1}`;
+  document.getElementById('q-category-tag').textContent = q.category || 'Héritage POO';
+  document.getElementById('q-counter').textContent = `${index + 1} / ${quizData.length}`;
+
+  // Texte de la question
+  document.getElementById('q-text').innerHTML = formatCode(q.question);
+
+  // Indice
+  const hintBody = document.getElementById('hint-body');
+  hintBody.innerHTML = formatCode(q.hint);
+  hintBody.classList.remove('open');
+  document.getElementById('hint-btn-label').textContent = "Afficher un indice";
+
+  // Carte de feedback & Bouton suivant
+  const fcard = document.getElementById('feedback-card');
+  fcard.style.display = 'none';
+  fcard.className = 'feedback-card';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'none';
+  if (index === quizData.length - 1) {
+    document.getElementById('next-btn-text').textContent = "Voir mes résultats 🎉";
+  } else {
+    document.getElementById('next-btn-text').textContent = "Question suivante";
+  }
+
+  // Options de réponse
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, optIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.type = 'button';
+    btn.dataset.idx = optIdx;
+    btn.innerHTML = `
+      <span class="opt-key-circle">${opt.label}</span>
+      <span class="opt-content">${formatCode(opt.text)}</span>
+      <span class="opt-status-icon"></span>
+    `;
+
+    btn.addEventListener('click', () => selectOption(optIdx));
+    grid.appendChild(btn);
+  });
+}
+
+// Traitement du choix d'une option
+function selectOption(selectedIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizData[currentQ];
+  const selectedOpt = q.options[selectedIdx];
+  const isCorrect = selectedOpt.isCorrect;
+  userAnswers[currentQ] = selectedIdx;
+
+  if (isCorrect) {
+    correctCount++;
+  }
+
+  const optionBtns = document.querySelectorAll('.option-btn');
+  optionBtns.forEach(btn => btn.disabled = true);
+
+  const selectedBtn = optionBtns[selectedIdx];
+  const selectedStatus = selectedBtn.querySelector('.opt-status-icon');
+  
+  if (isCorrect) {
+    selectedBtn.classList.add('selected-correct');
+    selectedStatus.textContent = '✓';
+  } else {
+    selectedBtn.classList.add('selected-incorrect');
+    selectedStatus.textContent = '✕';
+
+    const correctIdx = q.options.findIndex(o => o.isCorrect);
+    if (correctIdx !== -1) {
+      const correctBtn = optionBtns[correctIdx];
+      correctBtn.classList.add('revealed-correct');
+      const correctStatus = correctBtn.querySelector('.opt-status-icon');
+      correctStatus.textContent = '✓';
+    }
+  }
+
+  // Atténuer les options non retenues
+  optionBtns.forEach(btn => {
+    if (!btn.classList.contains('selected-correct') && 
+        !btn.classList.contains('selected-incorrect') && 
+        !btn.classList.contains('revealed-correct')) {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  // Affichage du feedback pédagogique
+  const fcard = document.getElementById('feedback-card');
+  const fheader = document.getElementById('feedback-header');
+  const fbody = document.getElementById('feedback-body');
+
+  fcard.style.display = 'block';
+
+  if (isCorrect) {
+    fcard.className = 'feedback-card correct';
+    fheader.innerHTML = '<span>✓</span> <span>Excellente réponse !</span>';
+    fbody.innerHTML = `<strong>Justification :</strong> ${formatCode(q.rationale)}`;
+  } else {
+    fcard.className = 'feedback-card incorrect';
+    fheader.innerHTML = `<span>✕</span> <span>Ce n'est pas tout à fait ça. La bonne réponse est l'option ${q.answer}.</span>`;
+    fbody.innerHTML = `<strong>Explication :</strong> ${formatCode(q.rationale)}`;
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'flex';
+  nextBtn.focus();
+}
+
+// Bascule d'affichage de l'indice
+function toggleHint() {
+  const hintBody = document.getElementById('hint-body');
+  const label = document.getElementById('hint-btn-label');
+  hintBody.classList.toggle('open');
+  if (hintBody.classList.contains('open')) {
+    label.textContent = "Masquer l'indice";
+  } else {
+    label.textContent = "Afficher un indice";
+  }
+}
+
+// Passer à la question suivante ou afficher la fin
+function handleNext() {
+  currentQ++;
+  if (currentQ < quizData.length) {
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+// Affichage de l'écran des résultats
+function showResults() {
+  document.getElementById('question-card').style.display = 'none';
+  document.getElementById('progress-container').style.display = 'none';
+  document.getElementById('results-card').style.display = 'block';
+
+  const total = quizData.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  const stroke = document.getElementById('circle-score-stroke');
+  stroke.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+  document.getElementById('score-percent-text').textContent = `${pct}%`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-incorrect').textContent = total - correctCount;
+  document.getElementById('stat-total').textContent = total;
+
+  const msgEl = document.getElementById('results-message');
+  const iconEl = document.getElementById('results-icon');
+
+  if (pct >= 90) {
+    iconEl.textContent = '🏆';
+    msgEl.innerHTML = `<strong>Excellente maîtrise !</strong> Vous maîtrisez parfaitement les fondements de l'héritage, le chaînage de constructeurs via <code>super()</code>, la visibilité <code>protected</code>, la redéfinition avec <code>override</code> et les arbitrages face à la composition.`;
+    launchConfetti();
+  } else if (pct >= 75) {
+    iconEl.textContent = '🚀';
+    msgEl.innerHTML = `<strong>Très bon travail !</strong> Les concepts de spécialisation, de sous-typage polymorphique et les pièges du couplage fort sont bien assimilés. Une consultation du corrigé vous permettra de viser le score parfait !`;
+    launchConfetti();
+  } else if (pct >= 50) {
+    iconEl.textContent = '👍';
+    msgEl.innerHTML = `<strong>Bases en place !</strong> La syntaxe <code>extends</code> et la relation « est-un » sont comprises, mais veillez à bien consolider les subtilités de <code>super()</code>, la visibilité <code>protected</code> et le problème de la classe de base fragile.`;
+  } else {
+    iconEl.textContent = '📚';
+    msgEl.innerHTML = `<strong>En apprentissage !</strong> Prenez le temps de revoir les diapositives sur la hiérarchie de classes, la protection des invariants et la composition avant de retenter l'évaluation !`;
+  }
+}
+
+// Déplier / masquer le corrigé complet
+function handleToggleReview() {
+  const container = document.getElementById('review-container');
+  const btn = document.getElementById('toggle-review-btn');
+  const list = document.getElementById('review-list');
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    btn.innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  } else {
+    container.style.display = 'block';
+    btn.innerHTML = '<span>Masquer le corrigé ▴</span>';
+
+    list.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const userIdx = userAnswers[qIdx];
+      const isGood = userIdx !== undefined && q.options[userIdx].isCorrect;
+
+      const card = document.createElement('div');
+      card.className = 'review-item';
+
+      const header = document.createElement('div');
+      header.className = 'review-item-header';
+      header.innerHTML = `
+        <div class="review-item-title">
+          <span>${isGood ? '✅' : '❌'}</span>
+          <span><strong>Q${qIdx + 1}.</strong> ${q.question.replace(/```[\s\S]*?```/g, '[Code]').substring(0, 75)}...</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);">Détails ▾</span>
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'review-item-body';
+
+      let optionsHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
+      q.options.forEach((opt, oIdx) => {
+        const wasUser = oIdx === userIdx;
+        const wasCorrect = opt.isCorrect;
+        let borderCol = 'var(--opt-border)';
+        let bgCol = 'transparent';
+        let badge = '';
+
+        if (wasCorrect) {
+          borderCol = '#10b981';
+          bgCol = 'rgba(16, 185, 129, 0.08)';
+          badge = ' <strong style="color: #10b981;">(Bonne réponse)</strong>';
+        }
+        if (wasUser && !wasCorrect) {
+          borderCol = '#ef4444';
+          bgCol = 'rgba(239, 68, 68, 0.08)';
+          badge = ' <strong style="color: #ef4444;">(Votre choix)</strong>';
+        }
+
+        optionsHtml += `
+          <div style="padding: 10px 14px; border: 1px solid ${borderCol}; background: ${bgCol}; border-radius: 8px; font-size: 13.5px;">
+            <div><strong>${opt.label}.</strong> ${formatCode(opt.text)}${badge}</div>
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+
+      body.innerHTML = `
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 8px;">${formatCode(q.question)}</div>
+        ${optionsHtml}
+        <div style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #6366f1; font-size: 13px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">Explication :</strong> ${formatCode(q.rationale)}
+        </div>
+      `;
+
+      header.addEventListener('click', () => {
+        body.classList.toggle('open');
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+  }
+}
+
+// Réinitialiser le quiz
+function handleRestart() {
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+  userAnswers = [];
+
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('review-container').style.display = 'none';
+  document.getElementById('toggle-review-btn').innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  document.getElementById('progress-container').style.display = 'block';
+  document.getElementById('question-card').style.display = 'block';
+
+  renderQuestion(0);
+}
+
+// Configuration des Raccourcis Clavier
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+
+    if (document.getElementById('results-card').style.display === 'block') {
+      if (e.key === 'Enter') handleRestart();
+      return;
+    }
+
+    if (answered) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      return;
+    }
+
+    const q = quizData[currentQ];
+    if (!q) return;
+
+    let targetIdx = -1;
+    if (key === 'A' || key === '1') targetIdx = 0;
+    else if (key === 'B' || key === '2') targetIdx = 1;
+    else if (key === 'C' || key === '3') targetIdx = 2;
+    else if (key === 'D' || key === '4') targetIdx = 3;
+
+    if (targetIdx >= 0 && targetIdx < q.options.length) {
+      e.preventDefault();
+      selectOption(targetIdx);
+    }
+
+    if (key === 'H' || key === 'I') {
+      e.preventDefault();
+      toggleHint();
+    }
+  });
+}
+
+// Animation Confettis
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#3178c6', '#6366f1', '#7c3aed', '#10b981', '#fbbf24', '#38bdf8'];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.015 + 0.008
+    });
+  }
+
+  let animId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25;
+      p.alpha -= p.decay;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  loop();
+}
+
+// Lancement
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+{
+  "hash": "661e3cd4",
+  "configHash": "7e44c54c",
+  "lockfileHash": "966164e7",
+  "browserHash": "3c03806c",
+  "optimized": {
+    "@angular/core": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/@angular/core/fesm2022/core.mjs",
+      "file": "@angular_core.js",
+      "fileHash": "1398a03e",
+      "needsInterop": false
+    },
+    "@angular/forms": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/@angular/forms/fesm2022/forms.mjs",
+      "file": "@angular_forms.js",
+      "fileHash": "4f2653dc",
+      "needsInterop": false
+    },
+    "@angular/platform-browser": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
+      "file": "@angular_platform-browser.js",
+      "fileHash": "92173205",
+      "needsInterop": false
+    },
+    "@angular/router": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/@angular/router/fesm2022/router.mjs",
+      "file": "@angular_router.js",
+      "fileHash": "aed55078",
+      "needsInterop": false
+    },
+    "@monaco-editor/loader": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/@monaco-editor/loader/lib/es/index.js",
+      "file": "@monaco-editor_loader.js",
+      "fileHash": "4fa2eb4c",
+      "needsInterop": false
+    },
+    "canvas-confetti": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/canvas-confetti/dist/confetti.module.mjs",
+      "file": "canvas-confetti.js",
+      "fileHash": "8a6f68aa",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "common-IeXKqUHr": {
+      "file": "common-IeXKqUHr.js",
+      "isDynamicEntry": false
+    },
+    "core-DDDyHR5b": {
+      "file": "core-DDDyHR5b.js",
+      "isDynamicEntry": false
+    },
+    "createObject-C7ycJ6U4": {
+      "file": "createObject-C7ycJ6U4.js",
+      "isDynamicEntry": false
+    },
+    "platform-browser-MdZpDrcX": {
+      "file": "platform-browser-MdZpDrcX.js",
+      "isDynamicEntry": false
+    }
+  }
+}
