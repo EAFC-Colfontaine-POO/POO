@@ -1,0 +1,36 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('dry-problem') {
+          <app-dry-problem></app-dry-problem>
+        }
+        @case ('is-a-vs-has-a') {
+          <app-is-a-vs-has-a></app-is-a-vs-has-a>
+        }
+        @case ('constructor-super') {
+          <app-constructor-super></app-constructor-super>
+        }
+        @case ('protected-encapsulation') {
+          <app-protected-encapsulation></app-protected-encapsulation>
+        }
+        @case ('override-enrichment') {
+          <app-override-enrichment></app-override-enrichment>
+        }
+        @case ('fragile-base-class') {
+          <app-fragile-base-class></app-fragile-base-class>
+        }
+        @case ('angular-mediatheque') {
+          <app-angular-mediatheque></app-angular-mediatheque>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>
