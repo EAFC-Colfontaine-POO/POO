@@ -1,0 +1,48 @@
+{
+  "hash": "399b9d87",
+  "configHash": "e045db43",
+  "lockfileHash": "966164e7",
+  "browserHash": "55238d60",
+  "optimized": {
+    "@angular/core": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/@angular/core/fesm2022/core.mjs",
+      "file": "@angular_core.js",
+      "fileHash": "825716a3",
+      "needsInterop": false
+    },
+    "@angular/forms": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/@angular/forms/fesm2022/forms.mjs",
+      "file": "@angular_forms.js",
+      "fileHash": "fade314a",
+      "needsInterop": false
+    },
+    "@angular/platform-browser": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
+      "file": "@angular_platform-browser.js",
+      "fileHash": "6d07d6b6",
+      "needsInterop": false
+    },
+    "@monaco-editor/loader": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/@monaco-editor/loader/lib/es/index.js",
+      "file": "@monaco-editor_loader.js",
+      "fileHash": "134fa4f2",
+      "needsInterop": false
+    },
+    "canvas-confetti": {
+      "src": "../../../../../../../../../../Téléchargements/To_improve/angular-seance4/node_modules/canvas-confetti/dist/confetti.module.mjs",
+      "file": "canvas-confetti.js",
+      "fileHash": "b84d11aa",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "common-JOF5c7ir": {
+      "file": "common-JOF5c7ir.js",
+      "isDynamicEntry": false
+    },
+    "core-BMA5NlNA": {
+      "file": "core-BMA5NlNA.js",
+      "isDynamicEntry": false
+    }
+  }
+}
