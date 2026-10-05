@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz POO — Composition vs Héritage en TypeScript & Angular</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      --bg-page: #090d16;
+      --bg-ambient-1: rgba(99, 102, 241, 0.16);
+      --bg-ambient-2: rgba(168, 85, 247, 0.14);
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --brand-blue: #3178c6;
+      --brand-indigo: #6366f1;
+      --brand-purple: #8b5cf6;
+      --brand-gradient: linear-gradient(135deg, #3178c6 0%, #6366f1 50%, #8b5cf6 100%);
+      
+      --opt-bg: rgba(255, 255, 255, 0.03);
+      --opt-border: rgba(255, 255, 255, 0.08);
+      --opt-hover-bg: rgba(255, 255, 255, 0.06);
+      --opt-hover-border: rgba(99, 102, 241, 0.45);
+      
+      --correct-bg: rgba(16, 185, 129, 0.12);
+      --correct-border: #10b981;
+      --correct-text: #34d399;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: rgba(239, 68, 68, 0.12);
+      --incorrect-border: #ef4444;
+      --incorrect-text: #f87171;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: rgba(245, 158, 11, 0.08);
+      --hint-border: rgba(245, 158, 11, 0.25);
+      --hint-text: #fbbf24;
+      
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --code-border: rgba(255, 255, 255, 0.12);
+      --code-color: #38bdf8;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8fafc;
+      --bg-ambient-1: rgba(99, 102, 241, 0.08);
+      --bg-ambient-2: rgba(168, 85, 247, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --opt-bg: #ffffff;
+      --opt-border: #e2e8f0;
+      --opt-hover-bg: #f8fafc;
+      --opt-hover-border: #6366f1;
+      
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --correct-text: #065f46;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: #fef2f2;
+      --incorrect-border: #ef4444;
+      --incorrect-text: #991b1b;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: #fffbeb;
+      --hint-border: #fde68a;
+      --hint-text: #92400e;
+      
+      --code-bg: #f1f5f9;
+      --code-border: #cbd5e1;
+      --code-color: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image: 
+        radial-gradient(circle at 12% 10%, var(--bg-ambient-1) 0%, transparent 45%),
+        radial-gradient(circle at 88% 90%, var(--bg-ambient-2) 0%, transparent 45%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-main);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .keyboard-badge {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    @media (min-width: 640px) {
+      .keyboard-badge { display: inline-flex; align-items: center; gap: 6px; }
+    }
+
+    .header-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .course-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.12);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #818cf8;
+      box-shadow: 0 0 10px #818cf8;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .quiz-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto 16px;
+      font-weight: 500;
+    }
+
+    .tags-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-muted);
+    }
+
+    .progress-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-q-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-score-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .progress-track {
+      background: #e2e8f0;
+    }
+
+    .progress-bar-fill {
+      background: var(--brand-gradient);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .q-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-index-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+    }
+
+    .q-category-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .q-text {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text-main);
+      margin-bottom: 22px;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-color);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #38bdf8;
+      overflow-x: auto;
+      text-align: left;
+    }
+    [data-theme="light"] .code-box {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0369a1;
+    }
+
+    .hint-container {
+      margin-bottom: 22px;
+    }
+
+    .hint-btn {
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      color: var(--hint-text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hint-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .hint-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--hint-text);
+      line-height: 1.5;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .hint-body.open {
+      display: block;
+    }
+
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 18px;
+      border: 2px solid var(--opt-border);
+      background: var(--opt-bg);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      position: relative;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--opt-hover-border);
+      background: var(--opt-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .opt-key-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--opt-border);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .opt-content {
+      flex: 1;
+      padding-top: 4px;
+      line-height: 1.5;
+    }
+
+    .opt-status-icon {
+      font-size: 18px;
+      margin-left: 8px;
+      display: none;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    /* Option States */
+    .option-btn.selected-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .option-btn.selected-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.selected-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--incorrect-border) !important;
+      background: var(--incorrect-bg) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+    .option-btn.selected-incorrect .opt-key-circle {
+      background: var(--incorrect-badge-bg);
+      color: var(--incorrect-badge-text);
+    }
+    .option-btn.selected-incorrect .opt-status-icon {
+      display: inline-block;
+      color: var(--incorrect-text);
+    }
+
+    .option-btn.revealed-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      border-style: dashed;
+    }
+    .option-btn.revealed-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.revealed-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.dimmed {
+      opacity: 0.45;
+    }
+
+    .feedback-card {
+      display: none;
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .feedback-card.correct {
+      background: var(--correct-bg);
+      border-left: 4px solid var(--correct-border);
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+      border-right: 1px solid rgba(16, 185, 129, 0.2);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .feedback-card.incorrect {
+      background: var(--incorrect-bg);
+      border-left: 4px solid var(--incorrect-border);
+      border-top: 1px solid rgba(239, 68, 68, 0.2);
+      border-right: 1px solid rgba(239, 68, 68, 0.2);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .feedback-header {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .feedback-card.correct .feedback-header { color: var(--correct-text); }
+    .feedback-card.incorrect .feedback-header { color: var(--incorrect-text); }
+
+    .feedback-body {
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    [data-theme="light"] .feedback-body {
+      color: #334155;
+    }
+
+    /* Action bar */
+    .action-bar {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.55);
+    }
+
+    .results-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .results-trophy {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .results-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle-wrapper {
+      margin: 24px auto;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-percent-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .results-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .stat-num.good { color: #10b981; }
+    .stat-num.bad { color: #ef4444; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn-secondary {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--opt-hover-bg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Review View */
+    .review-container {
+      display: none;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .review-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-item {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .review-item-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .review-item-title {
+      font-weight: 600;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-item-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--card-border);
+    }
+    .review-item-body.open {
+      display: block;
+      padding-top: 14px;
+    }
+
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="quiz-container">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="keyboard-badge">
+      <span>⌨️ Raccourcis : [A-D] ou [1-4] · [Entrée] · [I]</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Basculer le thème">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-text">Mode clair</span>
+    </button>
+  </div>
+
+  <!-- Header Hero -->
+  <div class="header-hero">
+    <div class="course-badge">
+      <span class="badge-dot"></span>
+      Programmation Orientée Objet · EAFC Colfontaine
+    </div>
+    <h1 class="quiz-title">Séance 9 — Composition vs Héritage en TypeScript & Angular</h1>
+    <p class="quiz-subtitle">Délégation · Fragile Base Class · Explosion combinatoire · Injection de dépendances · Principes GoF</p>
+    <div class="tags-row">
+      <span class="tag-pill">TypeScript</span>
+      <span class="tag-pill">POO</span>
+      <span class="tag-pill">Composition</span>
+      <span class="tag-pill">Héritage</span>
+      <span class="tag-pill">Angular</span>
+      <span class="tag-pill">23 questions</span>
+    </div>
+
+    <!-- Progress section -->
+    <div class="progress-section" id="progress-container">
+      <div class="progress-header">
+        <span class="progress-q-label" id="progress-q-label">Question 1 sur 23</span>
+        <span class="progress-score-pill" id="progress-score-pill">Score : 0/0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Question Card -->
+  <div class="card" id="question-card">
+    <div class="q-meta-bar">
+      <span class="q-index-badge" id="q-index-badge">Question 01</span>
+      <span class="q-category-tag" id="q-category-tag">Explosion Combinatoire</span>
+      <span style="font-size: 12px; color: var(--text-dim);" id="q-counter">1 / 23</span>
+    </div>
+
+    <div class="q-text" id="q-text"></div>
+
+    <div class="hint-container">
+      <button class="hint-btn" id="hint-toggle-btn" type="button">
+        <span>💡</span>
+        <span id="hint-btn-label">Afficher un indice</span>
+      </button>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <!-- Feedback card -->
+    <div class="feedback-card" id="feedback-card">
+      <div class="feedback-header" id="feedback-header"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="next-btn" id="next-btn" style="display: none;">
+        <span id="next-btn-text">Question suivante</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div class="card results-card" id="results-card" style="display: none;">
+    <div class="results-trophy" id="results-icon">🏆</div>
+    <h2 class="results-title" id="results-title">Quiz terminé !</h2>
+    
+    <div class="score-circle-wrapper">
+      <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <path stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path id="circle-score-stroke" stroke="url(#scoreGrad)" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3178c6" />
+            <stop offset="50%" stop-color="#6366f1" />
+            <stop offset="100%" stop-color="#8b5cf6" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-percent-val" id="score-percent-text">0%</div>
+    </div>
+
+    <p class="results-message" id="results-message"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num good" id="stat-correct">0</div>
+        <div class="stat-label">Bonnes réponses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-incorrect">0</div>
+        <div class="stat-label">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">23</div>
+        <div class="stat-label">Questions</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="next-btn" id="restart-btn" type="button">
+        <span>🔄 Recommencer le quiz</span>
+      </button>
+      <button class="btn-secondary" id="toggle-review-btn" type="button">
+        <span>📋 Voir le corrigé complet</span>
+      </button>
+    </div>
+
+    <div class="review-container" id="review-container">
+      <div class="review-header">Détail des questions et explications</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  {
+    "number": 1,
+    "category": "Explosion Combinatoire",
+    "question": "Dans une application de modélisation de drones, vous devez combiner trois caractéristiques indépendantes : le type de propulsion (hélices ou turbines), le type de contrôle (manuel ou autonome) et la présence d'un module caméra (oui ou non). Pourquoi l'héritage est-il ici déconseillé ?",
+    "hint": "Calculez le nombre de classes nécessaires si vous ajoutez une nouvelle option à deux choix.",
+    "options": [
+      {"label": "A", "text": "Le compilateur TypeScript limite le nombre de niveaux d'héritage à deux pour les objets complexes.", "isCorrect": false},
+      {"label": "B", "text": "Il provoquerait une explosion combinatoire du nombre de sous-classes à maintenir (2³ = 8 classes).", "isCorrect": true},
+      {"label": "C", "text": "L'héritage ne permet pas de définir des propriétés optionnelles comme le module caméra.", "isCorrect": false},
+      {"label": "D", "text": "Les sous-classes ne pourraient pas accéder aux membres privés de la classe Drone de base.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "L'utilisation de l'héritage pour des caractéristiques orthogonales impose de créer une sous-classe pour chaque combinaison possible (2³ = 8 classes, et 16 pour 4 caractéristiques). La composition évite cette explosion en assemblant 3 petits modules indépendants."
+  },
+  {
+    "number": 2,
+    "category": "Couplage & Fragilité",
+    "question": "Que désigne le syndrome de la « classe de base fragile » (Fragile Base Class) en programmation orientée objet ?",
+    "hint": "Pensez aux conséquences d'un changement de logique interne dans un parent sur ses héritiers distants.",
+    "options": [
+      {"label": "A", "text": "L'impossibilité d'instancier une classe abstraite qui ne possède pas de constructeur public.", "isCorrect": false},
+      {"label": "B", "text": "Une erreur de compilation survenant lorsqu'une classe mère devient trop volumineuse pour être chargée en mémoire.", "isCorrect": false},
+      {"label": "C", "text": "Le fait qu'une modification mineure dans la classe mère puisse casser silencieusement le comportement des classes filles.", "isCorrect": true},
+      {"label": "D", "text": "La nécessité d'utiliser le mot-clé `override` systématiquement pour éviter la suppression de la classe mère.", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "L'héritage crée un couplage fort : les classes filles dépendent intimement de l'implémentation interne du parent. Un changement anodin dans une méthode mère peut violer des invariants et casser silencieusement des classes descendantes."
+  },
+  {
+    "number": 3,
+    "category": "Sémantique Objet",
+    "question": "Quelle relation sémantique est correctement associée à la composition ?",
+    "hint": "Distinguez l'identité (ce qu'un objet est) de l'assemblage (ce qu'il possède).",
+    "options": [
+      {"label": "A", "text": "La relation « A un » (Has-a).", "isCorrect": true},
+      {"label": "B", "text": "La relation « Est un » (Is-a).", "isCorrect": false},
+      {"label": "C", "text": "La relation « Fait partie de » (Is-part-of) uniquement statique.", "isCorrect": false},
+      {"label": "D", "text": "La relation « Agit comme » (Acts-as).", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "La composition consiste à assembler des objets pour former un tout, où le composite possède une référence vers ses composants (relation « A un » ou Has-a). L'héritage représente quant à lui la relation taxonomique « Est un » (Is-a)."
+  },
+  {
+    "number": 4,
+    "category": "Anti-Patterns & Dépendances",
+    "question": "Pourquoi l'analogie du « Gorille et de la Banane » de Joe Armstrong critique-t-elle l'usage abusif de l'héritage ?",
+    "hint": "Considérez ce que vous obtenez en plus de la fonctionnalité spécifique que vous recherchiez.",
+    "options": [
+      {"label": "A", "text": "Parce qu'en héritant d'une classe pour une seule méthode, on récupère tout son contexte et ses dépendances inutiles.", "isCorrect": true},
+      {"label": "B", "text": "Parce qu'un objet complexe ne peut pas être manipulé aussi facilement qu'un type primitif.", "isCorrect": false},
+      {"label": "C", "text": "Parce que les classes mères consomment plus de mémoire que les interfaces légères.", "isCorrect": false},
+      {"label": "D", "text": "Parce que le polymorphisme rend le débogage impossible dans les environnements de production.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "Joe Armstrong (créateur d'Erlang) soulignait : « Vous vouliez juste une banane, mais vous vous retrouvez avec un gorille qui tient la banane, et toute la jungle avec. » L'héritage lie indûment toute l'ascendance et ses dépendances implicites."
+  },
+  {
+    "number": 5,
+    "category": "Délégation & Architecture",
+    "question": "En TypeScript, vous créez une classe `Voiture` qui possède un attribut privé `moteur` de type `Moteur`. Pour démarrer la voiture, vous appelez `this.moteur.demarrer()`. Quel mécanisme utilisez-vous ?",
+    "hint": "Pensez à un chef d'entreprise qui confie une tâche à un service spécialisé.",
+    "options": [
+      {"label": "A", "text": "La délégation.", "isCorrect": true},
+      {"label": "B", "text": "Le polymorphisme par substitution.", "isCorrect": false},
+      {"label": "C", "text": "L'héritage d'implémentation.", "isCorrect": false},
+      {"label": "D", "text": "L'encapsulation de type statique.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "La délégation est l'acte architectural consistant à confier l'exécution d'une tâche à un collaborateur interne spécialisé (`moteur`) plutôt que de l'implémenter soi-même ou d'hériter de son code."
+  },
+  {
+    "number": 6,
+    "category": "Flexibilité Temporelle",
+    "question": "Quel est l'avantage majeur de la composition sur l'héritage concernant la liaison temporelle ?",
+    "hint": "Demandez-vous si un Guerrier peut changer d'arme (composition) ou si un Chien peut devenir un Chat (héritage).",
+    "options": [
+      {"label": "A", "text": "La composition empêche l'utilisation de méthodes asynchrones dans le constructeur.", "isCorrect": false},
+      {"label": "B", "text": "La composition permet de modifier le comportement d'un objet dynamiquement à l'exécution.", "isCorrect": true},
+      {"label": "C", "text": "La composition garantit que l'objet ne changera jamais de type une fois instancié.", "isCorrect": false},
+      {"label": "D", "text": "La composition est plus rapide car elle est résolue à la compilation par le moteur JIT.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "L'héritage est statique et scellé à la compilation (un objet ne peut changer de classe mère). La composition repose sur des références d'instances remplaçables dynamiquement à chaud à l'exécution."
+  },
+  {
+    "number": 7,
+    "category": "Testabilité & Injection",
+    "question": "Pourquoi l'utilisation du mot-clé `new` à l'intérieur du constructeur d'une classe composite (ex: `this.moteur = new MoteurEssence()`) est-elle considérée comme une mauvaise pratique ?",
+    "hint": "Réfléchissez à la difficulté de tester cette classe en isolation si elle 'choisit' elle-même ses pièces.",
+    "options": [
+      {"label": "A", "text": "Elle consomme deux fois plus de mémoire car l'objet est créé avant d'être affecté.", "isCorrect": false},
+      {"label": "B", "text": "Le constructeur risque de s'exécuter de façon asynchrone, provoquant des erreurs de type 'undefined'.", "isCorrect": false},
+      {"label": "C", "text": "TypeScript interdit l'utilisation de `new` dans un constructeur si la classe n'est pas décorée par `@Injectable`.", "isCorrect": false},
+      {"label": "D", "text": "Elle crée un couplage fort avec une implémentation concrète, empêchant l'injection de mocks pour les tests.", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "Instancier directement une classe concrète (`new MoteurEssence()`) viole le principe d'Inversion des Dépendances (DIP). Il devient impossible de tester la classe en isolation avec un mock ou de lui substituer une autre variante."
+  },
+  {
+    "number": 8,
+    "category": "Règles de Conception",
+    "question": "Quelle est la 'Règle d'Or' de la conception orientée objet mentionnée dans le cours ?",
+    "hint": "Distinguez l'essence d'un objet (biologie/mathématique) de ses capacités ou de ses pièces.",
+    "options": [
+      {"label": "A", "text": "Une classe composite ne doit jamais posséder plus de trois composants internes.", "isCorrect": false},
+      {"label": "B", "text": "Héritez toujours par défaut pour maximiser la réutilisation du code source.", "isCorrect": false},
+      {"label": "C", "text": "N'utilisez les interfaces que lorsque l'héritage multiple est techniquement nécessaire.", "isCorrect": false},
+      {"label": "D", "text": "Composez ce que vos objets font ; héritez uniquement de ce que vos objets sont.", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "L'héritage doit être strictement réservé à l'essence ontologique et immuable d'un objet (ce qu'il est), tandis que ses rôles, capacités et comportements interchangeables (ce qu'il fait) doivent être composés."
+  },
+  {
+    "number": 9,
+    "category": "Architecture Angular",
+    "question": "En Angular, pourquoi l'anti-pattern `BaseComponent` (une classe mère pour factoriser les injections de services) est-il déconseillé ?",
+    "hint": "Considérez le 'bagage' qu'un petit composant reçoit lorsqu'il hérite d'un ancêtre 'fourre-tout'.",
+    "options": [
+      {"label": "A", "text": "Angular ne supporte pas l'injection de dépendances via le mot-clé `protected`.", "isCorrect": false},
+      {"label": "B", "text": "Il pollue les composants enfants avec des services dont ils n'ont pas forcément besoin.", "isCorrect": true},
+      {"label": "C", "text": "Il empêche l'utilisation des signaux `input()` dans les classes dérivées.", "isCorrect": false},
+      {"label": "D", "text": "Les décorateurs `@Component` ne sont pas hérités par les classes filles en Angular.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Un `BaseComponent` générique transforme la classe mère en aimant à dépendances. Chaque composant enfant se retrouve couplé à tous les services du parent, compliquant inutilement les tests unitaires et le refactoring."
+  },
+  {
+    "number": 10,
+    "category": "Modélisation UML",
+    "question": "Dans un diagramme UML, comment reconnaît-on visuellement une relation de composition par rapport à une relation d'héritage ?",
+    "hint": "Rappelez-vous la différence entre un arbre généalogique et un plan de montage.",
+    "options": [
+      {"label": "A", "text": "La composition place toujours le composant au-dessus du composite.", "isCorrect": false},
+      {"label": "B", "text": "L'héritage est représenté par un trait pointillé ; la composition par un trait plein.", "isCorrect": false},
+      {"label": "C", "text": "L'héritage utilise un losange plein ; la composition utilise une flèche simple.", "isCorrect": false},
+      {"label": "D", "text": "L'héritage utilise une flèche à triangle blanc ; la composition utilise un losange.", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "En UML, la relation de généralisation/héritage est représentée par une flèche à pointe triangulaire creuse blanche. La composition est représentée par un losange (plein pour la composition forte, creux pour l'agrégation)."
+  },
+  {
+    "number": 11,
+    "category": "Polymorphisme & Interfaces",
+    "question": "Dans le cadre du polymorphisme, quelle est la principale différence entre l'héritage et l'alliance composition-interface ?",
+    "hint": "Réfléchissez à la manière dont des moteurs thermique et électrique peuvent être interchangeables sans être 'parents'.",
+    "options": [
+      {"label": "A", "text": "La composition impose que toutes les méthodes soient redéfinies avec `override`.", "isCorrect": false},
+      {"label": "B", "text": "L'héritage est le seul moyen d'utiliser le mot-clé `instanceof` pour filtrer des objets.", "isCorrect": false},
+      {"label": "C", "text": "La composition permet l'interchangeabilité sans lien de parenté direct entre les objets.", "isCorrect": true},
+      {"label": "D", "text": "L'héritage permet de changer de classe parente à l'exécution via `super`.", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "La combinaison d'interfaces et de composition permet à des classes sans aucun lien de parenté hiérarchique de collaborer de façon interchangeable dès lors qu'elles respectent le même contrat d'interface."
+  },
+  {
+    "number": 12,
+    "category": "Arbre de Décision",
+    "question": "Selon l'arbre de décision présenté en cours, quand est-il légitime d'utiliser l'héritage ?",
+    "hint": "Cherchez les critères de stabilité identitaire et de faible profondeur hiérarchique.",
+    "options": [
+      {"label": "A", "text": "Lorsque le comportement de l'objet doit être modifié par l'utilisateur final à l'exécution.", "isCorrect": false},
+      {"label": "B", "text": "Pour une relation taxonomique stable et courte avec un besoin de factorisation de code via une classe abstraite.", "isCorrect": true},
+      {"label": "C", "text": "Pour combiner plusieurs fonctionnalités indépendantes au sein d'un même objet.", "isCorrect": false},
+      {"label": "D", "text": "Dès que l'on veut éviter de réécrire les méthodes `getters` et `setters`.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "L'héritage est pertinent lorsque la relation « Est-un » est incontestable (ex: un Cercle est une Forme), stable dans le temps, sur un ou deux niveaux maximum, et qu'il existe un socle de code invariant à factoriser."
+  },
+  {
+    "number": 13,
+    "category": "Principes GoF",
+    "question": "Quelle citation illustre le principe de 'Favoriser la composition d'objets par rapport à l'héritage de classes' ?",
+    "hint": "C'est le principe le plus cité de la conception orientée objet depuis 1994.",
+    "options": [
+      {"label": "A", "text": "« Inheritance is the silver bullet of reuse ».", "isCorrect": false},
+      {"label": "B", "text": "« One class to rule them all » (Robert C. Martin).", "isCorrect": false},
+      {"label": "C", "text": "« Always use extends for shared logic ».", "isCorrect": false},
+      {"label": "D", "text": "« Favor object composition over class inheritance » (Gang of Four).", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "Formulé dans l'ouvrage fondateur des Design Patterns (1994) par Erich Gamma, Richard Helm, Ralph Johnson et John Vlissides, ce principe reste la recommandation architecturale centrale de la POO moderne."
+  },
+  {
+    "number": 14,
+    "category": "Architecture Angular",
+    "question": "En Angular, comment se manifeste concrètement la composition dans un composant qui affiche une liste d'éléments ?",
+    "hint": "Pensez à la manière dont un composant collabore avec ses données et ses services sans 'devenir' l'un d'eux.",
+    "options": [
+      {"label": "A", "text": "Le composant doit obligatoirement étendre `ListBaseComponent` pour être reconnu par le moteur de rendu.", "isCorrect": false},
+      {"label": "B", "text": "Le composant reçoit les données via un signal `input()` et injecte des services pour traiter la logique.", "isCorrect": true},
+      {"label": "C", "text": "La composition Angular nécessite l'utilisation exclusive du mot-clé `implements` sur chaque classe de service.", "isCorrect": false},
+      {"label": "D", "text": "L'utilisation de la directive `@for` crée automatiquement une hiérarchie d'héritage entre les éléments.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Dans Angular moderne, la composition s'exprime par l'assemblage : les composants reçoivent leurs entrées via `input()`, émettent via `output()`, et collaborent avec des services spécialisés injectés via `inject()`."
+  },
+  {
+    "number": 15,
+    "category": "Délégation Métier",
+    "question": "Dans l'exemple du cours sur la galerie de véhicules, pourquoi la méthode `start()` de la classe `Car` ne contient-elle qu'une seule ligne : `return this.engine.start();` ?",
+    "hint": "C'est la définition même de l'acte de confier un travail à un spécialiste.",
+    "options": [
+      {"label": "A", "text": "Parce que la classe `Car` hérite de l'interface `Engine` par défaut.", "isCorrect": false},
+      {"label": "B", "text": "Parce qu'elle délègue entièrement la responsabilité de l'action à son composant moteur.", "isCorrect": true},
+      {"label": "C", "text": "Parce que TypeScript ne permet pas d'ajouter de logique supplémentaire dans une méthode déléguée.", "isCorrect": false},
+      {"label": "D", "text": "Parce que le compilateur Angular optimise automatiquement les appels de méthodes vers les services privés.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "La voiture sait qu'elle doit démarrer, mais elle n'a pas à connaître les détails internes de la combustion ou de l'électronique. Elle délègue l'action à son objet moteur spécialisé."
+  },
+  {
+    "number": 16,
+    "category": "Encapsulation & Visibilité",
+    "question": "Quel risque court-on en brisant l'encapsulation via l'héritage ('White-box reuse') ?",
+    "hint": "Comparez la visibilité 'boîte blanche' (héritage) à la visibilité 'boîte noire' (composition via méthodes publiques).",
+    "options": [
+      {"label": "A", "text": "La classe fille accède aux détails internes de la mère, ce qui rend les deux classes indissociables et fragiles.", "isCorrect": true},
+      {"label": "B", "text": "Le code devient impossible à minifier car les noms de propriétés protégées doivent rester en clair.", "isCorrect": false},
+      {"label": "C", "text": "Les classes filles ne peuvent plus utiliser de méthodes publiques, seulement des méthodes protégées.", "isCorrect": false},
+      {"label": "D", "text": "L'encapsulation n'est jamais brisée par l'héritage si l'on utilise TypeScript en mode strict.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "L'héritage est qualifié de réutilisation en 'boîte blanche' car les classes filles dépendent souvent de variables et méthodes `protected` du parent. Cette intrusion dans l'état interne détruit l'encapsulation."
+  },
+  {
+    "number": 17,
+    "category": "Testabilité & Mocks",
+    "question": "Pour tester un composant `Voiture` sans dépendre d'un `Moteur` réel qui fait des appels réseau complexes, quelle approche est facilitée par la composition ?",
+    "hint": "Comment isoler une classe de ses dépendances lourdes pour des tests rapides ?",
+    "options": [
+      {"label": "A", "text": "Le passage de toutes les méthodes du moteur en mode 'statique' pour simplifier l'accès.", "isCorrect": false},
+      {"label": "B", "text": "La suppression pure et simple de l'attribut moteur pendant la phase de test.", "isCorrect": false},
+      {"label": "C", "text": "L'utilisation du mot-clé `super` dans le fichier de test pour court-circuiter le moteur.", "isCorrect": false},
+      {"label": "D", "text": "L'injection d'un 'Mock' ou d'un faux moteur respectant la même interface.", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "En combinant composition et interfaces, on peut injecter un bouchon (Mock / Fake) dans `Voiture` lors des tests. Le test est instantané, déterministe et n'effectue aucun appel réseau externe."
+  },
+  {
+    "number": 18,
+    "category": "Architecture Angular",
+    "question": "Que signifie l'affirmation 'En Angular, tout est composition' ?",
+    "hint": "Pensez à la manière dont vous construisez une page web en emboîtant des briques et des services.",
+    "options": [
+      {"label": "A", "text": "Le mot-clé `extends` est strictement interdit dans tout projet Angular moderne.", "isCorrect": false},
+      {"label": "B", "text": "Le framework repose sur l'assemblage de briques autonomes (composants, services, pipes) via l'injection de dépendances.", "isCorrect": true},
+      {"label": "C", "text": "Les fichiers HTML et TypeScript sont fusionnés en un seul objet composite à la compilation.", "isCorrect": false},
+      {"label": "D", "text": "Toutes les classes Angular doivent hériter de la classe `AngularElement` de base.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Angular est structuré autour d'une composition à deux niveaux : structurelle dans les templates (arbre de composants imbriqués) et comportementale dans le code (injection de dépendances de services autonomes)."
+  },
+  {
+    "number": 19,
+    "category": "Erreurs de Conception",
+    "question": "Un développeur décide de faire hériter la classe `Smartphone` de la classe `Batterie` pour réutiliser la propriété `capacitemAh`. Quelle erreur de conception commet-il ?",
+    "hint": "Posez la question : 'Le smartphone est-il une sorte de batterie ?'",
+    "options": [
+      {"label": "A", "text": "La batterie devrait hériter du smartphone pour avoir accès à l'écran.", "isCorrect": false},
+      {"label": "B", "text": "Il oublie que TypeScript ne supporte pas l'héritage de propriétés numériques.", "isCorrect": false},
+      {"label": "C", "text": "Il confond la relation 'A un' (composition) avec la relation 'Est un' (héritage).", "isCorrect": true},
+      {"label": "D", "text": "Il crée une dépendance cyclique qui empêchera le chargement du smartphone.", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "Un smartphone n'est pas une batterie ; il comporte une batterie. Utiliser l'héritage par simple opportunisme de réutilisation de code dénature le modèle et expose des méthodes de la batterie comme si elles étaient l'essence du téléphone."
+  },
+  {
+    "number": 20,
+    "category": "Cycle de Vie & UML",
+    "question": "Dans le contexte de la composition forte (losange plein UML), que se passe-t-il si l'objet composite est détruit ?",
+    "hint": "Pensez à la relation entre un bâtiment et ses pièces : si le bâtiment est démoli, les pièces n'existent plus.",
+    "options": [
+      {"label": "A", "text": "Les composants sont automatiquement transférés à une autre instance de classe.", "isCorrect": false},
+      {"label": "B", "text": "Le ramasse-miettes (Garbage Collector) est désactivé pour éviter les fuites de mémoire.", "isCorrect": false},
+      {"label": "C", "text": "Le programme s'arrête immédiatement pour éviter une corruption de l'état.", "isCorrect": false},
+      {"label": "D", "text": "Les composants internes sont généralement détruits en même temps que le composite.", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "Dans une composition stricte (losange plein), les parties n'ont pas d'existence propre hors du tout. Leur cycle de vie est solidaire de celui du contenant."
+  },
+  {
+    "number": 21,
+    "category": "Spécificités TypeScript",
+    "question": "Quelle est la principale limite de l'héritage simple en TypeScript (par rapport à la composition) ?",
+    "hint": "Combien de parents directs une classe peut-elle avoir en TypeScript ?",
+    "options": [
+      {"label": "A", "text": "L'héritage simple est réservé aux types `string` et `number` uniquement.", "isCorrect": false},
+      {"label": "B", "text": "On ne peut hériter que d'une seule classe mère directe.", "isCorrect": true},
+      {"label": "C", "text": "L'héritage simple empêche l'utilisation de méthodes statiques.", "isCorrect": false},
+      {"label": "D", "text": "Les constructeurs ne peuvent pas accepter de paramètres si l'on utilise `extends`.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "TypeScript (et JavaScript) ne supporte pas l'héritage multiple de classes (une seule clause `extends`). En revanche, un objet peut composer autant d'attributs et de collaborateurs que nécessaire."
+  },
+  {
+    "number": 22,
+    "category": "Conception Modulaire",
+    "question": "Un développeur veut créer une classe `Robot` capable de marcher, nager et voler. Quel est le meilleur choix architectural selon le cours ?",
+    "hint": "Comment gérer plusieurs aptitudes indépendantes sans créer 15 sous-classes ?",
+    "options": [
+      {"label": "A", "text": "L'héritage multiple : le Robot hérite de `Marcheur`, `Nageur` et `Volant`.", "isCorrect": false},
+      {"label": "B", "text": "La composition : le Robot possède une collection de modules de déplacement interchangeables.", "isCorrect": true},
+      {"label": "C", "text": "L'héritage simple : le Robot hérite d'une classe `VehiculeAmphibie` qui fait déjà un peu tout.", "isCorrect": false},
+      {"label": "D", "text": "La création d'une énorme classe mère `RobotUniversel` contenant tout le code.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "La composition permet au robot d'embarquer une panoplie de modules de locomotion interchangeables (pattern Strategy). On évite l'explosion combinatoire et le robot peut changer de mode en temps réel."
+  },
+  {
+    "number": 23,
+    "category": "Synthèse & Décision",
+    "question": "En résumé, quand devriez-vous choisir l'héritage (`extends`) plutôt que la composition ?",
+    "hint": "Recherchez l'essence ontologique de l'objet.",
+    "options": [
+      {"label": "A", "text": "Lorsque vous voulez utiliser le mot-clé `super()` pour gagner du temps au développement.", "isCorrect": false},
+      {"label": "B", "text": "Dès que vous avez plus de deux méthodes à partager entre plusieurs classes.", "isCorrect": false},
+      {"label": "C", "text": "Uniquement face à une relation 'Est-un' incontestable et immuable (ex: identité biologique).", "isCorrect": true},
+      {"label": "D", "text": "Pour forcer toutes les classes d'un projet Angular à avoir la même structure de constructeur.", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "L'héritage doit être réservé aux relations d'essence taxonomique pure et pérenne (un Chien est un Canidé). Dès qu'il s'agit de capacités, de rôles ou de logique technique partageable, la composition est supérieure."
+  }
+];
+
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+let userAnswers = [];
+
+function formatCode(text) {
+  if (!text) return '';
+  
+  // 1. Math expressions like 2^3 = 8 or $2^3 = 8$
+  let formatted = text.replace(/\$2\^3\s*=\s*8\$/g, '<span class="code-term">2³ = 8</span>');
+  formatted = formatted.replace(/2³\s*=\s*8/g, '<span class="code-term">2³ = 8</span>');
+
+  // 2. Multi-line code blocks
+  formatted = formatted.replace(/```(?:ts|typescript|js)?\n([\s\S]*?)```/g, '<pre class="code-box"><code>$1</code></pre>');
+  
+  // 3. Inline backtick code
+  formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-term">$1</span>');
+  
+  // 4. Single-quoted keywords without breaking French apostrophes
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])'([a-zA-Z0-9_\-\.\/@\(\)=]+)'/g, '<span class="code-term">$1</span>');
+  
+  const parts = formatted.split(/(<pre[\s\S]*?<\/pre>)/g);
+  return parts.map(part => {
+    if (part.startsWith('<pre')) return part;
+    return part.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  }).join('');
+}
+
+function init() {
+  setupTheme();
+  setupKeyboard();
+  renderQuestion(0);
+  
+  document.getElementById('next-btn').addEventListener('click', handleNext);
+  document.getElementById('restart-btn').addEventListener('click', handleRestart);
+  document.getElementById('toggle-review-btn').addEventListener('click', handleToggleReview);
+  document.getElementById('hint-toggle-btn').addEventListener('click', toggleHint);
+}
+
+function setupTheme() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const text = document.getElementById('theme-text');
+  
+  const saved = localStorage.getItem('poo_quiz_theme_s9') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+  
+  toggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('poo_quiz_theme_s9', next);
+    updateThemeUI(next);
+  });
+  
+  function updateThemeUI(t) {
+    if (t === 'dark') {
+      icon.textContent = '☀️';
+      text.textContent = 'Mode clair';
+    } else {
+      icon.textContent = '🌙';
+      text.textContent = 'Mode sombre';
+    }
+  }
+}
+
+function renderQuestion(index) {
+  answered = false;
+  const q = quizData[index];
+  
+  // Progress bar
+  const progressPct = (index / quizData.length) * 100;
+  document.getElementById('progress-fill').style.width = progressPct + '%';
+  document.getElementById('progress-q-label').textContent = `Question ${index + 1} sur ${quizData.length}`;
+  document.getElementById('progress-score-pill').textContent = index > 0 
+    ? `Score : ${correctCount}/${index} (${Math.round((correctCount / index) * 100)}%)` 
+    : `Score : 0/0`;
+
+  // Metadata
+  document.getElementById('q-index-badge').textContent = `Question ${index < 9 ? '0' + (index + 1) : index + 1}`;
+  document.getElementById('q-category-tag').textContent = q.category || 'Composition vs Héritage';
+  document.getElementById('q-counter').textContent = `${index + 1} / ${quizData.length}`;
+
+  // Question body
+  document.getElementById('q-text').innerHTML = formatCode(q.question);
+
+  // Hint element
+  const hintBody = document.getElementById('hint-body');
+  hintBody.innerHTML = formatCode(q.hint);
+  hintBody.classList.remove('open');
+  document.getElementById('hint-btn-label').textContent = "Afficher un indice";
+
+  // Reset feedback card & next button
+  const fcard = document.getElementById('feedback-card');
+  fcard.style.display = 'none';
+  fcard.className = 'feedback-card';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'none';
+  if (index === quizData.length - 1) {
+    document.getElementById('next-btn-text').textContent = "Voir mes résultats 🎉";
+  } else {
+    document.getElementById('next-btn-text').textContent = "Question suivante";
+  }
+
+  // Options list
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, optIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.type = 'button';
+    btn.dataset.idx = optIdx;
+    btn.innerHTML = `
+      <span class="opt-key-circle">${opt.label}</span>
+      <span class="opt-content">${formatCode(opt.text)}</span>
+      <span class="opt-status-icon"></span>
+    `;
+
+    btn.addEventListener('click', () => selectOption(optIdx));
+    grid.appendChild(btn);
+  });
+}
+
+function selectOption(selectedIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizData[currentQ];
+  const selectedOpt = q.options[selectedIdx];
+  const isCorrect = selectedOpt.isCorrect;
+  userAnswers[currentQ] = selectedIdx;
+
+  if (isCorrect) {
+    correctCount++;
+  }
+
+  const optionBtns = document.querySelectorAll('.option-btn');
+  optionBtns.forEach(btn => btn.disabled = true);
+
+  const selectedBtn = optionBtns[selectedIdx];
+  const selectedStatus = selectedBtn.querySelector('.opt-status-icon');
+  
+  if (isCorrect) {
+    selectedBtn.classList.add('selected-correct');
+    selectedStatus.textContent = '✓';
+  } else {
+    selectedBtn.classList.add('selected-incorrect');
+    selectedStatus.textContent = '✕';
+
+    const correctIdx = q.options.findIndex(o => o.isCorrect);
+    if (correctIdx !== -1) {
+      const correctBtn = optionBtns[correctIdx];
+      correctBtn.classList.add('revealed-correct');
+      const correctStatus = correctBtn.querySelector('.opt-status-icon');
+      correctStatus.textContent = '✓';
+    }
+  }
+
+  // Dim remaining unselected options
+  optionBtns.forEach(btn => {
+    if (!btn.classList.contains('selected-correct') && 
+        !btn.classList.contains('selected-incorrect') && 
+        !btn.classList.contains('revealed-correct')) {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  // Display feedback notification card
+  const fcard = document.getElementById('feedback-card');
+  const fheader = document.getElementById('feedback-header');
+  const fbody = document.getElementById('feedback-body');
+
+  fcard.style.display = 'block';
+
+  if (isCorrect) {
+    fcard.className = 'feedback-card correct';
+    fheader.innerHTML = '<span>✓</span> <span>Excellente réponse !</span>';
+    fbody.innerHTML = `<strong>Justification :</strong> ${formatCode(q.rationale)}`;
+  } else {
+    fcard.className = 'feedback-card incorrect';
+    fheader.innerHTML = `<span>✕</span> <span>Ce n'est pas tout à fait ça. La bonne réponse est l'option ${q.answer}.</span>`;
+    fbody.innerHTML = `<strong>Explication :</strong> ${formatCode(q.rationale)}`;
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'flex';
+  nextBtn.focus();
+}
+
+function toggleHint() {
+  const hintBody = document.getElementById('hint-body');
+  const label = document.getElementById('hint-btn-label');
+  hintBody.classList.toggle('open');
+  if (hintBody.classList.contains('open')) {
+    label.textContent = "Masquer l'indice";
+  } else {
+    label.textContent = "Afficher un indice";
+  }
+}
+
+function handleNext() {
+  currentQ++;
+  if (currentQ < quizData.length) {
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById('question-card').style.display = 'none';
+  document.getElementById('progress-container').style.display = 'none';
+  document.getElementById('results-card').style.display = 'block';
+
+  const total = quizData.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  const stroke = document.getElementById('circle-score-stroke');
+  stroke.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+  document.getElementById('score-percent-text').textContent = `${pct}%`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-incorrect').textContent = total - correctCount;
+  document.getElementById('stat-total').textContent = total;
+
+  const msgEl = document.getElementById('results-message');
+  const iconEl = document.getElementById('results-icon');
+
+  if (pct >= 90) {
+    iconEl.textContent = '🏆';
+    msgEl.innerHTML = `<strong>Excellente maîtrise !</strong> Vous maîtrisez parfaitement la distinction 'A un' vs 'Est un', la délégation, la prévention de la Fragile Base Class et l'injection de dépendances en Angular !`;
+    launchConfetti();
+  } else if (pct >= 75) {
+    iconEl.textContent = '🚀';
+    msgEl.innerHTML = `<strong>Très bon score !</strong> Les grands principes du Gang of Four et la modularité par composition sont bien acquis. Consultez le corrigé détaillé pour peaufiner les subtilités.`;
+    launchConfetti();
+  } else if (pct >= 50) {
+    iconEl.textContent = '👍';
+    msgEl.innerHTML = `<strong>Bases comprises !</strong> La règle 'Composez ce que vos objets font' est comprise, mais attention aux pièges sur l'anti-pattern BaseComponent et l'explosion combinatoire.`;
+  } else {
+    iconEl.textContent = '📚';
+    msgEl.innerHTML = `<strong>À consolider !</strong> Relisez attentivement les diapositives sur la fragilité de l'héritage et la puissance de la délégation, puis relancez le test pour viser le sans-faute !`;
+  }
+}
+
+function handleToggleReview() {
+  const container = document.getElementById('review-container');
+  const btn = document.getElementById('toggle-review-btn');
+  const list = document.getElementById('review-list');
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    btn.innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  } else {
+    container.style.display = 'block';
+    btn.innerHTML = '<span>Masquer le corrigé ▴</span>';
+
+    list.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const userIdx = userAnswers[qIdx];
+      const isGood = userIdx !== undefined && q.options[userIdx].isCorrect;
+
+      const card = document.createElement('div');
+      card.className = 'review-item';
+
+      const header = document.createElement('div');
+      header.className = 'review-item-header';
+      header.innerHTML = `
+        <div class="review-item-title">
+          <span>${isGood ? '✅' : '❌'}</span>
+          <span><strong>Q${qIdx + 1}.</strong> ${q.question.replace(/```[\s\S]*?```/g, '[Code]').substring(0, 75)}...</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);">Détails ▾</span>
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'review-item-body';
+
+      let optionsHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
+      q.options.forEach((opt, oIdx) => {
+        const wasUser = oIdx === userIdx;
+        const wasCorrect = opt.isCorrect;
+        let borderCol = 'var(--opt-border)';
+        let bgCol = 'transparent';
+        let badge = '';
+
+        if (wasCorrect) {
+          borderCol = '#10b981';
+          bgCol = 'rgba(16, 185, 129, 0.08)';
+          badge = ' <strong style="color: #10b981;">(Bonne réponse)</strong>';
+        }
+        if (wasUser && !wasCorrect) {
+          borderCol = '#ef4444';
+          bgCol = 'rgba(239, 68, 68, 0.08)';
+          badge = ' <strong style="color: #ef4444;">(Votre choix)</strong>';
+        }
+
+        optionsHtml += `
+          <div style="padding: 10px 14px; border: 1px solid ${borderCol}; background: ${bgCol}; border-radius: 8px; font-size: 13.5px;">
+            <div><strong>${opt.label}.</strong> ${formatCode(opt.text)}${badge}</div>
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+
+      body.innerHTML = `
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 8px;">${formatCode(q.question)}</div>
+        ${optionsHtml}
+        <div style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #6366f1; font-size: 13px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">Explication :</strong> ${formatCode(q.rationale)}
+        </div>
+      `;
+
+      header.addEventListener('click', () => {
+        body.classList.toggle('open');
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+  }
+}
+
+function handleRestart() {
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+  userAnswers = [];
+
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('review-container').style.display = 'none';
+  document.getElementById('toggle-review-btn').innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  document.getElementById('progress-container').style.display = 'block';
+  document.getElementById('question-card').style.display = 'block';
+
+  renderQuestion(0);
+}
+
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+
+    if (document.getElementById('results-card').style.display === 'block') {
+      if (e.key === 'Enter') handleRestart();
+      return;
+    }
+
+    if (answered) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      return;
+    }
+
+    const q = quizData[currentQ];
+    if (!q) return;
+
+    let targetIdx = -1;
+    if (key === 'A' || key === '1') targetIdx = 0;
+    else if (key === 'B' || key === '2') targetIdx = 1;
+    else if (key === 'C' || key === '3') targetIdx = 2;
+    else if (key === 'D' || key === '4') targetIdx = 3;
+
+    if (targetIdx >= 0 && targetIdx < q.options.length) {
+      e.preventDefault();
+      selectOption(targetIdx);
+    }
+
+    if (key === 'H' || key === 'I') {
+      e.preventDefault();
+      toggleHint();
+    }
+  });
+}
+
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#3178c6', '#6366f1', '#8b5cf6', '#10b981', '#fbbf24', '#38bdf8'];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.015 + 0.008
+    });
+  }
+
+  let animId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25;
+      p.alpha -= p.decay;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  loop();
+}
+
+init();
+</script>
+</body>
+</html>
