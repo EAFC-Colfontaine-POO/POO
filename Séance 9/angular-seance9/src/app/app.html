@@ -1,0 +1,39 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('heritage-pathologies') {
+          <app-heritage-pathologies></app-heritage-pathologies>
+        }
+        @case ('semantic-pillars') {
+          <app-semantic-pillars></app-semantic-pillars>
+        }
+        @case ('delegation-mechanism') {
+          <app-delegation-mechanism></app-delegation-mechanism>
+        }
+        @case ('runtime-swap') {
+          <app-runtime-swap></app-runtime-swap>
+        }
+        @case ('dip-interfaces') {
+          <app-dip-interfaces></app-dip-interfaces>
+        }
+        @case ('duel-decision-tree') {
+          <app-duel-decision-tree></app-duel-decision-tree>
+        }
+        @case ('antipatterns-debug') {
+          <app-antipatterns-debug></app-antipatterns-debug>
+        }
+        @case ('angular-garage') {
+          <app-angular-garage></app-angular-garage>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>
