@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz POO — Gestion des Exceptions & Architecture Robuste</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      --bg-page: #090d16;
+      --bg-ambient-1: rgba(99, 102, 241, 0.16);
+      --bg-ambient-2: rgba(236, 72, 153, 0.12);
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --brand-blue: #3b82f6;
+      --brand-indigo: #6366f1;
+      --brand-purple: #8b5cf6;
+      --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+      
+      --opt-bg: rgba(255, 255, 255, 0.03);
+      --opt-border: rgba(255, 255, 255, 0.08);
+      --opt-hover-bg: rgba(255, 255, 255, 0.06);
+      --opt-hover-border: rgba(99, 102, 241, 0.45);
+      
+      --correct-bg: rgba(16, 185, 129, 0.12);
+      --correct-border: #10b981;
+      --correct-text: #34d399;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: rgba(239, 68, 68, 0.12);
+      --incorrect-border: #ef4444;
+      --incorrect-text: #f87171;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: rgba(245, 158, 11, 0.08);
+      --hint-border: rgba(245, 158, 11, 0.25);
+      --hint-text: #fbbf24;
+      
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --code-border: rgba(255, 255, 255, 0.12);
+      --code-color: #38bdf8;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8fafc;
+      --bg-ambient-1: rgba(99, 102, 241, 0.08);
+      --bg-ambient-2: rgba(236, 72, 153, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --opt-bg: #ffffff;
+      --opt-border: #e2e8f0;
+      --opt-hover-bg: #f8fafc;
+      --opt-hover-border: #6366f1;
+      
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --correct-text: #065f46;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: #fef2f2;
+      --incorrect-border: #ef4444;
+      --incorrect-text: #991b1b;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: #fffbeb;
+      --hint-border: #fde68a;
+      --hint-text: #92400e;
+      
+      --code-bg: #f1f5f9;
+      --code-border: #cbd5e1;
+      --code-color: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image: 
+        radial-gradient(circle at 15% 12%, var(--bg-ambient-1) 0%, transparent 45%),
+        radial-gradient(circle at 85% 88%, var(--bg-ambient-2) 0%, transparent 45%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-main);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .keyboard-badge {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    @media (min-width: 640px) {
+      .keyboard-badge { display: inline-flex; align-items: center; gap: 6px; }
+    }
+
+    /* Header Hero */
+    .header-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .course-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.12);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #a5b4fc;
+      box-shadow: 0 0 10px #a5b4fc;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .quiz-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto 16px;
+      font-weight: 500;
+    }
+
+    .tags-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-muted);
+    }
+
+    /* Progress section */
+    .progress-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-q-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-score-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .progress-track {
+      background: #e2e8f0;
+    }
+
+    .progress-bar-fill {
+      background: var(--brand-gradient);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .q-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-index-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+    }
+
+    .q-category-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .q-text {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text-main);
+      margin-bottom: 22px;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-color);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #38bdf8;
+      overflow-x: auto;
+      text-align: left;
+    }
+    [data-theme="light"] .code-box {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0369a1;
+    }
+
+    /* Hint box */
+    .hint-container {
+      margin-bottom: 22px;
+    }
+
+    .hint-btn {
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      color: var(--hint-text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hint-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .hint-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--hint-text);
+      line-height: 1.5;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .hint-body.open {
+      display: block;
+    }
+
+    /* Options List */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 18px;
+      border: 2px solid var(--opt-border);
+      background: var(--opt-bg);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      position: relative;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--opt-hover-border);
+      background: var(--opt-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .opt-key-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--opt-border);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .opt-content {
+      flex: 1;
+      padding-top: 4px;
+      line-height: 1.5;
+    }
+
+    .opt-status-icon {
+      font-size: 18px;
+      margin-left: 8px;
+      display: none;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    /* Option States */
+    .option-btn.selected-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .option-btn.selected-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.selected-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--incorrect-border) !important;
+      background: var(--incorrect-bg) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+    .option-btn.selected-incorrect .opt-key-circle {
+      background: var(--incorrect-badge-bg);
+      color: var(--incorrect-badge-text);
+    }
+    .option-btn.selected-incorrect .opt-status-icon {
+      display: inline-block;
+      color: var(--incorrect-text);
+    }
+
+    .option-btn.revealed-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      border-style: dashed;
+    }
+    .option-btn.revealed-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.revealed-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.dimmed {
+      opacity: 0.45;
+    }
+
+    /* Feedback Card */
+    .feedback-card {
+      display: none;
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .feedback-card.correct {
+      background: var(--correct-bg);
+      border-left: 4px solid var(--correct-border);
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+      border-right: 1px solid rgba(16, 185, 129, 0.2);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .feedback-card.incorrect {
+      background: var(--incorrect-bg);
+      border-left: 4px solid var(--incorrect-border);
+      border-top: 1px solid rgba(239, 68, 68, 0.2);
+      border-right: 1px solid rgba(239, 68, 68, 0.2);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .feedback-header {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .feedback-card.correct .feedback-header { color: var(--correct-text); }
+    .feedback-card.incorrect .feedback-header { color: var(--incorrect-text); }
+
+    .feedback-body {
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    [data-theme="light"] .feedback-body {
+      color: #334155;
+    }
+
+    /* Action bar */
+    .action-bar {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.55);
+    }
+
+    /* Results Card */
+    .results-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .results-trophy {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .results-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle-wrapper {
+      margin: 24px auto;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-percent-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .results-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .stat-num.good { color: #10b981; }
+    .stat-num.bad { color: #ef4444; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn-secondary {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--opt-hover-bg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Review View */
+    .review-container {
+      display: none;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .review-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-item {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .review-item-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .review-item-title {
+      font-weight: 600;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-item-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--card-border);
+    }
+    .review-item-body.open {
+      display: block;
+      padding-top: 14px;
+    }
+
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="quiz-container">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="keyboard-badge">
+      <span>⌨️ Raccourcis : [A-D] ou [1-4] · [Entrée] · [I]</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Basculer le thème">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-text">Mode clair</span>
+    </button>
+  </div>
+
+  <!-- Header Hero -->
+  <div class="header-hero">
+    <div class="course-badge">
+      <span class="badge-dot"></span>
+      Programmation Orientée Objet · EAFC Colfontaine
+    </div>
+    <h1 class="quiz-title">Séance 10 — Gestion des Exceptions & Architecture Robuste</h1>
+    <p class="quiz-subtitle">Codes sentinelles vs Exceptions · Stack Unwinding · Try/Catch/Finally · Custom Errors · Règle des Trois Étages</p>
+    <div class="tags-row">
+      <span class="tag-pill">TypeScript</span>
+      <span class="tag-pill">POO</span>
+      <span class="tag-pill">Exceptions</span>
+      <span class="tag-pill">Architecture Robuste</span>
+      <span class="tag-pill">23 questions</span>
+    </div>
+
+    <!-- Progress section -->
+    <div class="progress-section" id="progress-container">
+      <div class="progress-header">
+        <span class="progress-q-label" id="progress-q-label">Question 1 sur 23</span>
+        <span class="progress-score-pill" id="progress-score-pill">Score : 0/0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Question Card -->
+  <div class="card" id="question-card">
+    <div class="q-meta-bar">
+      <span class="q-index-badge" id="q-index-badge">Question 01</span>
+      <span class="q-category-tag" id="q-category-tag">Gestion des Erreurs</span>
+      <span style="font-size: 12px; color: var(--text-dim);" id="q-counter">1 / 23</span>
+    </div>
+
+    <div class="q-text" id="q-text"></div>
+
+    <div class="hint-container">
+      <button class="hint-btn" id="hint-toggle-btn" type="button">
+        <span>💡</span>
+        <span id="hint-btn-label">Afficher un indice</span>
+      </button>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <!-- Feedback card -->
+    <div class="feedback-card" id="feedback-card">
+      <div class="feedback-header" id="feedback-header"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="next-btn" id="next-btn" style="display: none;">
+        <span id="next-btn-text">Question suivante</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div class="card results-card" id="results-card" style="display: none;">
+    <div class="results-trophy" id="results-icon">🏆</div>
+    <h2 class="results-title" id="results-title">Quiz terminé !</h2>
+    
+    <div class="score-circle-wrapper">
+      <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <path stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path id="circle-score-stroke" stroke="url(#scoreGrad)" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3b82f6" />
+            <stop offset="50%" stop-color="#6366f1" />
+            <stop offset="100%" stop-color="#8b5cf6" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-percent-val" id="score-percent-text">0%</div>
+    </div>
+
+    <p class="results-message" id="results-message"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num good" id="stat-correct">0</div>
+        <div class="stat-label">Bonnes réponses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-incorrect">0</div>
+        <div class="stat-label">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">23</div>
+        <div class="stat-label">Questions</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="next-btn" id="restart-btn" type="button">
+        <span>🔄 Recommencer le quiz</span>
+      </button>
+      <button class="btn-secondary" id="toggle-review-btn" type="button">
+        <span>📋 Voir le corrigé complet</span>
+      </button>
+    </div>
+
+    <div class="review-container" id="review-container">
+      <div class="review-header">Détail des questions et explications</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  {
+    "number": 1,
+    "category": "Codes Sentinelles vs Exceptions",
+    "question": "Pourquoi l'utilisation de codes de retour sentinelles (par exemple `-1` ou `null`) pour signaler un échec pose-t-elle un problème majeur de conception dans une méthode comme `retirer(montant: number): number` ?",
+    "hint": "Réfléchissez à la double signification d'une valeur de retour lorsque -1 est à la fois un solde possible et un signal d'erreur.",
+    "options": [
+      {"label": "A", "text": "Elle provoque une récompilation automatique de l'ensemble des modules dépendants à chaque appel.", "isCorrect": false, "rationale": "Renvoyer une valeur numérique ou nulle n'a aucun impact sur la phase de compilation du projet."},
+      {"label": "B", "text": "Elle force le moteur JavaScript à arrêter immédiatement le processus d'exécution.", "isCorrect": false, "rationale": "Une valeur sentinelle est un retour de fonction ordinaire qui n'interrompt pas le flux d'exécution du runtime."},
+      {"label": "C", "text": "Elle empêche l'accès aux attributs privés de la classe depuis ses propres méthodes.", "isCorrect": false, "rationale": "L'encapsulation et l'accès aux membres privés dépendent de la visibilité des attributs, et non de la valeur retournée par les méthodes."},
+      {"label": "D", "text": "Elle cumule deux responsabilités incompatibles dans la valeur de retour : le résultat métier légitime et le statut d'échec.", "isCorrect": true, "rationale": "L'utilisation d'une valeur sentinelle surcharge le type de retour, rendant impossible la distinction entre un résultat valide (par exemple un solde négatif autorisé de -1 €) et un code d'erreur -1."}
+    ],
+    "answer": "D",
+    "rationale": "L'utilisation d'une valeur sentinelle surcharge le type de retour, créant une ambiguïté fondamentale entre un résultat métier légitime et un signal d'erreur, tout en obligeant chaque appelant à penser à vérifier manuellement le retour."
+  },
+  {
+    "number": 2,
+    "category": "Propagation des Erreurs",
+    "question": "Dans une architecture logicielle en couches sans système d'exceptions, quel est l'inconvénient majeur de la propagation manuelle des erreurs ?",
+    "hint": "Pensez à ce que doivent écrire les fonctions intermédiaires qui ne savent pas traiter l'erreur elles-mêmes.",
+    "options": [
+      {"label": "A", "text": "Le compilateur TypeScript refuse de générer le code JavaScript si une fonction intermédiaire retourne un nombre négatif.", "isCorrect": false, "rationale": "TypeScript valide les types déclarés mais n'interdit pas le retour de nombres négatifs s'ils correspondent au type de retour déclaratif."},
+      {"label": "B", "text": "Chaque couche intermédiaire doit vérifier et relayer manuellement les codes d'erreur, ce qui noie la logique métier sous du code parasite.", "isCorrect": true, "rationale": "Sans dérivation automatique, les fonctions intermédiaires non concernées par la résolution doivent inclure des vérifications répétitives pour faire passer le code d'erreur au niveau supérieur."},
+      {"label": "C", "text": "L'interface utilisateur reçoit l'erreur de manière asynchrone avant même que le service ne l'ait renvoyée.", "isCorrect": false, "rationale": "Le flux d'exécution procédural reste strictement synchrone et descendant, puis ascendant, sans devancer les appels."},
+      {"label": "D", "text": "Les transactions en base de données sont automatiquement annulées sans l'intervention du service.", "isCorrect": false, "rationale": "La gestion des annulations de transactions nécessite une logique explicite ou une exception, ce que la simple propagation manuelle ne fournit pas automatiquement."}
+    ],
+    "answer": "B",
+    "rationale": "Sans exceptions automatiques, chaque couche intermédiaire doit vérifier et relayer manuellement le code d'erreur (ex. `if (code === -1) return -1;`), ce qui pollue la logique métier avec du code défensif répétitif."
+  },
+  {
+    "number": 3,
+    "category": "Constructeurs & Invariants",
+    "question": "Pourquoi l'instruction `throw` est-elle l'unique moyen légitime d'empêcher la création d'un objet corrompu au sein de son constructeur ?",
+    "hint": "Examinez la signature et la valeur de retour particulière d'un constructeur en POO.",
+    "options": [
+      {"label": "A", "text": "L'instruction `throw` est la seule commande autorisée à lire les paramètres passés à `super()`.", "isCorrect": false, "rationale": "Les paramètres transmis à `super()` sont accessibles par la logique interne du constructeur indépendamment de `throw`."},
+      {"label": "B", "text": "Les constructeurs ne possèdent pas d'instruction `return` explicite permettant de renvoyer un code ou une valeur d'erreur.", "isCorrect": true, "rationale": "Un constructeur retourne implicitement la nouvelle instance créée ; lever une exception est donc la seule façon d'interrompre cette instanciation si les arguments sont invalides."},
+      {"label": "C", "text": "Utiliser `return null` dans un constructeur TypeScript génère une erreur de syntaxe bloquante.", "isCorrect": false, "rationale": "Bien que `return` avec valeur soit proscrit dans un constructeur, c'est l'impossibilité de retourner un statut d'échec métier qui rend `throw` indispensable."},
+      {"label": "D", "text": "Les constructeurs s'exécutent dans un thread isolé séparé de la pile d'appels principale.", "isCorrect": false, "rationale": "En JavaScript, l'instanciation s'exécute de manière synchrone sur le thread principal au sein de la pile d'appels courante."}
+    ],
+    "answer": "B",
+    "rationale": "En TypeScript/JavaScript, un appel `new` renvoie toujours implicitement la nouvelle instance. Lever une exception (`throw`) est le seul moyen d'interrompre l'instanciation et d'empêcher un objet corrompu d'exister en mémoire."
+  },
+  {
+    "number": 4,
+    "category": "Déroulement de la Pile (Stack Unwinding)",
+    "question": "Que se passe-t-il lors du déroulement de la pile (*stack unwinding*) lorsqu'une exception est déclenchée dans une méthode ?",
+    "hint": "Considérez le comportement du moteur d'exécution lorsque la fonction courante ne possède pas de bloc `catch`.",
+    "options": [
+      {"label": "A", "text": "Toutes les variables locales des fonctions dépilées sont conservées en mémoire globale pour analyse ultérieure.", "isCorrect": false, "rationale": "Lorsqu'une fonction est dépilée sans bloc `catch`, son contexte d'exécution et ses variables locales sont nettoyés par le moteur."},
+      {"label": "B", "text": "La méthode courante termine son exécution jusqu'à la dernière ligne avant de transmettre l'avertissement.", "isCorrect": false, "rationale": "Dès qu'un `throw` est exécuté, les lignes suivantes de la méthode sont immédiatement court-circuitées."},
+      {"label": "C", "text": "Le programme redémarre immédiatement à partir de la fonction principale pour réinitialiser la mémoire.", "isCorrect": false, "rationale": "Le déroulement de pile cherche un intercepteur local ou parent sans redémarrer l'ensemble de l'application."},
+      {"label": "D", "text": "L'exécution nominale est suspendue et le moteur dépile successivement les fonctions appelantes jusqu'à rencontrer un bloc `catch`.", "isCorrect": true, "rationale": "Le runtime nettoie les cadres de pile et remonte l'arborescence des appels jusqu'à trouver un gestionnaire d'exception approprié."}
+    ],
+    "answer": "D",
+    "rationale": "Le déroulement de la pile (stack unwinding) interrompt le flux nominal et dépile successivement chaque cadre de fonction (frame) jusqu'à trouver un bloc `catch` capable d'intercepter l'exception."
+  },
+  {
+    "number": 5,
+    "category": "Exceptions Non Interceptées",
+    "question": "Quelle est la conséquence directe d'une exception non interceptée (*Unhandled Exception*) dans une application serveur Node.js ?",
+    "hint": "Pensez au comportement par défaut d'un processus serveur lorsqu'une erreur critique atteint le sommet de la pile d'appels.",
+    "options": [
+      {"label": "A", "text": "L'exception est ignorée et le thread continue son exécution sur l'instruction suivante.", "isCorrect": false, "rationale": "Une exception non gérée interrompt définitivement le flux nominal et ne peut pas être simplement ignorée par le runtime."},
+      {"label": "B", "text": "Le processus Node.js s'arrête brutalement, entraînant le crash de l'application.", "isCorrect": true, "rationale": "Si la pile est entièrement déroulée jusqu'à la racine sans rencontrer de bloc `catch`, le processus Node.js prend fin prématurément."},
+      {"label": "C", "text": "Le serveur convertit automatiquement l'erreur en réponse HTTP 200 avec un message d'avertissement.", "isCorrect": false, "rationale": "Sans gestionnaire d'erreur configuré, le serveur ne peut pas construire une réponse HTTP structurée et s'arrête."},
+      {"label": "D", "text": "Le moteur réexécute automatiquement la méthode fautive trois fois avant d'abandonner.", "isCorrect": false, "rationale": "Le moteur d'exécution ne retente pas spontanément les opérations ayant levé une exception synchrone."}
+    ],
+    "answer": "B",
+    "rationale": "Si une exception remonte jusqu'au sommet de la pile sans aucun gestionnaire, Node.js émet un événement `uncaughtException` et termine immédiatement le processus (crash) afin d'éviter qu'il tourne dans un état imprévisible et corrompu."
+  },
+  {
+    "number": 6,
+    "category": "Structure Try / Catch / Finally",
+    "question": "Quelles affirmations décrivent correctement le comportement de la clause `finally` dans une structure `try / catch / finally` ?",
+    "hint": "Pensez aux garanties d'exécution offertes par le bloc `finally` en cas de sortie prématurée ou d'échec.",
+    "options": [
+      {"label": "A", "text": "Le bloc `finally` remplace le bloc `catch` en capturant automatiquement toutes les erreurs silencieuses.", "isCorrect": false, "rationale": "Le bloc `finally` ne reçoit pas l'objet erreur et ne sert pas à traiter l'anomalie, mais à libérer les ressources."},
+      {"label": "B", "text": "Le bloc `finally` s'exécute même si le bloc `try` ou le bloc `catch` contient une instruction `return` anticipée.", "isCorrect": true, "rationale": "Le runtime intercepte les retours prématurés pour exécuter impérativement le bloc `finally` avant de rendre la main à l'appelant."},
+      {"label": "C", "text": "Le bloc `finally` s'exécute toujours, que le bloc `try` réussisse ou qu'une exception soit levée.", "isCorrect": true, "rationale": "Cette garantie d'exécution inconditionnelle assure que la logique de nettoyage sera appliquée dans tous les scénarios."},
+      {"label": "D", "text": "Le bloc `finally` ne s'exécute que si aucune exception n'a été interceptée par le bloc `catch`.", "isCorrect": false, "rationale": "Le bloc `finally` s'exécute peu importe si une exception a été levée, capturée ou ignorée."}
+    ],
+    "answer": "B ou C",
+    "rationale": "La clause `finally` s'exécute de manière inconditionnelle : que le code réussisse, lève une exception ou déclenche un `return` anticipé. C'est l'emplacement dédié à la libération des ressources (fermeture de fichiers, sockets, etc.)."
+  },
+  {
+    "number": 7,
+    "category": "Anti-Patterns & Contrôle du Flux",
+    "question": "Pourquoi l'insertion d'une instruction `return` à l'intérieur d'un bloc `finally` est-elle considérée comme un anti-pattern dangereux ?",
+    "hint": "Examinez ce qui arrive à l'exception ou à la valeur retournée dans le `try` lorsque `finally` décide d'exécuter son propre `return`.",
+    "options": [
+      {"label": "A", "text": "Elle déclenche une erreur de compilation irrécupérable dans les projets TypeScript stricts.", "isCorrect": false, "rationale": "TypeScript autorise la syntaxe mais ne prévient pas automatiquement les conséquences sémantiques dévastatrices de cet anti-pattern."},
+      {"label": "B", "text": "Elle provoque la destruction immédiate de l'instance d'objet courante en mémoire vive.", "isCorrect": false, "rationale": "Mettre un `return` dans `finally` affecte le flux de contrôle de la fonction, pas la durée de vie des objets en mémoire."},
+      {"label": "C", "text": "Elle écrase et annule silencieusement tout `return` ou toute exception levée dans les blocs `try` ou `catch` précédents.", "isCorrect": true, "rationale": "Un `return` dans `finally` masque les erreurs et les valeurs de retour légitimes produites plus haut, rendant le débogage extrêmement difficile."},
+      {"label": "D", "text": "Elle oblige le moteur à réexécuter le bloc `try` une seconde fois.", "isCorrect": false, "rationale": "Le bloc `try` n'est jamais réexécuté suite à l'achèvement du bloc `finally`."}
+    ],
+    "answer": "C",
+    "rationale": "Un `return` à l'intérieur de `finally` court-circuite le déroulement normal de l'exception : toute erreur levée dans le `try` est silencieusement avalée et remplacée par la valeur de retour du `finally`."
+  },
+  {
+    "number": 8,
+    "category": "Classe Native Error",
+    "question": "Quelles sont les propriétés standards fournies par une instance de la classe native `Error` en JavaScript / TypeScript ?",
+    "hint": "Identifiez les caractéristiques natives qu'un objet `new Error('texte')` possède dès son instanciation.",
+    "options": [
+      {"label": "A", "text": "`stack` : une chaîne retraçant la pile d'appels au moment de l'instanciation.", "isCorrect": true, "rationale": "Elle capture l'historique des fonctions, fichiers et lignes traversés lors de la création de l'exception."},
+      {"label": "B", "text": "`name` : une chaîne identifiant le type d'erreur.", "isCorrect": true, "rationale": "Cette propriété contient par défaut le nom de la classe d'erreur (ex. 'Error' ou 'TypeError')."},
+      {"label": "C", "text": "`message` : une description textuelle du problème passée au constructeur.", "isCorrect": true, "rationale": "Elle fournit une explication lisible par un humain sur la cause de l'anomalie."},
+      {"label": "D", "text": "`httpStatus` : un nombre représentant le code d'état HTTP correspondant.", "isCorrect": false, "rationale": "La classe native `Error` ne contient pas de concept lié au protocole HTTP ; cette propriété doit être ajoutée dans une classe sur-mesure."}
+    ],
+    "answer": "A, B ou C",
+    "rationale": "Les trois attributs standards d'une instance `Error` sont `name` (identifiant de classe), `message` (texte explicatif) et `stack` (trace de pile d'appels). La propriété `httpStatus` relève d'une classe d'application personnalisée."
+  },
+  {
+    "number": 9,
+    "category": "Hiérarchie Native des Erreurs",
+    "question": "Quelle classe d'erreur native du moteur JavaScript est automatiquement levée lors d'une tentative d'accès à une propriété sur une valeur `null` ou `undefined` ?",
+    "hint": "Pensez au type d'erreur qui signale une incompatibilité de type au moment d'utiliser un membre.",
+    "options": [
+      {"label": "A", "text": "TypeError", "isCorrect": true, "rationale": "Le moteur lève une `TypeError` lorsque le type d'une valeur est incompatible avec l'opération tentée (comme déréférencer `null`)."},
+      {"label": "B", "text": "ReferenceError", "isCorrect": false, "rationale": "Une `ReferenceError` survient lors de l'accès à une variable qui n'a jamais été déclarée dans la portée courante."},
+      {"label": "C", "text": "RangeError", "isCorrect": false, "rationale": "Une `RangeError` est émise lorsqu'une valeur numérique dépasse les limites autorisées (ex. taille de tableau négative)."},
+      {"label": "D", "text": "SyntaxError", "isCorrect": false, "rationale": "Une `SyntaxError` se produit lors de l'analyse d'un code ou d'une chaîne (comme `JSON.parse`) mal structurée."}
+    ],
+    "answer": "A",
+    "rationale": "Une `TypeError` se produit lorsqu'une opération est effectuée sur une valeur d'un type inattendu (ex. accéder à une propriété ou invoquer `null` ou `undefined`)."
+  },
+  {
+    "number": 10,
+    "category": "Chaînage d'Erreurs (ES2022)",
+    "question": "Quel est l'intérêt principal de l'option `{ cause: errOriginal }` introduite dans le constructeur de la classe `Error` (ES2022+) ?",
+    "hint": "Considérez le besoin d'afficher un message compréhensible à l'utilisateur tout en conservant le détail technique pour la maintenance.",
+    "options": [
+      {"label": "A", "text": "Elle convertit automatiquement l'objet erreur en une chaîne JSON prête pour un envoi HTTP.", "isCorrect": false, "rationale": "Elle stocke une référence d'objet directe et ne réalise aucune sérialisation automatique."},
+      {"label": "B", "text": "Elle permet de lier une exception métier de haut niveau à l'erreur technique initiale sans perdre la traçabilité d'origine.", "isCorrect": true, "rationale": "La propriété `cause` préserve l'exception sous-jacente pour le débogage tout en offrant un message clair adapté aux couches supérieures."},
+      {"label": "C", "text": "Elle force le navigateur à retenter automatiquement la requête réseau qui a échoué.", "isCorrect": false, "rationale": "L'option `cause` sert uniquement à la structuration des données d'erreur et ne modifie pas le comportement d'exécution."},
+      {"label": "D", "text": "Elle efface la propriété `stack` pour alléger l'empreinte mémoire des logs.", "isCorrect": false, "rationale": "Au contraire, elle conserve la trace de pile initiale accessible via `error.cause.stack`."}
+    ],
+    "answer": "B",
+    "rationale": "L'option `{ cause: err }` permet d'encapsuler (wrap) une erreur technique de bas niveau dans une erreur métier explicite sans rompre la chaîne causale ni perdre la trace d'origine (`stack trace`)."
+  },
+  {
+    "number": 11,
+    "category": "Typage Strict TypeScript",
+    "question": "En TypeScript strict, pourquoi l'écriture `catch (error: any)` est-elle considérée comme un piège dangereux ?",
+    "hint": "Rappelez-vous qu'un mot-clé `throw` peut être suivi par un nombre, une chaîne ou même `null`.",
+    "options": [
+      {"label": "A", "text": "Parce que le type `any` consomme deux fois plus de mémoire vive sur le serveur Node.js.", "isCorrect": false, "rationale": "Les annotations de type TypeScript sont effacées à la compilation et n'ont aucun impact sur la mémoire au runtime."},
+      {"label": "B", "text": "Parce que TypeScript interdit formellement le mot-clé `any` dans toutes les clauses de garde.", "isCorrect": false, "rationale": "TypeScript autorise `any` par défaut sauf si le mode strict avec `useUnknownInCatchVariables` exige `unknown` dans les blocs `catch`."},
+      {"label": "C", "text": "Parce qu'en JavaScript n'importe quelle valeur peut être levée (string, number, null), et accéder aveuglément à `error.message` peut déclencher un second crash.", "isCorrect": true, "rationale": "Le type `any` désactive la vérification du compilateur ; si l'élément levé est une simple chaîne ou `null`, tenter de lire `error.message` provoque une nouvelle exception au cœur du gestionnaire d'erreur."},
+      {"label": "D", "text": "Parce qu'utiliser `any` empêche l'exécution du bloc `finally` rattaché.", "isCorrect": false, "rationale": "Le typage des variables de capture n'a aucune influence sur le mécanisme d'exécution du bloc `finally`."}
+    ],
+    "answer": "C",
+    "rationale": "JavaScript permet de lever n'importe quoi (`throw 'erreur'`, `throw 404`, `throw null`). Avec `any`, le compilateur n'alerte pas : si l'erreur n'est pas un objet avec une propriété `message`, le code plante dans le gestionnaire même."
+  },
+  {
+    "number": 12,
+    "category": "Opérateur instanceof & Type Narrowing",
+    "question": "Quel est le rôle de l'opérateur `instanceof` lorsqu'il est utilisé dans un bloc `catch (error: unknown)` ?",
+    "hint": "Considérez comment TypeScript garantit l'accès sécurisé aux propriétés d'une variable au départ typée `unknown`.",
+    "options": [
+      {"label": "A", "text": "Il intercepte l'exception avant qu'elle n'atteigne le bloc `catch` parent.", "isCorrect": false, "rationale": "L'évaluation se fait à l'intérieur du bloc `catch` une fois l'exception déjà interceptée."},
+      {"label": "B", "text": "Il transforme automatiquement une chaîne primitive levée en un objet héritant de `Error`.", "isCorrect": false, "rationale": "`instanceof` est une instruction de vérification conditionnelle, pas un mécanisme de conversion de type."},
+      {"label": "C", "text": "Il compare la chaîne du message d'erreur avec le nom de la classe au moment de la compilation.", "isCorrect": false, "rationale": "`instanceof` est un opérateur exécuté au runtime qui évalue le prototype, et non une comparaison textuelle à la compilation."},
+      {"label": "D", "text": "Il contrôle la chaîne de prototypes au runtime, permettant à TypeScript de réduire le type (`narrowing`) vers la classe d'erreur identifiée.", "isCorrect": true, "rationale": "L'instruction `if (error instanceof MonErreur)` valide dynamiquement la classe et permet à TypeScript de débloquer l'autocomplétion sécurisée des membres de cette classe."}
+    ],
+    "answer": "D",
+    "rationale": "Grâce au rétrécissement de type (*type narrowing*), l'opérateur `instanceof` vérifie la classe au runtime et permet à TypeScript de savoir que la variable possède les attributs spécifiques de cette sous-classe dans le bloc conditionnel."
+  },
+  {
+    "number": 13,
+    "category": "Exceptions Métier & Résilience",
+    "question": "Pourquoi le fait de lever des erreurs génériques sous forme de texte brut (`throw new Error(\"Créneau déjà réservé\")`) est-il déconseillé pour la logique métier ?",
+    "hint": "Pensez aux conséquences d'une modification du texte de l'erreur ou de sa traduction sur les conditions `if (error.message.includes(...))`.",
+    "options": [
+      {"label": "A", "text": "La classe native `Error` ne capture pas la pile d'appels (`stack trace`) lors de son instanciation.", "isCorrect": false, "rationale": "La classe native `Error` capture toujours la trace de pile lors du `new Error()`, quel que soit son message."},
+      {"label": "B", "text": "L'instruction `throw` refuse de prendre en argument des instances de la classe de base `Error`.", "isCorrect": false, "rationale": "`throw` accepte n'importe quel objet, y compris les instances de la classe `Error` de base."},
+      {"label": "C", "text": "Le filtrage basé sur le texte du message rend la logique de gestion des erreurs incompatible avec la traduction et l'internationalisation (i18n).", "isCorrect": true, "rationale": "Si l'application est traduite dans une autre langue, la recherche de sous-chaînes spécifiques échouera systématiquement."},
+      {"label": "D", "text": "Le code interceptant l'erreur devient dépendant de sous-chaînes de caractères, rendant l'application fragile au moindre changement de libellé.", "isCorrect": true, "rationale": "Une simple correction orthographique dans le texte du message risque de casser les tests `error.message.includes(...)` de l'application."}
+    ],
+    "answer": "C ou D",
+    "rationale": "Vérifier le texte d'un message (`error.message.includes(...)`) est fragile, sensible aux fautes de frappe et incompatible avec l'internationalisation. Les classes d'erreurs dédiées permettent un contrôle propre via `instanceof`."
+  },
+  {
+    "number": 14,
+    "category": "Chaîne de Prototypes (Héritage)",
+    "question": "Dans le constructeur d'une classe d'exception personnalisée étendant `Error`, quel est l'objectif de l'instruction `Object.setPrototypeOf(this, new.target.prototype)` ?",
+    "hint": "Réfléchissez au comportement de l'opérateur `instanceof` lorsque du code TypeScript héritant de `Error` est transpilé vers des versions ES antérieures.",
+    "options": [
+      {"label": "A", "text": "Elle restaure la chaîne de prototypes de l'instance pour garantir le bon fonctionnement de `instanceof` lors de la transpilation.", "isCorrect": true, "rationale": "Lors de la compilation vers des cibles JavaScript anciennes (ex. ES5), la chaîne de prototypes lors de l'extension de classes natives comme `Error` peut être rompue ; cette ligne rétablit le comportement attendu."},
+      {"label": "B", "text": "Elle réinitialise la mémoire attribuée à la propriété `stack` pour optimiser les performances.", "isCorrect": false, "rationale": "Cette méthode n'a pas d'effet sur la capture ou le nettoyage de la trace de pile."},
+      {"label": "C", "text": "Elle empêche l'instanciation de la classe d'erreur si les paramètres fournis sont invalides.", "isCorrect": false, "rationale": "C'est le rôle de la logique interne du constructeur (ou des validations), pas de la définition du prototype."},
+      {"label": "D", "text": "Elle transforme automatiquement la classe fille en classe abstraite non instanciable.", "isCorrect": false, "rationale": "La déclaration `abstract` au niveau de TypeScript est la seule façon de définir une classe abstraite."}
+    ],
+    "answer": "A",
+    "rationale": "Lors de la transpilation vers d'anciennes versions ECMAScript (ES5), l'héritage direct des constructeurs intégrés comme `Error` brise la chaîne prototypale. `Object.setPrototypeOf` rétablit la chaîne afin que `instanceof` fonctionne sans faille."
+  },
+  {
+    "number": 15,
+    "category": "Identité de Classe & Logs",
+    "question": "Lors de la création d'une exception personnalisée `class ReservationError extends AppError`, pourquoi est-il recommandé d'inclure `this.name = this.constructor.name` dans le constructeur ?",
+    "hint": "Pensez à ce qui s'affiche dans la console lorsque vous imprimez le nom d'une instance d'erreur fille si cette ligne est omise.",
+    "options": [
+      {"label": "A", "text": "Pour forcer le compilateur à générer automatiquement un code HTTP 500.", "isCorrect": false, "rationale": "L'affectation de `this.name` modifie uniquement l'identifiant textuel de la classe, pas les statuts HTTP."},
+      {"label": "B", "text": "Pour empêcher le modificateur `readonly` de bloquer la lecture du message d'erreur.", "isCorrect": false, "rationale": "`readonly` concerne l'immutabilité des propriétés et n'a pas de lien avec le nom du constructeur."},
+      {"label": "C", "text": "Pour éviter que la propriété `name` ne conserve la valeur générique `\"Error\"` dans les traces de la console.", "isCorrect": true, "rationale": "Par défaut, `super(message)` assigne `\"Error\"` à `this.name` ; réaffecter `this.constructor.name` garantit que le nom de la classe concrète apparaît dans les logs."},
+      {"label": "D", "text": "Pour rendre la méthode `super()` optionnelle dans les sous-classes.", "isCorrect": false, "rationale": "L'appel à `super()` reste obligatoire dans tous les constructeurs de classes dérivées en POO."}
+    ],
+    "answer": "C",
+    "rationale": "Par défaut, le constructeur natif `Error` fixe `this.name = 'Error'`. En affectant `this.constructor.name`, l'erreur affiche explicitement son nom de classe réel (ex. `ReservationError: Créneau indisponible`) dans la console et les logs."
+  },
+  {
+    "number": 16,
+    "category": "Architecture Socle (AppError)",
+    "question": "Dans une architecture orientée objet, quelles propriétés est-il judicieux d'ajouter à une classe abstraite socle `AppError extends Error` ?",
+    "hint": "Sélectionnez les métadonnées utiles au diagnostic métier ou technique, en excluant toute dépendance envers la couche de présentation graphique.",
+    "options": [
+      {"label": "A", "text": "Une propriété `httpStatus: number` associant l'erreur métier à un code de réponse HTTP.", "isCorrect": true, "rationale": "Fournir un statut HTTP par défaut permet aux API ou services d'associer directement l'erreur métier à un code de statut adapté."},
+      {"label": "B", "text": "Une propriété `timestamp: Date` capturant l'instant exact de survenue de l'incident.", "isCorrect": true, "rationale": "Horodater l'erreur au moment de son instanciation facilite le diagnostic et le suivi dans les outils de journalisation."},
+      {"label": "C", "text": "Une propriété `code: string` représentant un identifiant d'erreur constant.", "isCorrect": true, "rationale": "Un code constant (ex. 'ERR_SLOT_UNAVAILABLE') offre une référence stable pour les tests et la logique applicative."},
+      {"label": "D", "text": "Une méthode `renderModalUI()` contenant du code HTML pour afficher l'alerte à l'écran.", "isCorrect": false, "rationale": "Mélanger du code de rendu d'interface graphique au sein d'une classe d'exception viole la séparation des responsabilités."}
+    ],
+    "answer": "A, B ou C",
+    "rationale": "Une classe socle `AppError` enrichit l'exception avec des métadonnées comme `code` (identifiant constant), `httpStatus` et `timestamp`, tout en évitant toute adhérence à l'interface graphique (séparation stricte des responsabilités)."
+  },
+  {
+    "number": 17,
+    "category": "Hiérarchie & Ordonnancement",
+    "question": "Lorsque l'on traite des exceptions dérivées à l'aide de plusieurs clauses `else if (error instanceof ...)` dans un bloc `catch`, dans quel ordre faut-il placer les tests ?",
+    "hint": "Rappelez-vous qu'une instance de `SlotUnavailableError` vérifie également `instanceof ReservationError`.",
+    "options": [
+      {"label": "A", "text": "Du type le plus spécifique (sous-classe) au type le plus général (classe mère).", "isCorrect": true, "rationale": "Placer les classes mères en premier intercepterait toutes les sous-classes avant que leurs blocs spécifiques ne puissent être atteints."},
+      {"label": "B", "text": "L'ordre n'a aucune importance car TypeScript évalue toutes les branches en parallèle.", "isCorrect": false, "rationale": "Les conditions `if / else if` sont évaluées de façon strictement séquentielle au runtime."},
+      {"label": "C", "text": "Par ordre alphabétique des noms de classes d'exception.", "isCorrect": false, "rationale": "L'ordre alphabétique ne tient pas compte des relations d'héritage et peut masquer des sous-classes spécialisées."},
+      {"label": "D", "text": "Du type le plus général (classe mère) au type le plus spécifique (sous-classe).", "isCorrect": false, "rationale": "Cette disposition est un piège : la classe mère validerait la condition `instanceof` pour toutes ses filles, rendant le code des sous-classes inatteignable."}
+    ],
+    "answer": "A",
+    "rationale": "Puisque `instanceof` valide l'ensemble de la chaîne de prototypes montante, tester une classe parente en premier capterait toutes ses classes dérivées, rendant leur traitement spécifique impossible."
+  },
+  {
+    "number": 18,
+    "category": "Règle de Réémission (Rethrow)",
+    "question": "Que doit faire un bloc `catch` si l'exception reçue ne correspond à aucun des types d'exceptions métier attendus dans les conditions `instanceof` ?",
+    "hint": "Réfléchissez à l'attitude à adopter face à un bogue inattendu du système que votre code ne sait pas gérer.",
+    "options": [
+      {"label": "A", "text": "Elle doit être automatiquement convertie en une chaîne de caractères vide.", "isCorrect": false, "rationale": "Convertir l'erreur en chaîne vide détruit le contexte sans informer la pile d'appels."},
+      {"label": "B", "text": "Elle doit être réinitialisée en lui assignant la valeur `null`.", "isCorrect": false, "rationale": "Réassigner la variable ne permet pas de transmettre l'anomalie aux couches supérieures."},
+      {"label": "C", "text": "Elle doit être renvoyée au constructeur de la classe abstraite socle.", "isCorrect": false, "rationale": "On ne peut pas instancier directement une classe abstraite ni lui réexpédier une exception à la volée."},
+      {"label": "D", "text": "Elle doit être réémise via `throw error` dans la clause `else` pour ne pas masquer un bogue imprévu.", "isCorrect": true, "rationale": "S'il s'agit d'une erreur inattendue (ex. `TypeError`), l'étouffer empêcherait son traitement et masquerait des dysfonctionnements du code."}
+    ],
+    "answer": "D",
+    "rationale": "Un bloc `catch` ne doit intercepter que ce qu'il est capable de traiter. Toute exception inconnue doit obligatoirement être relancée (`throw error`) dans une branche `else` finale pour être traitée plus haut."
+  },
+  {
+    "number": 19,
+    "category": "Règle des 3 Étages (Étage 1)",
+    "question": "Dans le cadre de la « Règle des Trois Étages », quelle est la responsabilité exclusive de l'Étage 1 (Domaine / Entités POO) ?",
+    "hint": "Pensez au rôle des classes modèles et constructeurs qui protègent leurs invariants d'état.",
+    "options": [
+      {"label": "A", "text": "Intercepter les erreurs HTTP de bas niveau pour les convertir en signaux réactifs d'affichage.", "isCorrect": false, "rationale": "La manipulation des requêtes HTTP et des signaux UI relève des services applicatifs et de la couche de présentation."},
+      {"label": "B", "text": "Intercepter les erreurs de base de données pour retenter la requête trois fois.", "isCorrect": false, "rationale": "La logique d'infrastructure ou d'orchestration appartient à l'étage des services, pas au domaine purement métier."},
+      {"label": "C", "text": "Valider les invariants purs et lever immédiatement une exception (`throw`) si un état est invalide, sans utiliser de `try / catch`.", "isCorrect": true, "rationale": "Le domaine doit garantir l'intégrité de ses objets en levant des erreurs dès qu'une règle est violée, sans chercher à intercepter ses propres fautes."},
+      {"label": "D", "text": "Afficher une boîte de dialogue d'erreur à l'utilisateur.", "isCorrect": false, "rationale": "Le domaine métier est totalement découplé du DOM et de l'interface graphique."}
+    ],
+    "answer": "C",
+    "rationale": "L'Étage 1 (Domaine / Modèle) est le gardien des règles métier et des invariants d'état. Il valide et lève (`throw`) sans jamais poser de `try / catch`."
+  },
+  {
+    "number": 20,
+    "category": "Règle des 3 Étages (Étage 2)",
+    "question": "Quel est le rôle principal d'un service applicatif (Étage 2) lorsqu'une erreur technique (comme un statut HTTP 409) survient lors d'un appel réseau ?",
+    "hint": "Considérez le concept d'englobement (*error wrapping*) permettant de masquer les détails d'infrastructure à l'UI.",
+    "options": [
+      {"label": "A", "text": "Recompiler le composant Angular pour réinitialiser les formulaires.", "isCorrect": false, "rationale": "Un service applicatif ne manipule pas la recompilation des composants."},
+      {"label": "B", "text": "Intercepter l'erreur technique brute et l'englober (*error wrapping*) dans une exception métier explicite.", "isCorrect": true, "rationale": "Le service traduit l'incident d'infrastructure (ex. HttpErrorResponse 409) en un concept du domaine (ex. `SlotUnavailableError`) avant de le propager."},
+      {"label": "C", "text": "Ignorer l'erreur pour s'assurer que la méthode renvoie toujours une valeur indéfinie.", "isCorrect": false, "rationale": "Ignorer les erreurs techniques empêche la couche UI de réagir correctement aux échecs."},
+      {"label": "D", "text": "Modifier directement les éléments du DOM pour afficher un bandeau d'alerte rouge.", "isCorrect": false, "rationale": "L'affichage graphique est sous la responsabilité exclusive des composants de présentation (Étage 3)."}
+    ],
+    "answer": "B",
+    "rationale": "L'Étage 2 (Services) fait le pont entre le monde technique et le domaine. Il intercepte les erreurs brutes d'infrastructure et les traduit (wrapping) en exceptions métier intelligibles pour l'UI."
+  },
+  {
+    "number": 21,
+    "category": "Règle des 3 Étages (Étage 3)",
+    "question": "Selon la Règle des Trois Étages, quelle est la responsabilité du composant de présentation (Étage 3 / UI) lors du traitement d'une exception ?",
+    "hint": "Pensez au rôle de l'interface graphique face à l'utilisateur lorsqu'une opération échoue.",
+    "options": [
+      {"label": "A", "text": "Créer une sous-classe de `HttpErrorResponse` pour chaque bouton du formulaire.", "isCorrect": false, "rationale": "Le composant ne doit pas manipuler des erreurs HTTP bas niveau mais des exceptions métier abstraites."},
+      {"label": "B", "text": "Relancer l'exception vers le navigateur pour qu'elle s'affiche dans la console en rouge.", "isCorrect": false, "rationale": "Laisser fuiter l'exception dans le navigateur est un signe de non-résilience de l'interface utilisateur."},
+      {"label": "C", "text": "Poser le bloc `try / catch / finally`, intercepter l'exception métier et mettre à jour l'état réactif (signal) pour informer l'utilisateur sans faire planter l'UI.", "isCorrect": true, "rationale": "Le composant d'interface capture l'exception terminale pour offrir un retour visuel clair tout en préservant la stabilité de l'application."},
+      {"label": "D", "text": "Valider les préconditions de la base de données avant chaque appel de méthode.", "isCorrect": false, "rationale": "La validation des règles de persistances ou de base de données ne relève pas de la couche de présentation."}
+    ],
+    "answer": "C",
+    "rationale": "L'Étage 3 (UI) est le terminus de l'erreur : il pose le `try / catch / finally`, éteint les états de chargement (loading = false) et notifie l'utilisateur via l'interface sans laisser fuiter de crash."
+  },
+  {
+    "number": 22,
+    "category": "Conception Robuste (Quand Lever)",
+    "question": "Dans quelles situations est-il recommandé de lever une exception (`throw`) plutôt que de renvoyer une valeur de retour ordinaire (ou un signal d'état) ?",
+    "hint": "Distinguez les événements réellement exceptionnels ou bloquants des situations normales du flux applicatif (comme une erreur de saisie).",
+    "options": [
+      {"label": "A", "text": "En cas de violation d'un invariant d'objet (ex. solde négatif non autorisé dans un constructeur).", "isCorrect": true, "rationale": "Un objet ne doit pas pouvoir exister dans un état invalide ou corrompu en mémoire."},
+      {"label": "B", "text": "En cas de panne réseau critique ou de déconnexion imprévue de la base de données.", "isCorrect": true, "rationale": "Un incident technique externe imprévisible empêche la méthode d'honorer son contrat et justifie une exception."},
+      {"label": "C", "text": "Lorsqu'un utilisateur omet de remplir un champ obligatoire dans un formulaire de saisie.", "isCorrect": false, "rationale": "Les erreurs de saisie utilisateur sont des événements normaux et prévisibles qui doivent être gérés par des valeurs de retour ou des signaux d'état."},
+      {"label": "D", "text": "Lorsqu'un fichier de configuration indispensable au démarrage de l'application est introuvable.", "isCorrect": true, "rationale": "L'absence d'une ressource vitale empêche le programme de fonctionner et nécessite l'arrêt du flux nominal."}
+    ],
+    "answer": "A, B ou D",
+    "rationale": "Les exceptions doivent être réservées aux situations anormales, imprévues ou violant un invariant (panne réseau, configuration manquante, objet corrompu). Une saisie invalide dans un formulaire est un événement normal et prévisible."
+  },
+  {
+    "number": 23,
+    "category": "Anti-Patterns (Swallow Catch)",
+    "question": "Quel est le risque principal d'un bloc `catch` vide (souvent appelé *swallow catch*) ?",
+    "hint": "Pensez aux conséquences pour l'équipe de maintenance lorsque l'application échoue en silence sans laisser de logs.",
+    "options": [
+      {"label": "A", "text": "Il provoque une erreur de syntaxe immédiate lors de la compilation du code TypeScript.", "isCorrect": false, "rationale": "Un bloc `catch` vide est valide au niveau syntaxique mais constitue un dysfonctionnement sémantique majeur."},
+      {"label": "B", "text": "Il supprime automatiquement les instances de variables déclarées dans le bloc `finally`.", "isCorrect": false, "rationale": "Un `catch` vide n'a pas d'effet sur la portée des variables du bloc `finally`."},
+      {"label": "C", "text": "Il force le processeur à entrer dans une boucle récursive infinie.", "isCorrect": false, "rationale": "Un `catch` vide n'engendre pas de boucle récursive ; il se contente d'ignorer l'erreur et de passer à la ligne suivante."},
+      {"label": "D", "text": "L'échec est étouffé, l'application continue de s'exécuter dans un état corrompu et les bogues deviennent impossibles à diagnostiquer.", "isCorrect": true, "rationale": "En masquant l'exception sans la réparer, journaliser ou relancer, le système poursuit son traitement sur des données invalides sans laisser de trace dans les logs."}
+    ],
+    "answer": "D",
+    "rationale": "Un bloc `catch` vide étouffe silencieusement l'anomalie. L'application continue son exécution dans un état instable ou corrompu, et l'absence de traces rend tout débogage impossible."
+  }
+];
+
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+let userAnswers = [];
+
+// Formate les extraits de code inline, guillemets et blocs de code
+function formatCode(text) {
+  if (!text) return '';
+  
+  // 1. Blocs de code multi-lignes ```ts ... ```
+  let formatted = text.replace(/```(?:ts|typescript|js)?\n([\s\S]*?)```/g, '<pre class="code-box"><code>$1</code></pre>');
+  
+  // 2. Code inline entre backticks `...`
+  formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-term">$1</span>');
+  
+  // 3. Mots-clés isolés entre quotes '...', sans capturer les apostrophes françaises
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])'([a-zA-Z0-9_\-\.\/@\(\)=]+)'/g, '<span class="code-term">$1</span>');
+  
+  const parts = formatted.split(/(<pre[\s\S]*?<\/pre>)/g);
+  return parts.map(part => {
+    if (part.startsWith('<pre')) return part;
+    return part.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  }).join('');
+}
+
+// Initialisation
+function init() {
+  setupTheme();
+  setupKeyboard();
+  renderQuestion(0);
+  
+  document.getElementById('next-btn').addEventListener('click', handleNext);
+  document.getElementById('restart-btn').addEventListener('click', handleRestart);
+  document.getElementById('toggle-review-btn').addEventListener('click', handleToggleReview);
+  document.getElementById('hint-toggle-btn').addEventListener('click', toggleHint);
+}
+
+// Gestion du Thème Clair / Sombre
+function setupTheme() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const text = document.getElementById('theme-text');
+  
+  const saved = localStorage.getItem('poo_quiz_theme_s10') || localStorage.getItem('poo_quiz_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+  
+  toggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('poo_quiz_theme_s10', next);
+    updateThemeUI(next);
+  });
+  
+  function updateThemeUI(t) {
+    if (t === 'dark') {
+      icon.textContent = '☀️';
+      text.textContent = 'Mode clair';
+    } else {
+      icon.textContent = '🌙';
+      text.textContent = 'Mode sombre';
+    }
+  }
+}
+
+// Affichage d'une question
+function renderQuestion(index) {
+  answered = false;
+  const q = quizData[index];
+  
+  // Barre de progression
+  const progressPct = ((index) / quizData.length) * 100;
+  document.getElementById('progress-fill').style.width = progressPct + '%';
+  document.getElementById('progress-q-label').textContent = `Question ${index + 1} sur ${quizData.length}`;
+  document.getElementById('progress-score-pill').textContent = index > 0 
+    ? `Score : ${correctCount}/${index} (${Math.round((correctCount / index) * 100)}%)` 
+    : `Score : 0/0`;
+
+  // Métadonnées
+  document.getElementById('q-index-badge').textContent = `Question ${index < 9 ? '0' + (index + 1) : index + 1}`;
+  document.getElementById('q-category-tag').textContent = q.category || 'Exceptions & POO';
+  document.getElementById('q-counter').textContent = `${index + 1} / ${quizData.length}`;
+
+  // Texte de la question
+  document.getElementById('q-text').innerHTML = formatCode(q.question);
+
+  // Indice
+  const hintBody = document.getElementById('hint-body');
+  hintBody.innerHTML = formatCode(q.hint);
+  hintBody.classList.remove('open');
+  document.getElementById('hint-btn-label').textContent = "Afficher un indice";
+
+  // Carte de feedback & Bouton suivant
+  const fcard = document.getElementById('feedback-card');
+  fcard.style.display = 'none';
+  fcard.className = 'feedback-card';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'none';
+  if (index === quizData.length - 1) {
+    document.getElementById('next-btn-text').textContent = "Voir mes résultats 🎉";
+  } else {
+    document.getElementById('next-btn-text').textContent = "Question suivante";
+  }
+
+  // Options de réponse
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, optIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.type = 'button';
+    btn.dataset.idx = optIdx;
+    btn.innerHTML = `
+      <span class="opt-key-circle">${opt.label}</span>
+      <span class="opt-content">${formatCode(opt.text)}</span>
+      <span class="opt-status-icon"></span>
+    `;
+
+    btn.addEventListener('click', () => selectOption(optIdx));
+    grid.appendChild(btn);
+  });
+}
+
+// Sélection d'une option
+function selectOption(selectedIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizData[currentQ];
+  const selectedOpt = q.options[selectedIdx];
+  const isCorrect = selectedOpt.isCorrect;
+  userAnswers[currentQ] = selectedIdx;
+
+  if (isCorrect) {
+    correctCount++;
+  }
+
+  const optionBtns = document.querySelectorAll('.option-btn');
+  optionBtns.forEach(btn => btn.disabled = true);
+
+  const selectedBtn = optionBtns[selectedIdx];
+  const selectedStatus = selectedBtn.querySelector('.opt-status-icon');
+  
+  if (isCorrect) {
+    selectedBtn.classList.add('selected-correct');
+    selectedStatus.textContent = '✓';
+
+    // Révéler les autres bonnes réponses éventuelles en pointillé
+    optionBtns.forEach((btn, idx) => {
+      if (idx !== selectedIdx && q.options[idx].isCorrect) {
+        btn.classList.add('revealed-correct');
+        btn.querySelector('.opt-status-icon').textContent = '✓';
+      }
+    });
+  } else {
+    selectedBtn.classList.add('selected-incorrect');
+    selectedStatus.textContent = '✕';
+
+    // Révéler toutes les bonnes réponses
+    optionBtns.forEach((btn, idx) => {
+      if (q.options[idx].isCorrect) {
+        btn.classList.add('revealed-correct');
+        btn.querySelector('.opt-status-icon').textContent = '✓';
+      }
+    });
+  }
+
+  // Atténuer les options neutres non sélectionnées
+  optionBtns.forEach(btn => {
+    if (!btn.classList.contains('selected-correct') && 
+        !btn.classList.contains('selected-incorrect') && 
+        !btn.classList.contains('revealed-correct')) {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  // Afficher la carte de feedback élégante
+  const fcard = document.getElementById('feedback-card');
+  const fheader = document.getElementById('feedback-header');
+  const fbody = document.getElementById('feedback-body');
+
+  fcard.style.display = 'block';
+
+  const correctLabels = q.options.filter(o => o.isCorrect).map(o => o.label).join(', ');
+
+  let specificNote = selectedOpt.rationale 
+    ? `<div style="margin-bottom: 8px;"><strong>Votre choix (${selectedOpt.label}) :</strong> ${formatCode(selectedOpt.rationale)}</div>` 
+    : '';
+
+  if (isCorrect) {
+    fcard.className = 'feedback-card correct';
+    fheader.innerHTML = '<span>✓</span> <span>Excellente réponse !</span>';
+    fbody.innerHTML = `${specificNote}<div><strong>Explication :</strong> ${formatCode(q.rationale)}</div>`;
+  } else {
+    fcard.className = 'feedback-card incorrect';
+    const pluriel = correctLabels.includes(',') ? 'étaient les options' : 'est l\'option';
+    fheader.innerHTML = `<span>✕</span> <span>Ce n'est pas tout à fait ça. La bonne réponse ${pluriel} ${correctLabels}.</span>`;
+    fbody.innerHTML = `${specificNote}<div><strong>Explication :</strong> ${formatCode(q.rationale)}</div>`;
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'flex';
+  nextBtn.focus();
+}
+
+// Bascule de l'indice
+function toggleHint() {
+  const hintBody = document.getElementById('hint-body');
+  const label = document.getElementById('hint-btn-label');
+  hintBody.classList.toggle('open');
+  if (hintBody.classList.contains('open')) {
+    label.textContent = "Masquer l'indice";
+  } else {
+    label.textContent = "Afficher un indice";
+  }
+}
+
+// Question suivante ou fin
+function handleNext() {
+  currentQ++;
+  if (currentQ < quizData.length) {
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+// Écran de fin et résultats
+function showResults() {
+  document.getElementById('question-card').style.display = 'none';
+  document.getElementById('progress-container').style.display = 'none';
+  document.getElementById('results-card').style.display = 'block';
+
+  const total = quizData.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  const stroke = document.getElementById('circle-score-stroke');
+  stroke.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+  document.getElementById('score-percent-text').textContent = `${pct}%`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-incorrect').textContent = total - correctCount;
+  document.getElementById('stat-total').textContent = total;
+
+  const msgEl = document.getElementById('results-message');
+  const iconEl = document.getElementById('results-icon');
+
+  if (pct >= 90) {
+    iconEl.textContent = '🏆';
+    msgEl.innerHTML = `<strong>Maîtrise remarquable !</strong> Vous maîtrisez parfaitement la mécanique des exceptions, la Règle des Trois Étages, le chaînage d'erreurs et la protection des invariants.`;
+    launchConfetti();
+  } else if (pct >= 75) {
+    iconEl.textContent = '🚀';
+    msgEl.innerHTML = `<strong>Très bon score !</strong> Les bases du <span class="code-term">try / catch / finally</span>, du <span class="code-term">stack unwinding</span> et du narrowing avec <span class="code-term">instanceof</span> sont bien assimilées. Consultez le corrigé pour consolider les subtilités.`;
+    launchConfetti();
+  } else if (pct >= 50) {
+    iconEl.textContent = '👍';
+    msgEl.innerHTML = `<strong>Bases en place !</strong> La distinction entre codes sentinelles et exceptions est comprise, mais attention aux pièges sur l'héritage d'Error et la gestion de la clause <span class="code-term">finally</span>.`;
+  } else {
+    iconEl.textContent = '📚';
+    msgEl.innerHTML = `<strong>En apprentissage !</strong> Relisez les notes de cours sur la Règle des Trois Étages et les exceptions typées, puis retentez l'évaluation pour progresser !`;
+  }
+}
+
+// Corrigé interactif complet
+function handleToggleReview() {
+  const container = document.getElementById('review-container');
+  const btn = document.getElementById('toggle-review-btn');
+  const list = document.getElementById('review-list');
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    btn.innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  } else {
+    container.style.display = 'block';
+    btn.innerHTML = '<span>Masquer le corrigé ▴</span>';
+
+    list.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const userIdx = userAnswers[qIdx];
+      const isGood = userIdx !== undefined && q.options[userIdx].isCorrect;
+
+      const card = document.createElement('div');
+      card.className = 'review-item';
+
+      const header = document.createElement('div');
+      header.className = 'review-item-header';
+      header.innerHTML = `
+        <div class="review-item-title">
+          <span>${isGood ? '✅' : '❌'}</span>
+          <span><strong>Q${qIdx + 1}.</strong> ${q.question.replace(/```[\s\S]*?```/g, '[Code]').substring(0, 75)}...</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);">Détails ▾</span>
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'review-item-body';
+
+      let optionsHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
+      q.options.forEach((opt, oIdx) => {
+        const wasUser = oIdx === userIdx;
+        const wasCorrect = opt.isCorrect;
+        let borderCol = 'var(--opt-border)';
+        let bgCol = 'transparent';
+        let badge = '';
+
+        if (wasCorrect) {
+          borderCol = '#10b981';
+          bgCol = 'rgba(16, 185, 129, 0.08)';
+          badge = ' <strong style="color: #10b981;">(Bonne réponse)</strong>';
+        }
+        if (wasUser && !wasCorrect) {
+          borderCol = '#ef4444';
+          bgCol = 'rgba(239, 68, 68, 0.08)';
+          badge = ' <strong style="color: #ef4444;">(Votre choix)</strong>';
+        }
+
+        optionsHtml += `
+          <div style="padding: 10px 14px; border: 1px solid ${borderCol}; background: ${bgCol}; border-radius: 8px; font-size: 13.5px;">
+            <div><strong>${opt.label}.</strong> ${formatCode(opt.text)}${badge}</div>
+            ${opt.rationale ? `<div style="font-size: 12.5px; margin-top: 4px; color: var(--text-dim);">${formatCode(opt.rationale)}</div>` : ''}
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+
+      body.innerHTML = `
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 8px;">${formatCode(q.question)}</div>
+        ${optionsHtml}
+        <div style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #6366f1; font-size: 13px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">Synthèse :</strong> ${formatCode(q.rationale)}
+        </div>
+      `;
+
+      header.addEventListener('click', () => {
+        body.classList.toggle('open');
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+  }
+}
+
+// Recommencer
+function handleRestart() {
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+  userAnswers = [];
+
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('review-container').style.display = 'none';
+  document.getElementById('toggle-review-btn').innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  document.getElementById('progress-container').style.display = 'block';
+  document.getElementById('question-card').style.display = 'block';
+
+  renderQuestion(0);
+}
+
+// Raccourcis Clavier
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+
+    if (document.getElementById('results-card').style.display === 'block') {
+      if (e.key === 'Enter') handleRestart();
+      return;
+    }
+
+    if (answered) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      return;
+    }
+
+    const q = quizData[currentQ];
+    if (!q) return;
+
+    let targetIdx = -1;
+    if (key === 'A' || key === '1') targetIdx = 0;
+    else if (key === 'B' || key === '2') targetIdx = 1;
+    else if (key === 'C' || key === '3') targetIdx = 2;
+    else if (key === 'D' || key === '4') targetIdx = 3;
+
+    if (targetIdx >= 0 && targetIdx < q.options.length) {
+      e.preventDefault();
+      selectOption(targetIdx);
+    }
+
+    if (key === 'H' || key === 'I') {
+      e.preventDefault();
+      toggleHint();
+    }
+  });
+}
+
+// Animation Confettis
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#3b82f6', '#6366f1', '#8b5cf6', '#10b981', '#fbbf24', '#ec4899'];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.015 + 0.008
+    });
+  }
+
+  let animId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25;
+      p.alpha -= p.decay;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  loop();
+}
+
+// Lancement
+init();
+</script>
+</body>
+</html>
