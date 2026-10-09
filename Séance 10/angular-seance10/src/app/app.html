@@ -1,0 +1,39 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('sentinel-vs-exceptions') {
+          <app-sentinel-vs-exceptions></app-sentinel-vs-exceptions>
+        }
+        @case ('stack-unwinding') {
+          <app-stack-unwinding></app-stack-unwinding>
+        }
+        @case ('try-catch-finally') {
+          <app-try-catch-finally></app-try-catch-finally>
+        }
+        @case ('error-object-strict-typing') {
+          <app-error-object-strict-typing></app-error-object-strict-typing>
+        }
+        @case ('custom-domain-errors') {
+          <app-custom-domain-errors></app-custom-domain-errors>
+        }
+        @case ('filtering-polymorphism') {
+          <app-filtering-polymorphism></app-filtering-polymorphism>
+        }
+        @case ('architectural-strategies') {
+          <app-architectural-strategies></app-architectural-strategies>
+        }
+        @case ('atm-simulator') {
+          <app-atm-simulator></app-atm-simulator>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>
