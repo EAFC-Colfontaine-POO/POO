@@ -1,0 +1,353 @@
+/* Design System : TypeScript & POO Studio — Séance 11 : Principes SOLID (Focus S, O, D) (Dark / Light) */
+
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Couleurs Sémantiques SOLID */
+  --solid-s: #3b82f6; /* Bleu - SRP (Single Responsibility) */
+  --solid-o: #10b981; /* Vert Émeraude - OCP (Open/Closed) */
+  --solid-l: #64748b; /* Slate - LSP (Liskov) */
+  --solid-i: #94a3b8; /* Slate Clair - ISP (Interface Segregation) */
+  --solid-d: #8b5cf6; /* Violet / Indigo - DIP (Dependency Inversion) */
+
+  --accent-rose: #f43f5e;
+  --accent-amber: #f59e0b;
+  --accent-emerald: #10b981;
+  --accent-blue: #3b82f6;
+  --accent-indigo: #6366f1;
+  --accent-purple: #8b5cf6;
+  --accent-cyan: #06b6d4;
+  --accent-slate: #64748b;
+}
+
+/* Thème Sombre (Par défaut) */
+:root, [data-theme="dark"], body.theme-dark {
+  --bg-app: #090d16;
+  --bg-sidebar: #0f1422;
+  --bg-header: #121827;
+  --bg-card: #151e30;
+  --bg-card-hover: #1b263c;
+  --bg-subtle: #1b2438;
+  --bg-code: #0b0f19;
+  --bg-input: #111726;
+
+  --border-color: #24314c;
+  --border-subtle: #192336;
+  --border-focus: #6366f1;
+
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --text-code: #e2e8f0;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
+
+  --badge-bg: rgba(99, 102, 241, 0.18);
+  --badge-text: #a5b4fc;
+
+  --terminal-bg: #090d16;
+  --terminal-header: #111724;
+}
+
+/* Thème Clair */
+[data-theme="light"], body.theme-light {
+  --bg-app: #f4f6fb;
+  --bg-sidebar: #ffffff;
+  --bg-header: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-subtle: #f1f5f9;
+  --bg-code: #1e293b;
+  --bg-input: #ffffff;
+
+  --border-color: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  --border-focus: #6366f1;
+
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #94a3b8;
+  --text-code: #f8fafc;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.08);
+
+  --badge-bg: rgba(99, 102, 241, 0.12);
+  --badge-text: #4f46e5;
+
+  --terminal-bg: #0f172a;
+  --terminal-header: #1e293b;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+code, pre {
+  font-family: var(--font-mono);
+}
+
+/* Scrollbars modernes discrètes */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+/* Badges & Tags */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+
+  &.badge-indigo {
+    background: rgba(99, 102, 241, 0.16);
+    color: #818cf8;
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+  &.badge-rose {
+    background: rgba(244, 63, 94, 0.16);
+    color: #fb7185;
+    border-color: rgba(244, 63, 94, 0.3);
+  }
+  &.badge-emerald, &.badge-success {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+  &.badge-amber, &.badge-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+  &.badge-purple {
+    background: rgba(139, 92, 246, 0.15);
+    color: #c084fc;
+    border-color: rgba(139, 92, 246, 0.3);
+  }
+  &.badge-cyan {
+    background: rgba(6, 182, 212, 0.15);
+    color: #22d3ee;
+    border-color: rgba(6, 182, 212, 0.3);
+  }
+  &.badge-blue {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* Boutons Studio */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: all 0.18s ease-in-out;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #818cf8, #6366f1);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5);
+    transform: translateY(-1px);
+  }
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  font-weight: 500;
+  font-size: 0.875rem;
+  border-radius: 6px;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-card-hover);
+    border-color: var(--border-focus);
+  }
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  border-radius: 6px;
+
+  &:hover {
+    color: var(--text-main);
+    background: var(--bg-subtle);
+  }
+}
+
+/* Card Panel */
+.card-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+  }
+}
+
+/* Module Container standardisé */
+.module-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px 32px;
+  gap: 20px;
+}
+
+.module-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .module-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .module-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #818cf8;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-main);
+  }
+
+  .module-desc {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    max-width: 950px;
+    line-height: 1.5;
+  }
+}
+
+/* Onglets Mode Théorie vs Labo */
+.section-mode-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--bg-card);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  width: fit-content;
+
+  .mode-tab-btn {
+    padding: 7px 18px;
+    border-radius: 6px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+      color: var(--text-main);
+    }
+
+    &.active {
+      background: var(--accent-indigo);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    }
+  }
+}
+
+/* Animations visuelles */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.8);
+  }
+}
+
+@keyframes error-pulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(244, 63, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(244, 63, 94, 0.8);
+  }
+}
