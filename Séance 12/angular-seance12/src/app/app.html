@@ -1,0 +1,30 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('memory-model-identity') {
+          <app-memory-model-identity></app-memory-model-identity>
+        }
+        @case ('business-equality-equals') {
+          <app-business-equality-equals></app-business-equality-equals>
+        }
+        @case ('cloning-shallow-vs-deep') {
+          <app-cloning-shallow-vs-deep></app-cloning-shallow-vs-deep>
+        }
+        @case ('immutability-value-objects') {
+          <app-immutability-value-objects></app-immutability-value-objects>
+        }
+        @case ('angular-signals-memory') {
+          <app-angular-signals-memory></app-angular-signals-memory>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>
