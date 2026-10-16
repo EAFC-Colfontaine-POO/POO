@@ -1,0 +1,38 @@
+{
+  "hash": "f81d7f23",
+  "configHash": "436c82df",
+  "lockfileHash": "3b3b159c",
+  "browserHash": "ec039408",
+  "optimized": {
+    "@angular/core": {
+      "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
+      "file": "@angular_core.js",
+      "fileHash": "ad32a4b2",
+      "needsInterop": false
+    },
+    "@angular/platform-browser": {
+      "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
+      "file": "@angular_platform-browser.js",
+      "fileHash": "563d7119",
+      "needsInterop": false
+    },
+    "@monaco-editor/loader": {
+      "src": "../../../../../../node_modules/@monaco-editor/loader/lib/es/index.js",
+      "file": "@monaco-editor_loader.js",
+      "fileHash": "82a7ea86",
+      "needsInterop": false
+    },
+    "canvas-confetti": {
+      "src": "../../../../../../node_modules/canvas-confetti/dist/confetti.module.mjs",
+      "file": "canvas-confetti.js",
+      "fileHash": "b1c11376",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "core-Bf11ZB2U": {
+      "file": "core-Bf11ZB2U.js",
+      "isDynamicEntry": false
+    }
+  }
+}

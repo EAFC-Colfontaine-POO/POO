@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz POO — Séance 12 : Mémoire des Objets & Immutabilité</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      --bg-page: #090d16;
+      --bg-ambient-1: rgba(49, 120, 198, 0.16);
+      --bg-ambient-2: rgba(124, 58, 237, 0.14);
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --brand-blue: #3178c6;
+      --brand-indigo: #6366f1;
+      --brand-purple: #7c3aed;
+      --brand-gradient: linear-gradient(135deg, #3178c6 0%, #6366f1 50%, #7c3aed 100%);
+      
+      --opt-bg: rgba(255, 255, 255, 0.03);
+      --opt-border: rgba(255, 255, 255, 0.08);
+      --opt-hover-bg: rgba(255, 255, 255, 0.06);
+      --opt-hover-border: rgba(99, 102, 241, 0.45);
+      
+      --correct-bg: rgba(16, 185, 129, 0.12);
+      --correct-border: #10b981;
+      --correct-text: #34d399;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: rgba(239, 68, 68, 0.12);
+      --incorrect-border: #ef4444;
+      --incorrect-text: #f87171;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: rgba(245, 158, 11, 0.08);
+      --hint-border: rgba(245, 158, 11, 0.25);
+      --hint-text: #fbbf24;
+      
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --code-border: rgba(255, 255, 255, 0.12);
+      --code-color: #38bdf8;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8fafc;
+      --bg-ambient-1: rgba(49, 120, 198, 0.08);
+      --bg-ambient-2: rgba(124, 58, 237, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --opt-bg: #ffffff;
+      --opt-border: #e2e8f0;
+      --opt-hover-bg: #f8fafc;
+      --opt-hover-border: #3178c6;
+      
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --correct-text: #065f46;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: #fef2f2;
+      --incorrect-border: #ef4444;
+      --incorrect-text: #991b1b;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: #fffbeb;
+      --hint-border: #fde68a;
+      --hint-text: #92400e;
+      
+      --code-bg: #f1f5f9;
+      --code-border: #cbd5e1;
+      --code-color: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image: 
+        radial-gradient(circle at 12% 10%, var(--bg-ambient-1) 0%, transparent 45%),
+        radial-gradient(circle at 88% 90%, var(--bg-ambient-2) 0%, transparent 45%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-main);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .keyboard-badge {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    @media (min-width: 640px) {
+      .keyboard-badge { display: inline-flex; align-items: center; gap: 6px; }
+    }
+
+    /* Header Hero */
+    .header-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .course-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 9999px;
+      background: rgba(49, 120, 198, 0.12);
+      color: #60a5fa;
+      border: 1px solid rgba(49, 120, 198, 0.3);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #60a5fa;
+      box-shadow: 0 0 10px #60a5fa;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .quiz-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 16px;
+      font-weight: 500;
+    }
+
+    .tags-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-muted);
+    }
+
+    /* Progress section */
+    .progress-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-q-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-score-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .progress-track {
+      background: #e2e8f0;
+    }
+
+    .progress-bar-fill {
+      background: var(--brand-gradient);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(49, 120, 198, 0.5);
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .q-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-index-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #60a5fa;
+      background: rgba(49, 120, 198, 0.12);
+      border: 1px solid rgba(49, 120, 198, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+    }
+
+    .q-category-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .q-text {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text-main);
+      margin-bottom: 22px;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-color);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #38bdf8;
+      overflow-x: auto;
+      text-align: left;
+    }
+    [data-theme="light"] .code-box {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0369a1;
+    }
+
+    /* Hint box */
+    .hint-container {
+      margin-bottom: 22px;
+    }
+
+    .hint-btn {
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      color: var(--hint-text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hint-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .hint-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--hint-text);
+      line-height: 1.5;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .hint-body.open {
+      display: block;
+    }
+
+    /* Options List */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 18px;
+      border: 2px solid var(--opt-border);
+      background: var(--opt-bg);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      position: relative;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--opt-hover-border);
+      background: var(--opt-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .opt-key-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--opt-border);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .opt-content {
+      flex: 1;
+      padding-top: 4px;
+      line-height: 1.5;
+    }
+
+    .opt-status-icon {
+      font-size: 18px;
+      margin-left: 8px;
+      display: none;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    /* Option States */
+    .option-btn.selected-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .option-btn.selected-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.selected-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--incorrect-border) !important;
+      background: var(--incorrect-bg) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+    .option-btn.selected-incorrect .opt-key-circle {
+      background: var(--incorrect-badge-bg);
+      color: var(--incorrect-badge-text);
+    }
+    .option-btn.selected-incorrect .opt-status-icon {
+      display: inline-block;
+      color: var(--incorrect-text);
+    }
+
+    .option-btn.revealed-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      border-style: dashed;
+    }
+    .option-btn.revealed-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.revealed-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.dimmed {
+      opacity: 0.45;
+    }
+
+    /* Feedback Card */
+    .feedback-card {
+      display: none;
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .feedback-card.correct {
+      background: var(--correct-bg);
+      border-left: 4px solid var(--correct-border);
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+      border-right: 1px solid rgba(16, 185, 129, 0.2);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .feedback-card.incorrect {
+      background: var(--incorrect-bg);
+      border-left: 4px solid var(--incorrect-border);
+      border-top: 1px solid rgba(239, 68, 68, 0.2);
+      border-right: 1px solid rgba(239, 68, 68, 0.2);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .feedback-header {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .feedback-card.correct .feedback-header { color: var(--correct-text); }
+    .feedback-card.incorrect .feedback-header { color: var(--incorrect-text); }
+
+    .feedback-body {
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    [data-theme="light"] .feedback-body {
+      color: #334155;
+    }
+
+    /* Action bar */
+    .action-bar {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(49, 120, 198, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(49, 120, 198, 0.55);
+    }
+
+    /* Results Card */
+    .results-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .results-trophy {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .results-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle-wrapper {
+      margin: 24px auto;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-percent-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .results-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .stat-num.good { color: #10b981; }
+    .stat-num.bad { color: #ef4444; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn-secondary {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--opt-hover-bg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Review View */
+    .review-container {
+      display: none;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .review-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-item {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .review-item-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .review-item-title {
+      font-weight: 600;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-item-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--card-border);
+    }
+    .review-item-body.open {
+      display: block;
+      padding-top: 14px;
+    }
+
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="quiz-container">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="keyboard-badge">
+      <span>⌨️ Raccourcis : [A-D] ou [1-4] · [Entrée] · [I]</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Basculer le thème">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-text">Mode clair</span>
+    </button>
+  </div>
+
+  <!-- Header Hero -->
+  <div class="header-hero">
+    <div class="course-badge">
+      <span class="badge-dot"></span>
+      Programmation Orientée Objet · EAFC Colfontaine
+    </div>
+    <h1 class="quiz-title">Séance 12 — Mémoire des Objets & Immutabilité</h1>
+    <p class="quiz-subtitle">Stack vs Heap · Égalité & `equals()` · DDD Value Objects · Copies Profondes & Superficielles · Angular Signals</p>
+    <div class="tags-row">
+      <span class="tag-pill">TypeScript</span>
+      <span class="tag-pill">Stack vs Heap</span>
+      <span class="tag-pill">Égalité & Identité</span>
+      <span class="tag-pill">Clonage & Immutabilité</span>
+      <span class="tag-pill">Angular Signals</span>
+      <span class="tag-pill">23 questions</span>
+    </div>
+
+    <!-- Progress section -->
+    <div class="progress-section" id="progress-container">
+      <div class="progress-header">
+        <span class="progress-q-label" id="progress-q-label">Question 1 sur 23</span>
+        <span class="progress-score-pill" id="progress-score-pill">Score : 0/0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Question Card -->
+  <div class="card" id="question-card">
+    <div class="q-meta-bar">
+      <span class="q-index-badge" id="q-index-badge">Question 01</span>
+      <span class="q-category-tag" id="q-category-tag">Gestion Mémoire</span>
+      <span style="font-size: 12px; color: var(--text-dim);" id="q-counter">1 / 23</span>
+    </div>
+
+    <div class="q-text" id="q-text"></div>
+
+    <div class="hint-container">
+      <button class="hint-btn" id="hint-toggle-btn" type="button">
+        <span>💡</span>
+        <span id="hint-btn-label">Afficher un indice</span>
+      </button>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <!-- Feedback card -->
+    <div class="feedback-card" id="feedback-card">
+      <div class="feedback-header" id="feedback-header"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="next-btn" id="next-btn" style="display: none;">
+        <span id="next-btn-text">Question suivante</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div class="card results-card" id="results-card" style="display: none;">
+    <div class="results-trophy" id="results-icon">🏆</div>
+    <h2 class="results-title" id="results-title">Quiz terminé !</h2>
+    
+    <div class="score-circle-wrapper">
+      <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <path stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path id="circle-score-stroke" stroke="url(#scoreGrad)" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3178c6" />
+            <stop offset="50%" stop-color="#6366f1" />
+            <stop offset="100%" stop-color="#7c3aed" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-percent-val" id="score-percent-text">0%</div>
+    </div>
+
+    <p class="results-message" id="results-message"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num good" id="stat-correct">0</div>
+        <div class="stat-label">Bonnes réponses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-incorrect">0</div>
+        <div class="stat-label">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">23</div>
+        <div class="stat-label">Questions</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="next-btn" id="restart-btn" type="button">
+        <span>🔄 Recommencer le quiz</span>
+      </button>
+      <button class="btn-secondary" id="toggle-review-btn" type="button">
+        <span>📋 Voir le corrigé complet</span>
+      </button>
+    </div>
+
+    <div class="review-container" id="review-container">
+      <div class="review-header">Détail des questions et explications conceptuelles</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  {
+    "number": 1,
+    "category": "Gestion Mémoire (Stack vs Heap)",
+    "question": "Où est stockée la valeur d'une variable typée par une classe lorsque l'on instancie un objet avec le mot-clé `new` en TypeScript ?",
+    "hint": "Pensez à la distinction entre le conteneur dynamique de grande taille et le registre d'adresses rapides.",
+    "options": [
+      {"label": "A", "text": "Les propriétés primitives de l'objet vont dans la Pile (Stack) et les méthodes vont dans le Tas (Heap).", "isCorrect": false},
+      {"label": "B", "text": "L'objet est stocké dans le Tas (Heap), tandis que la Pile (Stack) ne contient aucune trace de la variable.", "isCorrect": false},
+      {"label": "C", "text": "L'intégralité de l'objet et de ses propriétés est directement conservée dans la Pile (Stack).", "isCorrect": false},
+      {"label": "D", "text": "L'adresse mémoire est stockée dans la Pile (Stack), tandis que le contenu de l'objet réside dans le Tas (Heap).", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "La Pile conserve les variables locales et leurs adresses de référence de taille fixe, alors que les structures d'objets dynamiques sont allouées dans le Tas."
+  },
+  {
+    "number": 2,
+    "category": "Identité & Égalité de Référence",
+    "question": "Pourquoi l'expression `new Point2D(10, 20) === new Point2D(10, 20)` retourne-t-elle `false` en TypeScript ?",
+    "hint": "Considérez ce que l'opérateur d'égalité stricte évalue réellement lorsqu'il est appliqué à deux conteneurs d'objets.",
+    "options": [
+      {"label": "A", "text": "Chaque appel au mot-clé `new` alloue une nouvelle adresse mémoire dans le Tas, et `===` compare les adresses de référence.", "isCorrect": true},
+      {"label": "B", "text": "L'un des deux points est automatiquement converti en chaîne de caractères lors de la comparaison.", "isCorrect": false},
+      {"label": "C", "text": "Le compilateur TypeScript ne sait pas comparer les nombres `10` et `20` à l'intérieur d'un constructeur.", "isCorrect": false},
+      {"label": "D", "text": "La classe `Point2D` n'a pas déclaré de méthode de surcharge de l'opérateur `===`.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "L'opérateur d'égalité stricte sur des objets vérifie l'identité de référence en mémoire vive et non l'égalité des valeurs des propriétés internes."
+  },
+  {
+    "number": 3,
+    "category": "Aliasing & Références Partagées",
+    "question": "Soit le code suivant : `const compteBob = compteAlice;`. Si l'on exécute `compteBob.solde -= 400;`, quel est l'effet sur `compteAlice.solde` ?",
+    "hint": "Rappelez-vous la métaphore des deux télécommandes réglées sur le même téléviseur.",
+    "options": [
+      {"label": "A", "text": "Une erreur d'exécution est levée car deux variables ne peuvent pas faire référence au même objet.", "isCorrect": false},
+      {"label": "B", "text": "`compteAlice.solde` devient `undefined` car la propriété a été transférée à `compteBob`.", "isCorrect": false},
+      {"label": "C", "text": "`compteAlice.solde` diminue également de 400 €, car les deux variables pointent vers le même objet en mémoire.", "isCorrect": true},
+      {"label": "D", "text": "`compteAlice.solde` reste inchangé, car `compteBob` est une copie indépendante créée lors de l'affectation.", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "L'affectation d'un objet recopie uniquement son adresse mémoire dans la Pile, créant un alias vers une seule et même instance dans le Tas."
+  },
+  {
+    "number": 4,
+    "category": "Implémentation de `equals()`",
+    "question": "Dans l'anatomie canonique d'une méthode `equals(other: unknown)`, quelle est la première étape d'optimisation à réaliser ?",
+    "hint": "Pensez au raccourci le plus rapide pour déterminer que deux variables désignent le même emplacement physique.",
+    "options": [
+      {"label": "A", "text": "Convertir `other` en chaîne JSON avec `JSON.stringify()` pour comparer le texte généré.", "isCorrect": false},
+      {"label": "B", "text": "Vérifier si `this === other` pour retourner immédiatement `true` en cas d'égalité de référence.", "isCorrect": true},
+      {"label": "C", "text": "Parcourir toutes les propriétés de l'objet avec une boucle `for...in` pour comparer leurs valeurs.", "isCorrect": false},
+      {"label": "D", "text": "Appliquer un cast de type explicite `(other as MyClass)` sans vérification préalable.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Si les deux variables partagent exactement la même adresse mémoire, elles sont nécessairement identiques et évitent des comparaisons de champs coûteuses."
+  },
+  {
+    "number": 5,
+    "category": "Typage & Sécurité (`unknown`)",
+    "question": "Pourquoi est-il recommandé de typer le paramètre de la méthode `equals(other: unknown)` au lieu de `equals(other: any)` ou du type de la classe elle-même ?",
+    "hint": "Réfléchissez à la façon dont TypeScript vous oblige à vérifier l'existence d'une instance avant de manipuler ses membres.",
+    "options": [
+      {"label": "A", "text": "Le type `unknown` force le développeur à effectuer un contrôle de type strict (`instanceof`) avant d'accéder aux propriétés.", "isCorrect": true},
+      {"label": "B", "text": "Le type `any` consomme plus de mémoire dans la Pile que le type `unknown`.", "isCorrect": false},
+      {"label": "C", "text": "Le type `unknown` permet à TypeScript de surcharger automatiquement l'opérateur `===` au moment de la compilation.", "isCorrect": false},
+      {"label": "D", "text": "Si l'on utilise le type de la classe, la méthode ne pourra plus être appelée dans une boucle de recherche sur un tableau.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "TypeScript impose un rétrécissement de type (*type narrowing*) sur `unknown`, ce qui garantit la sécurité contre des valeurs nulles ou de types inattendus."
+  },
+  {
+    "number": 6,
+    "category": "DDD — Entités vs Value Objects",
+    "question": "Selon les principes du Domain-Driven Design (DDD), quelle est la différence fondamentale entre une Entité (Entity) et un Objet-Valeur (Value Object) concernant leur méthode `equals()` ?",
+    "hint": "Posez-vous la question : cet objet est-il défini par son matricule/ID ou par l'ensemble des valeurs qu'il contient ?",
+    "options": [
+      {"label": "A", "text": "Un Value Object possède un identifiant unique en base de données, contrairement à une Entité qui n'en a pas.", "isCorrect": false},
+      {"label": "B", "text": "Une Entité se compare avec l'opérateur `===`, alors qu'un Value Object utilise obligatoirement `JSON.stringify()`.", "isCorrect": false},
+      {"label": "C", "text": "Une Entité se compare principalement via un identifiant unique pérenne (`id`), tandis qu'un Value Object se compare sur la totalité de ses attributs.", "isCorrect": true},
+      {"label": "D", "text": "Une Entité est immuable par nature, alors qu'un Value Object est toujours mutable.", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "L'identité d'une entité persiste même si ses données évoluent, alors qu'un Value Object est défini exclusivement par l'ensemble de ses valeurs."
+  },
+  {
+    "number": 7,
+    "category": "Mathématiques de l'Équivalence",
+    "question": "Quelles sont les quatre lois mathématiques que doit scrupuleusement respecter une relation d'équivalence dans une méthode `equals()` ?",
+    "hint": "Pensez aux règles formelles définissant la logique d'égalité entre éléments d'un ensemble.",
+    "options": [
+      {"label": "A", "text": "Encapsulation, Héritage, Polymorphisme et Abstraction.", "isCorrect": false},
+      {"label": "B", "text": "Associativité, Commutativité, Distributivité et Mutabilité.", "isCorrect": false},
+      {"label": "C", "text": "Single Responsibility, Open/Closed, Liskov Substitution et Dependency Inversion.", "isCorrect": false},
+      {"label": "D", "text": "Réflexivité, Symétrie, Transitivité et Cohérence.", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "Ces quatre propriétés garantissent qu'un objet est égal à lui-même, que l'ordre des comparés importe peu, que l'égalité se transmet et qu'elle reste stable dans le temps."
+  },
+  {
+    "number": 8,
+    "category": "Anti-Patterns (`JSON.stringify`)",
+    "question": "Pourquoi l'utilisation de `JSON.stringify(a) === JSON.stringify(b)` est-elle considérée comme un anti-pattern pour comparer deux objets ?",
+    "hint": "Considérez ce qui arrive à l'ordre des clés d'un objet et aux méthodes de classe lors de la conversion en texte JSON.",
+    "options": [
+      {"label": "A", "text": "La méthode `JSON.stringify()` ne fonctionne pas sur les objets contenant plus de deux propriétés.", "isCorrect": false},
+      {"label": "B", "text": "L'ordre de déclaration des clés n'est pas garanti et les types riches comme `Date` ou les méthodes sont altérés ou perdus.", "isCorrect": true},
+      {"label": "C", "text": "Cette méthode compare uniquement les adresses de référence dans la Pile.", "isCorrect": false},
+      {"label": "D", "text": "L'opération lève automatiquement une exception si les objets sont immuables.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "Deux objets aux données identiques déclarées dans un ordre différent produiront deux chaînes JSON différentes, sans compter la perte des prototypes et des fonctions."
+  },
+  {
+    "number": 9,
+    "category": "Clonage Superficiel (Shallow Copy)",
+    "question": "Lors de l'utilisation du spread operator `{ ...profil }` pour dupliquer un objet, quel problème survient si `profil` contient un sous-objet `parametres` ?",
+    "hint": "Réfléchissez à la différence de traitement entre le conteneur externe de premier niveau et ses membres complexes.",
+    "options": [
+      {"label": "A", "text": "Le sous-objet `parametres` est automatiquement gelé avec `Object.freeze()`.", "isCorrect": false},
+      {"label": "B", "text": "Une erreur de compilation surviendra car le spread operator ne supporte pas les objets imbriqués.", "isCorrect": false},
+      {"label": "C", "text": "Le sous-objet `parametres` est supprimé du clone résultant.", "isCorrect": false},
+      {"label": "D", "text": "Le premier niveau est copié, mais la référence de `parametres` est partagée entre l'original et le clone.", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "Le spread operator effectue une copie superficielle (*shallow copy*) : les sous-objets ne sont pas dupliqués, seules leurs adresses mémoires sont recopiées."
+  },
+  {
+    "number": 10,
+    "category": "Clonage Profond Natif (`structuredClone`)",
+    "question": "Quelle est la fonction native introduite dans le standard ECMAScript 2022 pour réaliser une véritable copie profonde (*deep copy*) d'un arbre de données ?",
+    "hint": "Cherchez le nom de l'API moderne du navigateur conçue pour dupliquer des structures complexes sans bibliothèques tierces.",
+    "options": [
+      {"label": "A", "text": "`structuredClone()`", "isCorrect": true},
+      {"label": "B", "text": "`JSON.parseDeep()`", "isCorrect": false},
+      {"label": "C", "text": "`Reflect.clone()`", "isCorrect": false},
+      {"label": "D", "text": "`Object.deepCopy()`", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "`structuredClone()` est la fonction standard native permettant de dupliquer récursivement des structures de données complexes tout en gérant les références circulaires."
+  },
+  {
+    "number": 11,
+    "category": "Limites de `structuredClone`",
+    "question": "Quelle est la principale limitation de la fonction native `structuredClone()` lorsqu'elle est appliquée à des instances de classes POO ?",
+    "hint": "Pensez aux membres comportementaux d'une classe (les fonctions) par opposition aux simples données d'état.",
+    "options": [
+      {"label": "A", "text": "Elle est restreinte aux objets de moins de 3 niveaux d'imbrication.", "isCorrect": false},
+      {"label": "B", "text": "Elle plante systématiquement dès que l'objet contient un tableau ou une date.", "isCorrect": false},
+      {"label": "C", "text": "Elle entre dans une boucle infinie si l'objet possède des structures imbriquées.", "isCorrect": false},
+      {"label": "D", "text": "Elle ne peut pas cloner les méthodes ni conserver le prototype de la classe d'origine.", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "`structuredClone()` est conçue pour les données pures ; l'objet cloné perd sa chaîne de prototypes et devient un objet littéral brut (`instanceof` renvoie `false`)."
+  },
+  {
+    "number": 12,
+    "category": "Patron de Duplication (`clone()`)",
+    "question": "Pourquoi l'implémentation d'une méthode métier `clone()` au sein d'une classe est-elle la solution reine en POO pour dupliquer des objets du domaine ?",
+    "hint": "Considérez le respect de l'encapsulation privée et la conservation de l'identité de type de l'instance.",
+    "options": [
+      {"label": "A", "text": "Elle préserve l'encapsulation, conserve le prototype (`instanceof`) et permet de déléguer le clonage des sous-composants.", "isCorrect": true},
+      {"label": "B", "text": "Elle évite d'avoir à utiliser le mot-clé `new` lors des instanciations.", "isCorrect": false},
+      {"label": "C", "text": "Elle transforme automatiquement l'objet cloné en un type primitif dans la Pile.", "isCorrect": false},
+      {"label": "D", "text": "Elle permet de contourner le compilateur TypeScript en désactivant le vérificateur de types.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "Chaque classe maîtrise la création de sa propre instance autonome, garantissant le maintien de ses méthodes et de sa chaîne d'héritage."
+  },
+  {
+    "number": 13,
+    "category": "Immutabilité & Value Objects",
+    "question": "Dans le contexte de l'immutabilité, comment doit se comporter une méthode métier telle que `ajouter(montant: Monnaie)` sur un Value Object immuable ?",
+    "hint": "Rappelez-vous le principe de la gravure sur pierre : on ne modifie pas l'existant, on façonne un nouvel élément.",
+    "options": [
+      {"label": "A", "text": "Elle efface l'instance courante du Tas pour libérer de la mémoire.", "isCorrect": false},
+      {"label": "B", "text": "Elle lève une exception `TypeError` car une méthode ne peut pas s'exécuter sur un objet immuable.", "isCorrect": false},
+      {"label": "C", "text": "Elle ne modifie pas l'instance courante et retourne une nouvelle instance de `Monnaie` contenant le résultat.", "isCorrect": true},
+      {"label": "D", "text": "Elle modifie directement l'attribut `montant` de l'instance courante puis retourne `this`.", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "Un objet immuable ne peut pas altérer ses propres membres : toute opération produit une nouvelle version de l'objet avec l'état mis à jour."
+  },
+  {
+    "number": 14,
+    "category": "Sémantique de `const` & Mutabilité",
+    "question": "Soit la déclaration suivante : `const user = { nom: 'Dupont' };`. Pourquoi l'instruction `user.nom = 'Durand';` est-elle parfaitement autorisée par le langage ?",
+    "hint": "Faites la différence entre interdire de changer d'adresse mémoire et interdire de modifier le contenu de la case mémoire.",
+    "options": [
+      {"label": "A", "text": "Parce que la chaîne `'Dupont'` est automatiquement convertie en nombre lors de l'affectation.", "isCorrect": false},
+      {"label": "B", "text": "L'instruction est en réalité interdite et génère une erreur de syntaxe à la compilation.", "isCorrect": false},
+      {"label": "C", "text": "Parce que TypeScript transforme implicitement toutes les variables `const` en objets immuables.", "isCorrect": false},
+      {"label": "D", "text": "Le mot-clé `const` verrouille uniquement le pointeur dans la Pile, mais l'objet référencé dans le Tas reste totalement mutable.", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "`const` interdit de réassigner la variable `user` à une autre adresse, mais ne rend pas le contenu de l'objet immuable."
+  },
+  {
+    "number": 15,
+    "category": "Réactivité & Angular Signals",
+    "question": "Dans Angular (approche Signal-First), pourquoi l'appel `monSignal.set(article)` ne déclenche-t-il AUCUN rafraîchissement de l'interface si l'on a fait `(article as any).prix = 70;` juste avant ?",
+    "hint": "Considérez la façon dont le moteur réactif vérifie l'égalité entre l'ancienne et la nouvelle valeur contenue dans le signal.",
+    "options": [
+      {"label": "A", "text": "Parce qu'il faut obligatoirement appeler la méthode `monSignal.destroy()` pour forcer l'actualisation.", "isCorrect": false},
+      {"label": "B", "text": "Parce que la propriété `prix` doit être obligatoirement typée en `string` dans le template HTML.", "isCorrect": false},
+      {"label": "C", "text": "Angular compare la valeur précédente et la nouvelle avec `Object.is()`, et constate que l'adresse mémoire (la référence) n'a pas changé.", "isCorrect": true},
+      {"label": "D", "text": "Parce que les signaux Angular refusent de stocker des instances de classes métier.", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "La réactivité d'Angular repose sur la détection du changement de référence (`0x10A === 0x10A`) ; si l'adresse est identique, l'UI reste figée."
+  },
+  {
+    "number": 16,
+    "category": "Mise à Jour Immuable de Signaux",
+    "question": "Quelle est la bonne pratique pour mettre à jour un signal contenant un tableau `fruits = signal<string[]>(['Pomme', 'Banane'])` en y ajoutant `'Orange'` ?",
+    "hint": "Cherchez l'option qui produit un nouveau tableau avec une nouvelle adresse mémoire sans muter l'existant.",
+    "options": [
+      {"label": "A", "text": "`Object.freeze(fruits()).push('Orange');`", "isCorrect": false},
+      {"label": "B", "text": "`fruits.set(fruits().concat().push('Orange'));`", "isCorrect": false},
+      {"label": "C", "text": "`fruits.update(anciens => [...anciens, 'Orange']);`", "isCorrect": true},
+      {"label": "D", "text": "`fruits().push('Orange'); fruits.set(fruits());`", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "Cette syntaxe crée une nouvelle référence de tableau via le spread operator, permettant au signal de détecter la modification d'adresse."
+  },
+  {
+    "number": 17,
+    "category": "Égalité Temporelle (`Date`)",
+    "question": "Comment convient-il de comparer deux instances distinctes de l'objet natif `Date` en TypeScript pour vérifier si elles représentent le même instant ?",
+    "hint": "Pensez à la méthode permettant d'extraire la primitive numérique représentant le nombre de millisecondes écoulées.",
+    "options": [
+      {"label": "A", "text": "En convertissant les dates avec `Object.freeze(dateA) === Object.freeze(dateB)`.", "isCorrect": false},
+      {"label": "B", "text": "En appliquant le spread operator `{ ...dateA } === { ...dateB }`.", "isCorrect": false},
+      {"label": "C", "text": "En utilisant directement l'opérateur d'égalité stricte `dateA === dateB`.", "isCorrect": false},
+      {"label": "D", "text": "En comparant leurs valeurs numériques d'horodatage avec `dateA.getTime() === dateB.getTime()`.", "isCorrect": true}
+    ],
+    "answer": "D",
+    "rationale": "L'expression `dateA === dateB` compare les adresses mémoires ; pour comparer le temps représenté, il faut extraire la primitive timestamp en millisecondes."
+  },
+  {
+    "number": 18,
+    "category": "Prototypes & Préservation de Type",
+    "question": "Que se passe-t-il si un développeur tente de dupliquer une instance de classe `const clone = { ...monClient }` au lieu d'utiliser une méthode métier `clone()` ?",
+    "hint": "Considérez ce qui survient au lien d'héritage et aux méthodes du prototype lors de la création d'un objet par syntaxe littérale `{}`.",
+    "options": [
+      {"label": "A", "text": "`clone` devient un objet littéral brut contenant les propriétés, mais perd le prototype et l'accès à toutes les méthodes de la classe `Client`.", "isCorrect": true},
+      {"label": "B", "text": "Une erreur de compilation survient car le spread operator est strictement interdit sur les instances de classes.", "isCorrect": false},
+      {"label": "C", "text": "`clone` est une instance parfaite de `Client` disposant de toutes ses méthodes et propriétés.", "isCorrect": false},
+      {"label": "D", "text": "`clone` pointe vers la même adresse mémoire que `monClient` sans créer de nouvel objet.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "Le spread operator extrait uniquement les propriétés énumérables propres et ne reproduit pas la chaîne de prototypes de la classe d'origine."
+  },
+  {
+    "number": 19,
+    "category": "Passage par Référence & Effets de Bord",
+    "question": "Lorsqu'un objet est passé en paramètre à une fonction `modifierProfil(p: Profil)`, que se produit-il si la fonction réassigne `p.nom = 'Nouveau'` ?",
+    "hint": "Réfléchissez au mode de transmission des variables pointant vers le Tas lors d'un appel de fonction.",
+    "options": [
+      {"label": "A", "text": "TypeScript lève une erreur de compilation car les paramètres de fonctions sont implicitement `readonly`.", "isCorrect": false},
+      {"label": "B", "text": "L'objet original de l'appelant est altéré car le passage s'effectue par partage de référence.", "isCorrect": true},
+      {"label": "C", "text": "L'objet original est protégé car les arguments de fonctions sont toujours copiés par valeur.", "isCorrect": false},
+      {"label": "D", "text": "Une copie locale automatique du profil est créée à l'entrée de la fonction.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "La fonction reçoit une copie de l'adresse mémoire menant au même objet dans le Tas ; toute mutation interne affecte donc l'objet d'origine."
+  },
+  {
+    "number": 20,
+    "category": "Principes de la Réactivité Moderne",
+    "question": "Quelle est la règle d'or à adopter en programmation réactive moderne (Angular Signals) concernant la manipulation de l'état des objets ?",
+    "hint": "Pensez au principe fondamental qui garantit la notification instantanée des composants réactifs lors d'une mise à jour.",
+    "options": [
+      {"label": "A", "text": "Muter systématiquement les objets sur place dans le Tas puis appeler `JSON.stringify()` sur le signal.", "isCorrect": false},
+      {"label": "B", "text": "Désactiver le contrôle de type TypeScript pour accélérer le rafraîchissement de l'interface.", "isCorrect": false},
+      {"label": "C", "text": "Traiter les objets comme des structures immuables et produire une nouvelle référence mémoire à chaque évolution d'état.", "isCorrect": true},
+      {"label": "D", "text": "Utiliser uniquement des variables globales mutables sans jamais instancier de classes.", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "La création d'une nouvelle référence mémoire permet aux comparateurs réactifs d'identifier la modification et de mettre à jour le DOM de manière optimale."
+  },
+  {
+    "number": 21,
+    "category": "Pression sur le Garbage Collector",
+    "question": "Quel est l'impact sur le Garbage Collector de l'utilisation répétée de `JSON.stringify()` pour comparer de gros objets dans une boucle ?",
+    "hint": "Réfléchissez à ce que crée la conversion d'un grand arbre d'objets en texte au niveau de l'allocation mémoire dynamique.",
+    "options": [
+      {"label": "A", "text": "Cela accélère le traitement car le Garbage Collector n'a plus besoin d'analyser le Tas.", "isCorrect": false},
+      {"label": "B", "text": "Aucun impact, car `JSON.stringify()` ne consomme de la mémoire que dans la Pile.", "isCorrect": false},
+      {"label": "C", "text": "Cela provoque une allocation massive de chaînes de caractères temporaires, surchargeant inutilement le Garbage Collector et dégradant le CPU.", "isCorrect": true},
+      {"label": "D", "text": "Cela bloque définitivement la mémoire vive sans aucune possibilité de libération.", "isCorrect": false}
+    ],
+    "answer": "C",
+    "rationale": "La sérialisation génère de volumineux blocs de texte temporaires en mémoire qui doivent être nettoyés fréquemment par le Garbage Collector."
+  },
+  {
+    "number": 22,
+    "category": "Protection d'État (`Object.freeze`)",
+    "question": "Si l'on appelle `Object.freeze(monObjet)`, que se passe-t-il si l'on tente de modifier une propriété de premier niveau en mode strict JavaScript ?",
+    "hint": "Pensez au type d'erreur levé par le moteur d'exécution lorsqu'une écriture est interdite sur un objet scellé.",
+    "options": [
+      {"label": "A", "text": "La propriété est modifiée en silence sans aucune notification.", "isCorrect": false},
+      {"label": "B", "text": "Une exception de type `TypeError` est levée immédiatement à l'exécution.", "isCorrect": true},
+      {"label": "C", "text": "L'objet crée automatiquement un clone avec la nouvelle valeur sans lever d'erreur.", "isCorrect": false},
+      {"label": "D", "text": "L'objet est supprimé de la mémoire vive.", "isCorrect": false}
+    ],
+    "answer": "B",
+    "rationale": "`Object.freeze()` verrouille l'objet ; en mode strict (`use strict`), toute tentative de modification d'une propriété gelée déclenche un plantage explicite."
+  },
+  {
+    "number": 23,
+    "category": "Shallow vs Deep Immutability",
+    "question": "Quelle est la différence d'effet entre `Object.freeze()` et le mot-clé `readonly` sur un attribut d'objet imbriqué `profil.adresse.rue` ?",
+    "hint": "Rappelez-vous la portée de limitation du gel standard concernant les structures imbriquées.",
+    "options": [
+      {"label": "A", "text": "Ni `readonly` ni `Object.freeze()` ne protègent le sous-objet `adresse` contre la mutation, car ce sont deux protections superficielles (*shallow*).", "isCorrect": true},
+      {"label": "B", "text": "`Object.freeze()` protège les sous-objets de manière récursive alors que `readonly` s'arrête au premier niveau.", "isCorrect": false},
+      {"label": "C", "text": "Les deux mécanismes bloquent automatiquement toutes les modifications de tous les sous-objets jusqu'au dernier niveau.", "isCorrect": false},
+      {"label": "D", "text": "`readonly` rend le sous-objet immuable au runtime alors que `Object.freeze()` agit uniquement à la compilation.", "isCorrect": false}
+    ],
+    "answer": "A",
+    "rationale": "`readonly` et `Object.freeze()` ne s'appliquent qu'au premier niveau de l'objet ; les sous-objets restent mutables à moins d'appliquer un gel récursif."
+  }
+];
+
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+let userAnswers = [];
+
+// Formate les extraits de code inline, guillemets et blocs de code
+function formatCode(text) {
+  if (!text) return '';
+  
+  // 1. Blocs de code multi-lignes ```ts ... ```
+  let formatted = text.replace(/```(?:ts|typescript|js)?\n([\s\S]*?)```/g, '<pre class="code-box"><code>$1</code></pre>');
+  
+  // 2. Code inline entre backticks `...`
+  formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-term">$1</span>');
+  
+  // 3. Mots-clés isolés entre quotes '...', sans capturer les apostrophes françaises
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])'([a-zA-Z0-9_\-\.\/@\(\)=]+)'/g, '<span class="code-term">$1</span>');
+  
+  const parts = formatted.split(/(<pre[\s\S]*?<\/pre>)/g);
+  return parts.map(part => {
+    if (part.startsWith('<pre')) return part;
+    return part.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  }).join('');
+}
+
+// Initialisation
+function init() {
+  setupTheme();
+  setupKeyboard();
+  renderQuestion(0);
+  
+  document.getElementById('next-btn').addEventListener('click', handleNext);
+  document.getElementById('restart-btn').addEventListener('click', handleRestart);
+  document.getElementById('toggle-review-btn').addEventListener('click', handleToggleReview);
+  document.getElementById('hint-toggle-btn').addEventListener('click', toggleHint);
+}
+
+// Gestion du Thème Clair / Sombre
+function setupTheme() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const text = document.getElementById('theme-text');
+  
+  const saved = localStorage.getItem('poo_quiz_theme_s12') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+  
+  toggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('poo_quiz_theme_s12', next);
+    updateThemeUI(next);
+  });
+  
+  function updateThemeUI(t) {
+    if (t === 'dark') {
+      icon.textContent = '☀️';
+      text.textContent = 'Mode clair';
+    } else {
+      icon.textContent = '🌙';
+      text.textContent = 'Mode sombre';
+    }
+  }
+}
+
+// Affichage d'une question
+function renderQuestion(index) {
+  answered = false;
+  const q = quizData[index];
+  
+  // Barre de progression
+  const progressPct = ((index) / quizData.length) * 100;
+  document.getElementById('progress-fill').style.width = progressPct + '%';
+  document.getElementById('progress-q-label').textContent = `Question ${index + 1} sur ${quizData.length}`;
+  document.getElementById('progress-score-pill').textContent = index > 0 
+    ? `Score : ${correctCount}/${index} (${Math.round((correctCount / index) * 100)}%)` 
+    : `Score : 0/0`;
+
+  // Métadonnées
+  document.getElementById('q-index-badge').textContent = `Question ${index < 9 ? '0' + (index + 1) : index + 1}`;
+  document.getElementById('q-category-tag').textContent = q.category || 'Mémoire des Objets';
+  document.getElementById('q-counter').textContent = `${index + 1} / ${quizData.length}`;
+
+  // Texte de la question
+  document.getElementById('q-text').innerHTML = formatCode(q.question);
+
+  // Indice
+  const hintBody = document.getElementById('hint-body');
+  hintBody.innerHTML = formatCode(q.hint);
+  hintBody.classList.remove('open');
+  document.getElementById('hint-btn-label').textContent = "Afficher un indice";
+
+  // Carte de feedback & Bouton suivant
+  const fcard = document.getElementById('feedback-card');
+  fcard.style.display = 'none';
+  fcard.className = 'feedback-card';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'none';
+  if (index === quizData.length - 1) {
+    document.getElementById('next-btn-text').textContent = "Voir mes résultats 🎉";
+  } else {
+    document.getElementById('next-btn-text').textContent = "Question suivante";
+  }
+
+  // Options de réponse
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, optIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.type = 'button';
+    btn.dataset.idx = optIdx;
+    btn.innerHTML = `
+      <span class="opt-key-circle">${opt.label}</span>
+      <span class="opt-content">${formatCode(opt.text)}</span>
+      <span class="opt-status-icon"></span>
+    `;
+
+    btn.addEventListener('click', () => selectOption(optIdx));
+    grid.appendChild(btn);
+  });
+}
+
+// Sélection d'une option
+function selectOption(selectedIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizData[currentQ];
+  const selectedOpt = q.options[selectedIdx];
+  const isCorrect = selectedOpt.isCorrect;
+  userAnswers[currentQ] = selectedIdx;
+
+  if (isCorrect) {
+    correctCount++;
+  }
+
+  const optionBtns = document.querySelectorAll('.option-btn');
+  optionBtns.forEach(btn => btn.disabled = true);
+
+  const selectedBtn = optionBtns[selectedIdx];
+  const selectedStatus = selectedBtn.querySelector('.opt-status-icon');
+  
+  if (isCorrect) {
+    selectedBtn.classList.add('selected-correct');
+    selectedStatus.textContent = '✓';
+  } else {
+    selectedBtn.classList.add('selected-incorrect');
+    selectedStatus.textContent = '✕';
+
+    const correctIdx = q.options.findIndex(o => o.isCorrect);
+    if (correctIdx !== -1) {
+      const correctBtn = optionBtns[correctIdx];
+      correctBtn.classList.add('revealed-correct');
+      const correctStatus = correctBtn.querySelector('.opt-status-icon');
+      correctStatus.textContent = '✓';
+    }
+  }
+
+  // Atténuer les options non sélectionnées
+  optionBtns.forEach(btn => {
+    if (!btn.classList.contains('selected-correct') && 
+        !btn.classList.contains('selected-incorrect') && 
+        !btn.classList.contains('revealed-correct')) {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  // Afficher la carte de feedback élégante
+  const fcard = document.getElementById('feedback-card');
+  const fheader = document.getElementById('feedback-header');
+  const fbody = document.getElementById('feedback-body');
+
+  fcard.style.display = 'block';
+
+  if (isCorrect) {
+    fcard.className = 'feedback-card correct';
+    fheader.innerHTML = '<span>✓</span> <span>Excellente réponse !</span>';
+    fbody.innerHTML = `<strong>Justification :</strong> ${formatCode(q.rationale)}`;
+  } else {
+    fcard.className = 'feedback-card incorrect';
+    fheader.innerHTML = `<span>✕</span> <span>Ce n'est pas tout à fait ça. La bonne réponse est l'option ${q.answer}.</span>`;
+    fbody.innerHTML = `<strong>Explication :</strong> ${formatCode(q.rationale)}`;
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'flex';
+  nextBtn.focus();
+}
+
+// Bascule de l'indice
+function toggleHint() {
+  const hintBody = document.getElementById('hint-body');
+  const label = document.getElementById('hint-btn-label');
+  hintBody.classList.toggle('open');
+  if (hintBody.classList.contains('open')) {
+    label.textContent = "Masquer l'indice";
+  } else {
+    label.textContent = "Afficher un indice";
+  }
+}
+
+// Question suivante ou fin
+function handleNext() {
+  currentQ++;
+  if (currentQ < quizData.length) {
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+// Écran de fin et résultats
+function showResults() {
+  document.getElementById('question-card').style.display = 'none';
+  document.getElementById('progress-container').style.display = 'none';
+  document.getElementById('results-card').style.display = 'block';
+
+  const total = quizData.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  const stroke = document.getElementById('circle-score-stroke');
+  stroke.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+  document.getElementById('score-percent-text').textContent = `${pct}%`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-incorrect').textContent = total - correctCount;
+  document.getElementById('stat-total').textContent = total;
+
+  const msgEl = document.getElementById('results-message');
+  const iconEl = document.getElementById('results-icon');
+
+  if (pct >= 85) {
+    iconEl.textContent = '🏆';
+    msgEl.innerHTML = `<strong>Excellente maîtrise !</strong> Vous maîtrisez en profondeur les rouages de la mémoire (Stack vs Heap), les pièges de l'aliasing, les contrats de comparaison profonde et l'immutabilité avec les Signals.`;
+    launchConfetti();
+  } else if (pct >= 65) {
+    iconEl.textContent = '🚀';
+    msgEl.innerHTML = `<strong>Très bon travail !</strong> Les distinctions entre référence et valeur ainsi que les mécanismes de clonage sont bien assimilés. Le corrigé complet vous aidera à finaliser votre compréhension.`;
+    launchConfetti();
+  } else if (pct >= 50) {
+    iconEl.textContent = '👍';
+    msgEl.innerHTML = `<strong>Bases en place !</strong> La mécanique de base du tas et de la pile est comprise, mais certains pièges sur la réactivité d'Angular et le clonage méritent une révision attentive.`;
+  } else {
+    iconEl.textContent = '📚';
+    msgEl.innerHTML = `<strong>En apprentissage !</strong> Prenez le temps de revoir les concepts d'aliasing, de copie superficielle vs profonde et d'immutabilité, puis retentez l'évaluation !`;
+  }
+}
+
+// Corrigé interactif complet
+function handleToggleReview() {
+  const container = document.getElementById('review-container');
+  const btn = document.getElementById('toggle-review-btn');
+  const list = document.getElementById('review-list');
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    btn.innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  } else {
+    container.style.display = 'block';
+    btn.innerHTML = '<span>Masquer le corrigé ▴</span>';
+
+    list.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const userIdx = userAnswers[qIdx];
+      const isGood = userIdx !== undefined && q.options[userIdx].isCorrect;
+
+      const card = document.createElement('div');
+      card.className = 'review-item';
+
+      const header = document.createElement('div');
+      header.className = 'review-item-header';
+      header.innerHTML = `
+        <div class="review-item-title">
+          <span>${isGood ? '✅' : '❌'}</span>
+          <span><strong>Q${qIdx + 1}.</strong> ${q.question.replace(/```[\s\S]*?```/g, '[Code]').substring(0, 75)}...</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);">Détails ▾</span>
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'review-item-body';
+
+      let optionsHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
+      q.options.forEach((opt, oIdx) => {
+        const wasUser = oIdx === userIdx;
+        const wasCorrect = opt.isCorrect;
+        let borderCol = 'var(--opt-border)';
+        let bgCol = 'transparent';
+        let badge = '';
+
+        if (wasCorrect) {
+          borderCol = '#10b981';
+          bgCol = 'rgba(16, 185, 129, 0.08)';
+          badge = ' <strong style="color: #10b981;">(Bonne réponse)</strong>';
+        }
+        if (wasUser && !wasCorrect) {
+          borderCol = '#ef4444';
+          bgCol = 'rgba(239, 68, 68, 0.08)';
+          badge = ' <strong style="color: #ef4444;">(Votre choix)</strong>';
+        }
+
+        optionsHtml += `
+          <div style="padding: 10px 14px; border: 1px solid ${borderCol}; background: ${bgCol}; border-radius: 8px; font-size: 13.5px;">
+            <div><strong>${opt.label}.</strong> ${formatCode(opt.text)}${badge}</div>
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+
+      body.innerHTML = `
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 8px;">${formatCode(q.question)}</div>
+        ${optionsHtml}
+        <div style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #6366f1; font-size: 13px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">Explication :</strong> ${formatCode(q.rationale)}
+        </div>
+      `;
+
+      header.addEventListener('click', () => {
+        body.classList.toggle('open');
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+  }
+}
+
+// Recommencer
+function handleRestart() {
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+  userAnswers = [];
+
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('review-container').style.display = 'none';
+  document.getElementById('toggle-review-btn').innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  document.getElementById('progress-container').style.display = 'block';
+  document.getElementById('question-card').style.display = 'block';
+
+  renderQuestion(0);
+}
+
+// Raccourcis Clavier
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+
+    if (document.getElementById('results-card').style.display === 'block') {
+      if (e.key === 'Enter') handleRestart();
+      return;
+    }
+
+    if (answered) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      return;
+    }
+
+    const q = quizData[currentQ];
+    if (!q) return;
+
+    let targetIdx = -1;
+    if (key === 'A' || key === '1') targetIdx = 0;
+    else if (key === 'B' || key === '2') targetIdx = 1;
+    else if (key === 'C' || key === '3') targetIdx = 2;
+    else if (key === 'D' || key === '4') targetIdx = 3;
+
+    if (targetIdx >= 0 && targetIdx < q.options.length) {
+      e.preventDefault();
+      selectOption(targetIdx);
+    }
+
+    if (key === 'H' || key === 'I') {
+      e.preventDefault();
+      toggleHint();
+    }
+  });
+}
+
+// Animation Confettis
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#3178c6', '#6366f1', '#7c3aed', '#10b981', '#fbbf24', '#38bdf8'];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.015 + 0.008
+    });
+  }
+
+  let animId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25;
+      p.alpha -= p.decay;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  loop();
+}
+
+// Lancement
+init();
+</script>
+</body>
+</html>
