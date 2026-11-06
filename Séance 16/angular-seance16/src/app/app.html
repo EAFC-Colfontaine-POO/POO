@@ -1,0 +1,36 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('ram-vs-storage') {
+          <app-ram-vs-storage></app-ram-vs-storage>
+        }
+        @case ('json-vs-xml') {
+          <app-json-vs-xml></app-json-vs-xml>
+        }
+        @case ('stringify-encapsulation') {
+          <app-stringify-encapsulation></app-stringify-encapsulation>
+        }
+        @case ('prototype-crisis') {
+          <app-prototype-crisis></app-prototype-crisis>
+        }
+        @case ('dto-studio') {
+          <app-dto-studio></app-dto-studio>
+        }
+        @case ('crash-tests') {
+          <app-crash-tests></app-crash-tests>
+        }
+        @case ('file-persistence') {
+          <app-file-persistence></app-file-persistence>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>

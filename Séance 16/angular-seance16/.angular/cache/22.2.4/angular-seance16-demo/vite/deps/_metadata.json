@@ -1,0 +1,66 @@
+{
+  "hash": "33630e45",
+  "configHash": "18b6df25",
+  "lockfileHash": "d52768c4",
+  "browserHash": "56775239",
+  "optimized": {
+    "@angular/common": {
+      "src": "../../../../../../../../Séance 14/angular-seance14/node_modules/@angular/common/fesm2022/common.mjs",
+      "file": "@angular_common.js",
+      "fileHash": "71b6e48f",
+      "needsInterop": false
+    },
+    "@angular/core": {
+      "src": "../../../../../../../../Séance 14/angular-seance14/node_modules/@angular/core/fesm2022/core.mjs",
+      "file": "@angular_core.js",
+      "fileHash": "55a58a02",
+      "needsInterop": false
+    },
+    "@angular/forms": {
+      "src": "../../../../../../../../Séance 14/angular-seance14/node_modules/@angular/forms/fesm2022/forms.mjs",
+      "file": "@angular_forms.js",
+      "fileHash": "bb86ff9f",
+      "needsInterop": false
+    },
+    "@angular/platform-browser": {
+      "src": "../../../../../../../../Séance 14/angular-seance14/node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
+      "file": "@angular_platform-browser.js",
+      "fileHash": "93d09f95",
+      "needsInterop": false
+    },
+    "@angular/router": {
+      "src": "../../../../../../../../Séance 14/angular-seance14/node_modules/@angular/router/fesm2022/router.mjs",
+      "file": "@angular_router.js",
+      "fileHash": "cd99f8a9",
+      "needsInterop": false
+    },
+    "@monaco-editor/loader": {
+      "src": "../../../../../../../../Séance 14/angular-seance14/node_modules/@monaco-editor/loader/lib/es/index.js",
+      "file": "@monaco-editor_loader.js",
+      "fileHash": "5f0b6824",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "common-JFo86Aiw": {
+      "file": "common-JFo86Aiw.js",
+      "isDynamicEntry": false
+    },
+    "core-CQGNqvmt": {
+      "file": "core-CQGNqvmt.js",
+      "isDynamicEntry": false
+    },
+    "createObject-Db6e8Zpr": {
+      "file": "createObject-Db6e8Zpr.js",
+      "isDynamicEntry": false
+    },
+    "from-4DAVp0UN": {
+      "file": "from-4DAVp0UN.js",
+      "isDynamicEntry": false
+    },
+    "platform-browser-BNxO1G1q": {
+      "file": "platform-browser-BNxO1G1q.js",
+      "isDynamicEntry": false
+    }
+  }
+}

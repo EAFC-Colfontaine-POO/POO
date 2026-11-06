@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz POO — Sérialisation, Formats de Données & DTOs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      --bg-page: #090d16;
+      --bg-ambient-1: rgba(49, 120, 198, 0.16);
+      --bg-ambient-2: rgba(124, 58, 237, 0.14);
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --brand-blue: #3178c6;
+      --brand-indigo: #6366f1;
+      --brand-purple: #7c3aed;
+      --brand-gradient: linear-gradient(135deg, #3178c6 0%, #6366f1 50%, #7c3aed 100%);
+      
+      --opt-bg: rgba(255, 255, 255, 0.03);
+      --opt-border: rgba(255, 255, 255, 0.08);
+      --opt-hover-bg: rgba(255, 255, 255, 0.06);
+      --opt-hover-border: rgba(99, 102, 241, 0.45);
+      
+      --correct-bg: rgba(16, 185, 129, 0.12);
+      --correct-border: #10b981;
+      --correct-text: #34d399;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: rgba(239, 68, 68, 0.12);
+      --incorrect-border: #ef4444;
+      --incorrect-text: #f87171;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: rgba(245, 158, 11, 0.08);
+      --hint-border: rgba(245, 158, 11, 0.25);
+      --hint-text: #fbbf24;
+      
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --code-border: rgba(255, 255, 255, 0.12);
+      --code-color: #38bdf8;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8fafc;
+      --bg-ambient-1: rgba(49, 120, 198, 0.08);
+      --bg-ambient-2: rgba(124, 58, 237, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --opt-bg: #ffffff;
+      --opt-border: #e2e8f0;
+      --opt-hover-bg: #f8fafc;
+      --opt-hover-border: #3178c6;
+      
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --correct-text: #065f46;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: #fef2f2;
+      --incorrect-border: #ef4444;
+      --incorrect-text: #991b1b;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: #fffbeb;
+      --hint-border: #fde68a;
+      --hint-text: #92400e;
+      
+      --code-bg: #f1f5f9;
+      --code-border: #cbd5e1;
+      --code-color: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image: 
+        radial-gradient(circle at 12% 10%, var(--bg-ambient-1) 0%, transparent 45%),
+        radial-gradient(circle at 88% 90%, var(--bg-ambient-2) 0%, transparent 45%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-main);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .keyboard-badge {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    @media (min-width: 640px) {
+      .keyboard-badge { display: inline-flex; align-items: center; gap: 6px; }
+    }
+
+    /* Header Hero */
+    .header-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .course-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 9999px;
+      background: rgba(49, 120, 198, 0.12);
+      color: #60a5fa;
+      border: 1px solid rgba(49, 120, 198, 0.3);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #60a5fa;
+      box-shadow: 0 0 10px #60a5fa;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .quiz-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 16px;
+      font-weight: 500;
+    }
+
+    .tags-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-muted);
+    }
+
+    /* Progress section */
+    .progress-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-q-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-score-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .progress-track {
+      background: #e2e8f0;
+    }
+
+    .progress-bar-fill {
+      background: var(--brand-gradient);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(49, 120, 198, 0.5);
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .q-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-index-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #60a5fa;
+      background: rgba(49, 120, 198, 0.12);
+      border: 1px solid rgba(49, 120, 198, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+    }
+
+    .q-category-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .q-text {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text-main);
+      margin-bottom: 22px;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-color);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #38bdf8;
+      overflow-x: auto;
+      text-align: left;
+    }
+    [data-theme="light"] .code-box {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0369a1;
+    }
+
+    /* Hint box */
+    .hint-container {
+      margin-bottom: 22px;
+    }
+
+    .hint-btn {
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      color: var(--hint-text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hint-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .hint-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--hint-text);
+      line-height: 1.5;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .hint-body.open {
+      display: block;
+    }
+
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 18px;
+      border: 2px solid var(--opt-border);
+      background: var(--opt-bg);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      position: relative;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--opt-hover-border);
+      background: var(--opt-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .opt-key-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--opt-border);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .opt-content {
+      flex: 1;
+      padding-top: 4px;
+      line-height: 1.5;
+    }
+
+    .opt-status-icon {
+      font-size: 18px;
+      margin-left: 8px;
+      display: none;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    /* Option States */
+    .option-btn.selected-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .option-btn.selected-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.selected-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--incorrect-border) !important;
+      background: var(--incorrect-bg) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+    .option-btn.selected-incorrect .opt-key-circle {
+      background: var(--incorrect-badge-bg);
+      color: var(--incorrect-badge-text);
+    }
+    .option-btn.selected-incorrect .opt-status-icon {
+      display: inline-block;
+      color: var(--incorrect-text);
+    }
+
+    .option-btn.revealed-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      border-style: dashed;
+    }
+    .option-btn.revealed-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.revealed-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.dimmed {
+      opacity: 0.45;
+    }
+
+    /* Feedback Card */
+    .feedback-card {
+      display: none;
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .feedback-card.correct {
+      background: var(--correct-bg);
+      border-left: 4px solid var(--correct-border);
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+      border-right: 1px solid rgba(16, 185, 129, 0.2);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .feedback-card.incorrect {
+      background: var(--incorrect-bg);
+      border-left: 4px solid var(--incorrect-border);
+      border-top: 1px solid rgba(239, 68, 68, 0.2);
+      border-right: 1px solid rgba(239, 68, 68, 0.2);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .feedback-header {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .feedback-card.correct .feedback-header { color: var(--correct-text); }
+    .feedback-card.incorrect .feedback-header { color: var(--incorrect-text); }
+
+    .feedback-body {
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    [data-theme="light"] .feedback-body {
+      color: #334155;
+    }
+
+    .action-bar {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(49, 120, 198, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(49, 120, 198, 0.55);
+    }
+
+    /* Results Card */
+    .results-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .results-trophy {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .results-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle-wrapper {
+      margin: 24px auto;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-percent-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .results-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .stat-num.good { color: #10b981; }
+    .stat-num.bad { color: #ef4444; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn-secondary {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--opt-hover-bg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Review View */
+    .review-container {
+      display: none;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .review-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-item {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .review-item-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .review-item-title {
+      font-weight: 600;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-item-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--card-border);
+    }
+    .review-item-body.open {
+      display: block;
+      padding-top: 14px;
+    }
+
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="quiz-container">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="keyboard-badge">
+      <span>⌨️ Raccourcis : [A-D] ou [1-4] · [Entrée] · [I]</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Basculer le thème">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-text">Mode clair</span>
+    </button>
+  </div>
+
+  <!-- Header Hero -->
+  <div class="header-hero">
+    <div class="course-badge">
+      <span class="badge-dot"></span>
+      Programmation Orientée Objet · EAFC Colfontaine
+    </div>
+    <h1 class="quiz-title">Séance 16 — Sérialisation & Formats de Données</h1>
+    <p class="quiz-subtitle">Persistance · JSON vs XML · Le Prototype Perdu · Patron DTO · Sécurité & File System Access</p>
+    <div class="tags-row">
+      <span class="tag-pill">TypeScript</span>
+      <span class="tag-pill">POO</span>
+      <span class="tag-pill">JSON & XML</span>
+      <span class="tag-pill">Patron DTO</span>
+      <span class="tag-pill">File System API</span>
+      <span class="tag-pill">26 questions</span>
+    </div>
+
+    <!-- Progress section -->
+    <div class="progress-section" id="progress-container">
+      <div class="progress-header">
+        <span class="progress-q-label" id="progress-q-label">Question 1 sur 26</span>
+        <span class="progress-score-pill" id="progress-score-pill">Score : 0/0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Question Card -->
+  <div class="card" id="question-card">
+    <div class="q-meta-bar">
+      <span class="q-index-badge" id="q-index-badge">Question 01</span>
+      <span class="q-category-tag" id="q-category-tag">Volatilité & Mémoire RAM</span>
+      <span style="font-size: 12px; color: var(--text-dim);" id="q-counter">1 / 26</span>
+    </div>
+
+    <div class="q-text" id="q-text"></div>
+
+    <div class="hint-container">
+      <button class="hint-btn" id="hint-toggle-btn" type="button">
+        <span>💡</span>
+        <span id="hint-btn-label">Afficher un indice</span>
+      </button>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <!-- Feedback card -->
+    <div class="feedback-card" id="feedback-card">
+      <div class="feedback-header" id="feedback-header"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="next-btn" id="next-btn" style="display: none;">
+        <span id="next-btn-text">Question suivante</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div class="card results-card" id="results-card" style="display: none;">
+    <div class="results-trophy" id="results-icon">🏆</div>
+    <h2 class="results-title" id="results-title">Quiz terminé !</h2>
+    
+    <div class="score-circle-wrapper">
+      <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <path stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path id="circle-score-stroke" stroke="url(#scoreGrad)" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3178c6" />
+            <stop offset="50%" stop-color="#6366f1" />
+            <stop offset="100%" stop-color="#7c3aed" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-percent-val" id="score-percent-text">0%</div>
+    </div>
+
+    <p class="results-message" id="results-message"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num good" id="stat-correct">0</div>
+        <div class="stat-label">Bonnes réponses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-incorrect">0</div>
+        <div class="stat-label">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">26</div>
+        <div class="stat-label">Questions</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="next-btn" id="restart-btn" type="button">
+        <span>🔄 Recommencer le quiz</span>
+      </button>
+      <button class="btn-secondary" id="toggle-review-btn" type="button">
+        <span>📋 Voir le corrigé complet</span>
+      </button>
+    </div>
+
+    <div class="review-container" id="review-container">
+      <div class="review-header">Détail des questions et explications</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  {
+    "number": 1,
+    "category": "Volatilité & Mémoire RAM",
+    "question": "Une application web instancie des objets métiers complexes en mémoire vive (RAM). Que se passe-t-il pour ces instances lorsque l'utilisateur rafraîchit la page (touche F5) ou ferme le navigateur ?",
+    "hint": "Pensez aux propriétés physiques fondamentales de la mémoire RAM par rapport au stockage persistant sur disque.",
+    "options": [
+      {"label": "A", "text": "Les objets sont automatiquement sauvegardés sous forme d'instances vivantes dans le cache du navigateur.", "isCorrect": false, "rationale": "Le cache du navigateur ne conserve que des ressources passives (images, scripts, CSS) et n'a pas la capacité de préserver des pointeurs de mémoire vive."},
+      {"label": "B", "text": "Les méthodes des objets sont supprimées, mais leurs attributs restent conservés en mémoire.", "isCorrect": false, "rationale": "La disparition de la mémoire vive lors de l'arrêt du processus affecte l'intégralité de l'instance, attributs comme méthodes."},
+      {"label": "C", "text": "Le moteur JavaScript sérialise silencieusement les objets vers le stockage local avant la fermeture.", "isCorrect": false, "rationale": "Aucune sauvegarde automatique n'est effectuée par le moteur JavaScript sans un code explicite rédigé par le développeur."},
+      {"label": "D", "text": "Les objets résidant dans le tas (Heap) de la mémoire vive sont immédiatement et définitivement détruits.", "isCorrect": true, "rationale": "La mémoire vive est par nature volatile : toute interruption du processus ou rechargement de page entraîne la perte totale des adresses mémoire et des objets alloués dans le tas."}
+    ],
+    "answer": "D",
+    "rationale": "La mémoire vive (RAM / Heap) est volatile : sans persistance explicite (LocalStorage, IndexedDB ou fichier), tout rafraîchissement ou fermeture de page détruit immédiatement les instances en mémoire."
+  },
+  {
+    "number": 2,
+    "category": "Concepts Fondamentaux",
+    "question": "Quelle est la définition exacte du processus de sérialisation (*marshalling*) en programmation orientée objet ?",
+    "hint": "Considérez le passage d'un réseau d'adresses mémoire complexes vers un simple flux d'octets unidimensionnel.",
+    "options": [
+      {"label": "A", "text": "La compilation du code source TypeScript vers du JavaScript exécutable par le navigateur.", "isCorrect": false, "rationale": "Il s'agit là de la transpilation du code source, une étape de compilation indépendante de la gestion des données à l'exécution."},
+      {"label": "B", "text": "L'association automatique d'un prototype de classe à un objet littéral anonyme.", "isCorrect": false, "rationale": "L'association de prototypes concerne la réhydratation d'objets métiers en POO et non le passage d'une instance vers un format d'échange."},
+      {"label": "C", "text": "La conversion d'un graphe d'objets tridimensionnel en RAM vers une séquence séquentielle linéaire de caractères ou d'octets.", "isCorrect": true, "rationale": "La sérialisation consiste à aplatir des structures d'objets interconnectées en mémoire vive pour les transformer en un fil linéaire de données adapté au stockage ou au transport réseau."},
+      {"label": "D", "text": "La lecture d'une chaîne de caractères pour réhydrater une instance de classe avec ses méthodes.", "isCorrect": false, "rationale": "Cette description correspond à la désérialisation (*unmarshalling*), qui est l'opération inverse."}
+    ],
+    "answer": "C",
+    "rationale": "La sérialisation consiste à 'aplatir' un graphe d'objets en mémoire (avec pointeurs et références) en un flux linéaire (texte ou binaire) consommable par un canal d'E/S ou un support de stockage."
+  },
+  {
+    "number": 3,
+    "category": "Limites de la Sérialisation JSON",
+    "question": "Lorsqu'une instance de classe est sérialisée en JSON via `JSON.stringify()`, quel élément parmi les suivants survit au passage sous forme de texte ?",
+    "hint": "Distinguez les données passives (état) des éléments dynamiques et comportementaux de la classe.",
+    "options": [
+      {"label": "A", "text": "Les champs privés déclarés avec la syntaxe `#champ`.", "isCorrect": false, "rationale": "Les champs privés réels (#champ) sont protégés par le moteur JavaScript et ne sont jamais énumérés ni sérialisés par `JSON.stringify()`."},
+      {"label": "B", "text": "Le lien vers le prototype de la classe d'origine.", "isCorrect": false, "rationale": "JSON est un format totalement agnostique des classes et ne conserve aucune information sur la chaîne de prototypes."},
+      {"label": "C", "text": "Les méthodes publiques et privées définies sur la classe d'origine.", "isCorrect": false, "rationale": "Les fonctions exécutables ne peuvent pas être représentées en JSON ; elles sont systématiquement ignorées."},
+      {"label": "D", "text": "Les valeurs des propriétés primitives publiques (chaînes, nombres, booléens).", "isCorrect": true, "rationale": "Seules les données scalaires brutes énumérables et la structure arborescente passive sont conservées dans le format texte JSON."}
+    ],
+    "answer": "D",
+    "rationale": "Le format JSON est purement passif : il ne transporte que les données brutes (propriétés publiques énumérables). Les méthodes, champs privés et prototypes sont totalement éliminés."
+  },
+  {
+    "number": 4,
+    "category": "Types Spéciaux en JavaScript",
+    "question": "Comment la méthode `JSON.stringify()` convertit-elle respectivement une propriété contenant un objet `Date` et une propriété contenant un `Set` ?",
+    "hint": "Rappelez-vous qu'un objet `Date` possède sa propre méthode `toJSON()`, alors que `Set` est une structure spéciale non gérée nativement par JSON.",
+    "options": [
+      {"label": "A", "text": "La `Date` devient une chaîne ISO textuelle et le `Set` devient un objet vide `{}`.", "isCorrect": true, "rationale": "L'objet `Date` possède une méthode `toJSON()` native renvoyant une chaîne ISO, tandis que `Set` n'a pas de propriétés énumérables propres et se sérialise en objet vide `{}`."},
+      {"label": "B", "text": "La `Date` et le `Set` sont tous deux sérialisés sous forme de tableaux ordonnés.", "isCorrect": false, "rationale": "Le `Set` ne se convertit pas automatiquement en tableau lors de l'appel à `JSON.stringify()` sans transformation explicite."},
+      {"label": "C", "text": "La `Date` est convertie en timestamp numérique et le `Set` est omis du résultat.", "isCorrect": false, "rationale": "`Date.prototype.toJSON()` génère une chaîne ISO (ex: \"2026-10-29T...\") et non un timestamp numérique."},
+      {"label": "D", "text": "La `Date` conserve son type d'origine et le `Set` lève une erreur de type `TypeError`.", "isCorrect": false, "rationale": "JSON ne possède pas de type natif `Date`, et la sérialisation d'un `Set` ne lève pas d'exception mais produit `{}`."}
+    ],
+    "answer": "A",
+    "rationale": "`Date` implémente `toJSON()` qui génère un texte ISO 8601. En revanche, `Set` ne possède pas de propriétés énumérables directes, il est donc converti en objet vide `{}` sans conversion manuelle préalable."
+  },
+  {
+    "number": 5,
+    "category": "Syntaxe & Structure XML",
+    "question": "Parmi les règles syntaxiques du format XML, laquelle est une contrainte de structure impérative ?",
+    "hint": "Pensez à l'élément sommet qui doit chapeauter l'ensemble de l'arbre documentaire XML.",
+    "options": [
+      {"label": "A", "text": "Le document doit obligatoirement posséder une seule et unique balise racine englobante.", "isCorrect": true, "rationale": "Tout document XML bien formé doit s'articuler autour d'un nœud racine unique contenant l'intégralité des autres balises."},
+      {"label": "B", "text": "Les éléments peuvent se chevaucher librement sans respecter d'ordre hiérarchique.", "isCorrect": false, "rationale": "XML exige un emboîtement hiérarchique strict des balises ; aucun chevauchement n'est toléré."},
+      {"label": "C", "text": "Les valeurs des attributs doivent être écrites sans guillemets s'il s'agit de nombres.", "isCorrect": false, "rationale": "En XML, toutes les valeurs d'attributs doivent impérativement être entourées de guillemets, quel que soit leur type."},
+      {"label": "D", "text": "Les balises sans contenu ne nécessitent pas de fermeture si elles sont précédées d'un point d'interrogation.", "isCorrect": false, "rationale": "Toute balise XML ouverte doit être fermée, soit explicitement, soit par la syntaxe auto-fermante `/>`."}
+    ],
+    "answer": "A",
+    "rationale": "Pour être qualifié de 'bien formé' (*well-formed*), un document XML doit obligatoirement comporter un élément racine unique englobant l'intégralité de l'arbre."
+  },
+  {
+    "number": 6,
+    "category": "Échappement XML",
+    "question": "Comment devez-vous représenter les caractères réservés `<` et `&` au sein du contenu textuel d'une balise XML ?",
+    "hint": "Ces caractères sont remplacés par des entités commençant par l'esperluette `&` et terminées par un point-virgule.",
+    "options": [
+      {"label": "A", "text": "En utilisant les entités d'échappement respectives `&lt;` et `&amp;`.", "isCorrect": true, "rationale": "Ces caractères étant utilisés par la grammaire de XML pour les balises et entités, ils doivent obligatoirement être échappés pour éviter les collisions de parsing."},
+      {"label": "B", "text": "En les précédant d'un antislash comme `\\<` et `\\&`.", "isCorrect": false, "rationale": "L'antislash n'est pas le mécanisme d'échappement standard du XML (réservé aux langages de programmation comme C/JS)."},
+      {"label": "C", "text": "En les écrivant en majuscules sous la forme `&LESS;` et `&AND;`.", "isCorrect": false, "rationale": "Les entités XML prédéfinies sont rigoureusement en minuscules (`&lt;` et `&amp;`)."},
+      {"label": "D", "text": "En les encadrant par des simples guillemets `'<'` et `'&'`.", "isCorrect": false, "rationale": "Les guillemets simples ne protègent pas les caractères réservés dans le contenu textuel d'une balise."}
+    ],
+    "answer": "A",
+    "rationale": "Le standard XML définit 5 entités prédéfinies obligatoires, dont `&lt;` (less than) et `&amp;` (ampersand), indispensables pour ne pas fausser l'analyseur syntaxique."
+  },
+  {
+    "number": 7,
+    "category": "Sections CDATA en XML",
+    "question": "Dans quel cas précis est-il recommandé d'utiliser une section `<![CDATA[ ... ]]>` dans un document XML ?",
+    "hint": "Réfléchissez au moyen d'intégrer du code HTML riche à l'intérieur d'un nœud XML sans devoir échapper chaque balise à la main.",
+    "options": [
+      {"label": "A", "text": "Pour spécifier l'encodage et la version du document dans le prologue XML.", "isCorrect": false, "rationale": "Le prologue utilise la syntaxe `<?xml version=\"1.0\" encoding=\"UTF-8\"?>` et non une section CDATA."},
+      {"label": "B", "text": "Pour déclarer des espaces de noms (*namespaces*) sur la balise racine.", "isCorrect": false, "rationale": "Les espaces de noms sont déclarés via des attributs spéciaux comme `xmlns:prefixe=\"...\"`."},
+      {"label": "C", "text": "Pour inclure un grand bloc de texte brut contenant des caractères interdits (code HTML, script) sans échappement manuel.", "isCorrect": true, "rationale": "Les sections CDATA (*Character Data*) indiquent au parser XML de traiter le bloc comme du texte brut littéral sans chercher à en interpréter les balises."},
+      {"label": "D", "text": "Pour définir des règles de validation de schéma XSD à l'intérieur du document.", "isCorrect": false, "rationale": "La validation de schéma se fait via des fichiers externes ou des balises de schéma dédiées, pas avec CDATA."}
+    ],
+    "answer": "C",
+    "rationale": "Une section CDATA dispense d'échapper manuellement des centaines de `<` et `&`, rendant le stockage de payloads HTML ou de fragments de code beaucoup plus propre et lisible."
+  },
+  {
+    "number": 8,
+    "category": "Parsing XML en JavaScript",
+    "question": "Lors du parsing d'un document XML dans le navigateur via `new DOMParser().parseFromString(source, 'application/xml')`, comment faut-il vérifier la présence d'une erreur de syntaxe XML ?",
+    "hint": "L'API `DOMParser` renvoie toujours un arbre documentaire, mais y insère une balise d'erreur spéciale.",
+    "options": [
+      {"label": "A", "text": "En testant si la méthode retourne la valeur `null` au lieu d'un objet `Document`.", "isCorrect": false, "rationale": "La méthode renvoie toujours une instance valide de `Document`, même si le contenu XML est invalide."},
+      {"label": "B", "text": "En lisant la propriété booléenne `document.isValid` retournée par le parser.", "isCorrect": false, "rationale": "L'API DOM W3C standard ne possède pas de propriété `isValid` sur l'objet `Document`."},
+      {"label": "C", "text": "En entourant l'appel d'un bloc `try / catch` qui intercepte l'exception levée.", "isCorrect": false, "rationale": "`DOMParser` ne lève pas d'exception JavaScript en cas d'erreur de syntaxe XML ; un bloc try/catch ne détectera rien."},
+      {"label": "D", "text": "En recherchant la présence d'un nœud nommé `<parsererror>` dans le document XML retourné.", "isCorrect": true, "rationale": "Contrairement aux APIs qui lèvent des exceptions, `DOMParser` génère un document contenant une balise spécifique `<parsererror>` en cas de faute de syntaxe."}
+    ],
+    "answer": "D",
+    "rationale": "Le standard du navigateur impose à `DOMParser` de ne pas lever d'exception en cas de syntaxe XML invalide, mais d'injecter une balise `<parsererror>` contenant le détail de l'erreur dans l'arbre résultant."
+  },
+  {
+    "number": 9,
+    "category": "Spécification JSON (RFC 8259)",
+    "question": "Selon la spécification RFC 8259 du format JSON, quels sont les seuls types de données autorisés ?",
+    "hint": "Le format JSON ne compte que 6 types de base et ne fait pas la distinction entre entiers et décimaux.",
+    "options": [
+      {"label": "A", "text": "Chaîne (`string`), Nombre (`number`), Booléen (`boolean`), Valeur nulle (`null`), Tableau (`array`), Objet (`object`).", "isCorrect": true, "rationale": "La norme RFC 8259 définit rigoureusement ces 6 types uniques et exclut tout autre type de donnée natif."},
+      {"label": "B", "text": "Chaîne, Nombre, Grand Entier (`BigInt`), Booléen, Nul, Tableau.", "isCorrect": false, "rationale": "Le type `BigInt` est strictement interdit en JSON et déclenche une erreur lors de la sérialisation."},
+      {"label": "C", "text": "Chaîne, Entier (`int`), Flottant (`float`), Booléen, Ensemble (`Set`), Dictionnaire (`Map`).", "isCorrect": false, "rationale": "JSON ne distingue pas les entiers des flottants (un seul type `number`) et ne supporte pas nativement `Set` ou `Map`."},
+      {"label": "D", "text": "Chaîne, Nombre, Booléen, Indéfini (`undefined`), Date, Objet.", "isCorrect": false, "rationale": "`undefined` et `Date` ne font absolument pas partie des types primitifs de la spécification JSON."}
+    ],
+    "answer": "A",
+    "rationale": "La RFC 8259 est restrictive : string, number, boolean, null, array et object. Tout autre type JavaScript (undefined, Function, Symbol, BigInt, Date) doit être converti ou ignoré."
+  },
+  {
+    "number": 10,
+    "category": "Syntaxe JSON vs JavaScript",
+    "question": "Quelle syntaxe est parfaitement valide en littéral JavaScript mais provoque une erreur de parsing fatale (`SyntaxError`) en JSON strict ?",
+    "hint": "Cherchez une habitude de codage courante en JS/TS moderne qui concerne la fin des listes ou des objets.",
+    "options": [
+      {"label": "A", "text": "Ajouter une virgule traînante (*trailing comma*) après le dernier élément : `{\"a\": 1, \"b\": 2,}`.", "isCorrect": true, "rationale": "Les virgules traînantes sont formellement interdites par la norme JSON et provoquent un rejet immédiat par le parser."},
+      {"label": "B", "text": "Affecter la valeur `null` à une propriété : `{\"description\": null}`.", "isCorrect": false, "rationale": "La valeur `null` est un type primitif reconnu et parfaitement autorisé par la norme RFC 8259."},
+      {"label": "C", "text": "Déclarer un tableau contenant des nombres décimaux : `[12.5, 99.0]`.", "isCorrect": false, "rationale": "Les nombres décimaux délimités par un point sont totalement valides en JSON."},
+      {"label": "D", "text": "Délimiter les clés d'un objet par des guillemets doubles : `{\"nom\": \"Alice\"}`.", "isCorrect": false, "rationale": "En JSON strict, l'utilisation des guillemets doubles sur les clés est obligatoire."}
+    ],
+    "answer": "A",
+    "rationale": "Les virgules finales ou traînantes (*trailing commas*) sont tolérées en JS moderne mais interdites en JSON strict ; leur présence déclenche systématiquement une `SyntaxError`."
+  },
+  {
+    "number": 11,
+    "category": "Comparatif JSON vs XML",
+    "question": "Pour quelle raison majeure le format JSON a-t-il supplanté le XML pour les échanges dans les APIs REST et applications web ?",
+    "hint": "Comparez la quantité de caractères nécessaires pour représenter la même information dans les deux formats.",
+    "options": [
+      {"label": "A", "text": "Il permet de stocker des fonctions et méthodes directement dans le fichier de données.", "isCorrect": false, "rationale": "JSON ne permet aucunement de sérialiser du code exécutable ou des méthodes."},
+      {"label": "B", "text": "Il intègre un système natif de validation par schémas imposé par le W3C.", "isCorrect": false, "rationale": "JSON ne possède pas de système de validation natif obligatoire intégré aux navigateurs."},
+      {"label": "C", "text": "Il permet d'ajouter des commentaires explicatifs au milieu des données pour faciliter le travail des développeurs.", "isCorrect": false, "rationale": "Les commentaires sont strictement interdits dans la norme JSON standard."},
+      {"label": "D", "text": "Il offre une syntaxe plus concise sans balises de fermeture répétées, intègre des types natifs et se parse très rapidement.", "isCorrect": true, "rationale": "La légèreté de JSON et sa correspondance directe avec les structures de données en mémoire en font un format nettement plus performant."}
+    ],
+    "answer": "D",
+    "rationale": "JSON est beaucoup moins verbeux que XML (pas de balises fermantes redondantes), possède des types typés (booléens, nombres réels) et se parse nativement à très haute vitesse dans les moteurs JS."
+  },
+  {
+    "number": 12,
+    "category": "API JSON.stringify",
+    "question": "À quoi sert le troisième paramètre `space` dans l'appel `JSON.stringify(donnees, null, 2)` ?",
+    "hint": "Ce paramètre intervient lorsque l'on souhaite afficher du JSON lisible dans un journal ou une zone de texte.",
+    "options": [
+      {"label": "A", "text": "À limiter la profondeur de sérialisation des objets imbriqués à 2 niveaux.", "isCorrect": false, "rationale": "`space` ne contrôle pas la profondeur de l'arbre d'objets, mais uniquement l'affichage des retours à la ligne et espaces."},
+      {"label": "B", "text": "À indenter la chaîne JSON produite avec 2 espaces par niveau pour en faciliter la lecture par un humain.", "isCorrect": true, "rationale": "Le paramètre `space` spécifie l'indentation (nombre d'espaces ou chaîne de tabulation) pour le formatage lisible (*pretty-print*)."},
+      {"label": "C", "text": "À restreindre la taille maximale du document JSON à 2 kilo-octets.", "isCorrect": false, "rationale": "Le paramètre `space` ne fixe aucune limite de taille sur la chaîne générée."},
+      {"label": "D", "text": "À ignorer les 2 premières propriétés du premier niveau de l'objet.", "isCorrect": false, "rationale": "Le filtrage des propriétés est géré par le deuxième paramètre (`replacer`), pas par `space`."}
+    ],
+    "answer": "B",
+    "rationale": "Le 3ème paramètre contrôle le formatage esthétique (*pretty-printing*). Passer un entier `2` indente chaque niveau de 2 espaces avec des sauts de ligne réguliers."
+  },
+  {
+    "number": 13,
+    "category": "Filtrage JSON (Replacer Array)",
+    "question": "Que produit l'instruction `JSON.stringify(utilisateur, ['id', 'email'])` si l'objet `utilisateur` possède les propriétés `id`, `nom`, `email` et `motDePasse` ?",
+    "hint": "Considérez le deuxième paramètre lorsqu'il reçoit une liste de noms de propriétés sous forme de tableau.",
+    "options": [
+      {"label": "A", "text": "Une erreur `TypeError` car le second paramètre de `JSON.stringify` doit obligatoirement être une fonction.", "isCorrect": false, "rationale": "La signature de `JSON.stringify` accepte soit une fonction, soit un tableau de chaînes en guise de filtre."},
+      {"label": "B", "text": "Une chaîne JSON excluant `id` et `email` pour ne conserver que `nom` et `motDePasse`.", "isCorrect": false, "rationale": "Le tableau sert de liste blanche d'inclusions, et non de liste noire d'exclusions."},
+      {"label": "C", "text": "Un tableau contenant les deux valeurs correspondant aux clés `id` et `email`.", "isCorrect": false, "rationale": "`JSON.stringify` retourne toujours une chaîne de caractères représentant un objet JSON, pas un tableau JavaScript."},
+      {"label": "D", "text": "Une chaîne JSON contenant exclusivement les clés `id` et `email` (filtre en liste blanche).", "isCorrect": true, "rationale": "Lorsqu'un tableau de chaînes est fourni comme `replacer`, `JSON.stringify` agit comme une liste blanche en ne conservant que ces propriétés."}
+    ],
+    "answer": "D",
+    "rationale": "Fournir un tableau de chaînes comme second argument de `JSON.stringify()` fait office de liste blanche (*whitelist*) : seules les propriétés listées seront présentes dans le texte produit."
+  },
+  {
+    "number": 14,
+    "category": "Filtrage JSON (Replacer Function)",
+    "question": "Lorsqu'on utilise une fonction `replacer` avec `JSON.stringify(donnees, replacer)`, quelle valeur la fonction doit-elle retourner pour supprimer complètement une propriété du JSON final ?",
+    "hint": "Il s'agit de la valeur JavaScript représentant l'absence totale de définition d'une valeur.",
+    "options": [
+      {"label": "A", "text": "`false`", "isCorrect": false, "rationale": "Renvoyer `false` sérialise la propriété avec la valeur booléenne `\"cle\": false`."},
+      {"label": "B", "text": "`null`", "isCorrect": false, "rationale": "Renvoyer `null` conserve la clé dans le JSON et lui assigne la valeur `\"cle\": null`."},
+      {"label": "C", "text": "`\"\"` (une chaîne vide)", "isCorrect": false, "rationale": "Renvoyer une chaîne vide associe la valeur textuelle vide à la clé dans le JSON généré."},
+      {"label": "D", "text": "`undefined`", "isCorrect": true, "rationale": "Renvoyer `undefined` dans la fonction `replacer` indique au sérialiseur d'omettre totalement la clé du résultat."}
+    ],
+    "answer": "D",
+    "rationale": "Dans un replacer fonctionnel `(key, value) => ...`, retourner `undefined` indique au sérialiseur d'évincer purement et simplement la propriété correspondante."
+  },
+  {
+    "number": 15,
+    "category": "Personnalisation via toJSON()",
+    "question": "Quel est l'avantage architectural principal de déclarer une méthode `toJSON()` sur une classe métier ?",
+    "hint": "Pensez au principe d'encapsulation : l'objet choisit lui-même ce qu'il accepte d'exposer à l'extérieur.",
+    "options": [
+      {"label": "A", "text": "Elle convertit les méthodes de la classe en chaînes de caractères exécutables par `eval()`.", "isCorrect": false, "rationale": "La méthode `toJSON()` ne sérialise pas les méthodes de la classe sous forme d'instructions exécutables."},
+      {"label": "B", "text": "La classe maîtrise elle-même sa représentation sérialisable, préservant l'encapsulation et évitant la fuite de données sensibles.", "isCorrect": true, "rationale": "Lors de l'appel à `JSON.stringify()`, le moteur délègue automatiquement la sérialisation à la méthode `toJSON()` de la classe si elle existe."},
+      {"label": "C", "text": "La méthode force `JSON.parse()` à réinstancier directement la classe sans passer par une fabrique.", "isCorrect": false, "rationale": "`toJSON()` n'intervient que lors de la phase de sérialisation (écriture) et n'a aucun impact automatique sur `JSON.parse()`."},
+      {"label": "D", "text": "Elle permet à l'objet d'écrire son contenu directement dans un fichier sur le disque dur du client.", "isCorrect": false, "rationale": "`toJSON()` se contente de retourner un objet littéral prêt pour la conversion texte ; elle ne réalise aucune I/O."}
+    ],
+    "answer": "B",
+    "rationale": "Implémenter `toJSON()` permet à l'objet d'encapsuler la logique de sa propre projection publique : filtrer des mots de passe, formater des dates ou aplatir des structures complexes."
+  },
+  {
+    "number": 16,
+    "category": "Le Piège du Prototype Perdu",
+    "question": "Considérez le code suivant : `const t = JSON.parse(jsonStr) as Tache;`. Si la classe `Tache` possède une méthode `terminer()`, quelle est la conséquence de l'exécution de `t.terminer()` ?",
+    "hint": "Rappelez-vous du problème du 'Prototype Perdu' : que devient l'assertion `as` après la compilation TypeScript vers JavaScript ?",
+    "options": [
+      {"label": "A", "text": "La méthode s'exécute correctement car TypeScript a réattaché le prototype à la désérialisation.", "isCorrect": false, "rationale": "TypeScript n'émet aucun code JavaScript au runtime pour réattacher les prototypes lors d'un cast `as`."},
+      {"label": "B", "text": "La méthode s'exécute mais réinitialise toutes les propriétés de l'objet à `null`.", "isCorrect": false, "rationale": "L'appel échoue immédiatement au moment d'invoquer la fonction, car la propriété `terminer` vaut `undefined` sur un objet littéral."},
+      {"label": "C", "text": "Le compilateur TypeScript bloque la compilation et signale une erreur de type fatale.", "isCorrect": false, "rationale": "Le compilateur accepte le cast `as Tache` sans erreur, rendant le piège indétectable avant l'exécution."},
+      {"label": "D", "text": "Une erreur `TypeError` est levée au runtime indiquant que `t.terminer` n'est pas une fonction.", "isCorrect": true, "rationale": "Le cast `as` est une simple indication pour le compilateur TypeScript qui disparaît à la compilation. `JSON.parse()` crée un objet littéral sans le prototype de `Tache`."}
+    ],
+    "answer": "D",
+    "rationale": "C'est le piège classique du 'Prototype Perdu'. Le mot-clé `as Tache` disparaît à la compilation. À l'exécution, `JSON.parse` renvoie un objet brut `{}` dont le prototype est `Object` : `t.terminer` vaut `undefined` et l'appel plante."
+  },
+  {
+    "number": 17,
+    "category": "Prototype & instanceof",
+    "question": "Que renvoie l'expression `restaure instanceof Article` lorsque `restaure` provient directement du résultat de `JSON.parse(chaineJson)` ?",
+    "hint": "Considérez le prototype rattaché par défaut aux objets créés par le moteur `JSON.parse()`.",
+    "options": [
+      {"label": "A", "text": "`true`", "isCorrect": false, "rationale": "`instanceof` vérifie la chaîne de prototypes en mémoire, et `JSON.parse()` ne connaît pas la classe `Article`."},
+      {"label": "B", "text": "`false`", "isCorrect": true, "rationale": "`JSON.parse()` crée un objet simple dont le prototype est `Object.prototype`, il n'est donc pas une instance de la classe `Article`."},
+      {"label": "C", "text": "Une exception `ReferenceError`.", "isCorrect": false, "rationale": "L'évaluation est syntaxiquement valide et s'exécute sans lever d'erreur, renvoyant simplement un booléen."},
+      {"label": "D", "text": "`undefined`", "isCorrect": false, "rationale": "L'opérateur `instanceof` renvoie toujours un booléen (`true` ou `false`)."}
+    ],
+    "answer": "B",
+    "rationale": "Puisque `JSON.parse` n'a pas exécuté `new Article()`, le prototype de l'objet est `Object.prototype`. L'opérateur `instanceof Article` teste la chaîne de prototypes et renvoie donc `false`."
+  },
+  {
+    "number": 18,
+    "category": "Patron DTO (Data Transfer Object)",
+    "question": "Dans le patron d'architecture DTO, quel est le rôle d'une `interface ArticleDTO` par rapport à une `class Article` ?",
+    "hint": "Pensez à l'analogie du carton plat IKEA par rapport au meuble assemblé et fonctionnel.",
+    "options": [
+      {"label": "A", "text": "Garantir la validation des invariants métier lors de l'instanciation des objets.", "isCorrect": false, "rationale": "Les DTOs sont des structures passives sans constructeur ni logique de validation ; c'est l'entité métier qui protège ses invariants."},
+      {"label": "B", "text": "Conserver des références vers le système de fichiers pour la persistance automatique.", "isCorrect": false, "rationale": "Un DTO est une simple description de types de données, totalement découplée du stockage physique."},
+      {"label": "C", "text": "Définir un contrat de structure passif, muet et sans méthodes, adapté à la sérialisation et au transfert réseau.", "isCorrect": true, "rationale": "Le DTO (*Data Transfer Object*) sert uniquement d'enveloppe de données plates pour traverser la frontière de la mémoire vive."},
+      {"label": "D", "text": "Encapsuler les algorithmes métier complexes de calcul de prix pour décharger la classe.", "isCorrect": false, "rationale": "Un DTO ne contient aucune méthode ni logique algorithmique ; cette responsabilité incombe à l'entité métier."}
+    ],
+    "answer": "C",
+    "rationale": "Le DTO est un carton de transport passif : il ne comporte aucune méthode ni logique métier, uniquement les données primitives prêtes pour le transport réseau ou la sérialisation."
+  },
+  {
+    "number": 19,
+    "category": "Entité Métier vs DTO",
+    "question": "Quelle caractéristique distingue essentiellement une Entité Métier (`class Article`) d'un simple DTO (`interface ArticleDTO`) ?",
+    "hint": "Pensez aux concepts de validation d'invariants (Séance 05) et d'encapsulation du comportement.",
+    "options": [
+      {"label": "A", "text": "L'entité interdit l'utilisation de méthodes statiques de fabrique.", "isCorrect": false, "rationale": "Au contraire, les entités utilisent fréquemment des fabriques statiques (ex: `fromDTO()`) pour gérer leur réhydratation."},
+      {"label": "B", "text": "L'entité est composée uniquement de types primitifs compatibles JSON sans aucune méthode.", "isCorrect": false, "rationale": "Cette description est celle du DTO. L'entité métier contient au contraire des méthodes et des types riches."},
+      {"label": "C", "text": "L'entité peut être sérialisée directement sur le réseau sans passer par une conversion.", "isCorrect": false, "rationale": "Toute instance métier contenant du comportement doit passer par un DTO pour franchir la frontière réseau proprement."},
+      {"label": "D", "text": "L'entité possède un constructeur validant ses invariants, des attributs encapsulés et du comportement (méthodes).", "isCorrect": true, "rationale": "L'entité est une structure vivante responsable de la cohérence de ses données et de l'exécution des règles du domaine."}
+    ],
+    "answer": "D",
+    "rationale": "Une entité métier est vivante et riche : elle protège ses invariants via son constructeur, encapsule ses attributs et expose des méthodes de comportement opérationnel."
+  },
+  {
+    "number": 20,
+    "category": "Réhydratation & Constructeurs",
+    "question": "Pourquoi la fabrique statique `Article.fromDTO(dto: ArticleDTO)` passe-t-elle par l'instruction `new Article(...)` plutôt que par un simple `Object.assign()` ?",
+    "hint": "Réfléchissez au rôle du constructeur en tant que 'gardien' de la cohérence de l'objet.",
+    "options": [
+      {"label": "A", "text": "Parce que `Object.assign()` est une méthode obsolète retirée des versions récentes de TypeScript.", "isCorrect": false, "rationale": "`Object.assign()` est une méthode standard toujours présente en JavaScript/TypeScript."},
+      {"label": "B", "text": "Parce que l'appel au constructeur réexécute les validations d'invariants et rattache correctement le prototype de la classe.", "isCorrect": true, "rationale": "Passer par le constructeur garantit que l'objet créé respecte toutes les règles de gestion et possède l'ensemble de ses méthodes."},
+      {"label": "C", "text": "Parce que `new Article()` convertit directement le DTO en fichier JSON sur disque.", "isCorrect": false, "rationale": "L'opérateur `new` instancie un objet en mémoire RAM et ne réalise aucune écriture sur disque."},
+      {"label": "D", "text": "Parce que `Object.assign()` efface les valeurs des propriétés primitives du DTO.", "isCorrect": false, "rationale": "`Object.assign()` copie les propriétés, mais sans invoquer le constructeur de la classe cible ni valider les règles métier."}
+    ],
+    "answer": "B",
+    "rationale": "Invoquer `new Article(...)` permet de passer par le gardien naturel de la classe : son constructeur. Celui-ci valide que les données reçues respectent les invariants et rattache la chaîne de prototypes."
+  },
+  {
+    "number": 21,
+    "category": "Cycle de Réhydratation",
+    "question": "Quel est l'ordre logique exact des opérations pour reconstruire une entité métier vivante en RAM à partir d'un fichier JSON stocké sur disque ?",
+    "hint": "Suivez le cheminement de la donnée : du texte froid vers la structure brute, puis vers l'objet enrichi par sa classe.",
+    "options": [
+      {"label": "A", "text": "Texte brut JSON ➔ `Entity.fromDTO()` ➔ `JSON.parse()` ➔ Instance vivante en RAM.", "isCorrect": false, "rationale": "`Entity.fromDTO()` attend un objet DTO JavaScript en entrée et ne peut pas traiter directement une chaîne de texte non parsée."},
+      {"label": "B", "text": "Instance vivante en RAM ➔ `JSON.stringify()` ➔ `toDTO()` ➔ Texte brut JSON.", "isCorrect": false, "rationale": "Cette séquence décrit le cycle inverse de sauvegarde (sérialisation) et non de chargement."},
+      {"label": "C", "text": "Texte brut JSON ➔ `JSON.parse()` (donnée brute DTO) ➔ `Entity.fromDTO()` ➔ Instance vivante en RAM.", "isCorrect": true, "rationale": "Le fichier texte est d'abord converti en objet anonyme (DTO), puis la fabrique réinvoque le constructeur pour produire l'instance typée."},
+      {"label": "D", "text": "Texte brut JSON ➔ Cast `as Entity` ➔ `JSON.stringify()` ➔ Instance vivante en RAM.", "isCorrect": false, "rationale": "Un cast TypeScript ne convertit pas le texte et `JSON.stringify` produit du texte au lieu d'une instance."}
+    ],
+    "answer": "C",
+    "rationale": "Le pipeline standard de désérialisation : le texte brut est parsé en objet générique DTO via `JSON.parse()`, puis transmis à la fabrique statique `fromDTO()` qui instancie l'entité vivante."
+  },
+  {
+    "number": 22,
+    "category": "Conversion des Types Riches",
+    "question": "Lorsqu'un DTO contient une propriété `echeance: string` sous forme de date ISO (ex: `\"2026-11-02\"`), comment la fabrique `fromDTO()` doit-elle la traiter lors de la réhydratation de l'entité ?",
+    "hint": "Rappelez-vous que les types complexes comme `Date` sont dégradés en chaînes lors de la sérialisation et doivent être reconstruits.",
+    "options": [
+      {"label": "A", "text": "En instanciant un objet `Date` réel via `new Date(dto.echeance)` à passer au constructeur.", "isCorrect": true, "rationale": "Puisque JSON ne conserve les dates que sous forme de textes ISO, la fabrique doit convertir explicitement la chaîne en instance `Date`."},
+      {"label": "B", "text": "En exécutant `JSON.stringify()` sur la chaîne pour la transformer en nombre.", "isCorrect": false, "rationale": "`JSON.stringify()` sur une chaîne rajouterait simplement des guillemets sans créer d'objet date."},
+      {"label": "C", "text": "En laissant la propriété sous forme de `string`, car TypeScript la convertit automatiquement.", "isCorrect": false, "rationale": "TypeScript n'effectue aucune conversion de type à l'exécution ; la variable resterait une simple chaîne de caractères."},
+      {"label": "D", "text": "En appliquant `Object.setPrototypeOf(dto.echeance, Date.prototype)`.", "isCorrect": false, "rationale": "On ne peut pas changer le prototype d'une chaîne primitive pour la transformer en objet `Date` fonctionnel."}
+    ],
+    "answer": "A",
+    "rationale": "Le JSON ne stocke que du texte. La fabrique métier a la responsabilité de convertir les types dégénérés : la chaîne ISO doit être expressément transformée via `new Date(dto.echeance)`."
+  },
+  {
+    "number": 23,
+    "category": "Gestion des Références Circulaires",
+    "question": "Que se produit-il si vous tentez d'exécuter `JSON.stringify()` sur une structure contenant une référence circulaire (ex: `a.b = b; b.a = a;`) ?",
+    "hint": "Pensez au comportement de l'algorithme de parcours d'arbre lorsqu'il retombe indéfiniment sur un nœud parent.",
+    "options": [
+      {"label": "A", "text": "Les objets sont sérialisés correctement grâce à l'attribution d'identifiants uniques automatiques.", "isCorrect": false, "rationale": "Le format JSON ne possède pas de système natif de pointeurs ou d'identifiants de référence."},
+      {"label": "B", "text": "Le sérialiseur lève une exception fatale du type `TypeError: converting circular structure to JSON`.", "isCorrect": true, "rationale": "En présence de références circulaires, l'analyseur entre dans une boucle infinie et interrompt le traitement par une erreur fatale."},
+      {"label": "C", "text": "La sérialisation réussit mais la chaîne JSON produite est de longueur infinie.", "isCorrect": false, "rationale": "L'exécution plante sur une exception de dépassement de pile avant de produire une chaîne infinie."},
+      {"label": "D", "text": "Le deuxième objet est automatiquement remplacé par la valeur `null` pour couper la boucle.", "isCorrect": false, "rationale": "`JSON.stringify()` ne résout pas automatiquement les références circulaires sans un filtre `replacer` personnalisé."}
+    ],
+    "answer": "B",
+    "rationale": "`JSON.stringify()` explore récursivement l'arbre d'objets. S'il détecte une boucle fermée, il abandonne immédiatement en levant un `TypeError: converting circular structure to JSON`."
+  },
+  {
+    "number": 24,
+    "category": "Résilience & Sécurité du Parsing",
+    "question": "Quelle est la règle de sécurité indispensable à appliquer lors de l'appel à `JSON.parse()` sur des données provenant d'un fichier externe ou du réseau ?",
+    "hint": "Que se passe-t-il si le fichier JSON sur disque est corrompu ou incomplet au moment de la lecture ?",
+    "options": [
+      {"label": "A", "text": "Désactiver le mode strict de TypeScript dans le fichier de configuration `tsconfig.json`.", "isCorrect": false, "rationale": "Le mode strict de TypeScript n'empêche pas le moteur JavaScript d'interrompre l'exécution sur une erreur de parsing."},
+      {"label": "B", "text": "Encapsuler systématiquement l'appel dans un bloc `try / catch` pour gérer les éventuelles erreurs de syntaxe (`SyntaxError`).", "isCorrect": true, "rationale": "Si la chaîne JSON reçue est malformée ou altérée, `JSON.parse()` lève une exception qui crashera l'application si elle n'est pas capturée."},
+      {"label": "C", "text": "Utiliser le mot-clé `as any` pour empêcher l'analyseur de lever des exceptions.", "isCorrect": false, "rationale": "L'assertion de type `as any` est un outil de compilation qui n'a aucun effet sur les exceptions levées à l'exécution."},
+      {"label": "D", "text": "Exécuter `JSON.stringify()` sur la chaîne avant d'appeler `JSON.parse()`.", "isCorrect": false, "rationale": "Sérialiser une chaîne texte invalide ne corrige pas sa syntaxe et rajouterait simplement un niveau d'échappement."}
+    ],
+    "answer": "B",
+    "rationale": "`JSON.parse()` est une fonction stricte et non tolérante. Le moindre caractère manquant ou mal formé déclenche une `SyntaxError` fatale ; l'envelopper dans un `try / catch` est impératif."
+  },
+  {
+    "number": 25,
+    "category": "File System Access & Sandbox Web",
+    "question": "Dans une application web Angular, pourquoi l'accès aux fichiers via l'API File System Access (`window.showOpenFilePicker()`) diffère-t-il des accès fichiers en Java ou C# desktop ?",
+    "hint": "Considérez le modèle de sécurité du navigateur web qui isole les onglets du reste du système d'exploitation.",
+    "options": [
+      {"label": "A", "text": "Applications web et applications C# desktop partagent exactement les mêmes autorisations d'accès direct par chemin absolu (`C:\\...`).", "isCorrect": false, "rationale": "Le navigateur web interdit l'accès direct par chemin absolu sans passer par le sélecteur de fichiers de l'IHM."},
+      {"label": "B", "text": "Le code Angular enregistre toujours les fichiers sur un serveur distant et non sur le disque local.", "isCorrect": false, "rationale": "L'API File System Access permet bel et bien d'interagir directement avec le disque local de la machine cliente."},
+      {"label": "C", "text": "L'application web s'exécute dans un bac à sable (sandbox) et exige une interaction utilisateur explicite (ex: un clic) pour ouvrir le sélecteur.", "isCorrect": true, "rationale": "Pour des raisons de sécurité, le navigateur interdit au code JavaScript de lire le disque dur à l'insu de l'utilisateur."},
+      {"label": "D", "text": "L'API File System Access ne permet de manipuler que des fichiers XML et refuse le format JSON.", "isCorrect": false, "rationale": "L'API manipule des flux d'octets et de texte bruts, totalement indépendants du format des données (JSON, XML, txt)."}
+    ],
+    "answer": "C",
+    "rationale": "Le modèle de sécurité du Web (*sandbox*) interdit tout accès silencieux au disque. L'ouverture d'un fichier nécessite obligatoirement un geste explicite de l'utilisateur (*User Activation*) déclenchant une boîte de dialogue native du système."
+  },
+  {
+    "number": 26,
+    "category": "Typage Défensif (unknown vs any)",
+    "question": "Pourquoi est-il recommandé de typer la donnée issue de `JSON.parse()` en `unknown` plutôt qu'en `any` en TypeScript ?",
+    "hint": "Réfléchissez à la différence entre ignorer les contrôles du compilateur et l'obliger à réclamer une vérification préalable.",
+    "options": [
+      {"label": "A", "text": "Le compilateur TypeScript interdit formellement l'utilisation du type `any` dans tous les projets.", "isCorrect": false, "rationale": "Le type `any` est autorisé par défaut, même s'il est considéré comme une mauvaise pratique de développement."},
+      {"label": "B", "text": "Le type `unknown` restaure automatiquement le prototype de la classe d'origine au runtime.", "isCorrect": false, "rationale": "`unknown` est un type de compilation TypeScript qui n'exécute aucun code d'instanciation en JavaScript."},
+      {"label": "C", "text": "Le type `unknown` force le développeur à valider la structure de la donnée (Type Guards) avant toute utilisation sécurisée.", "isCorrect": true, "rationale": "Contrairement à `any` qui désactive tous les contrôles, `unknown` oblige à vérifier la présence des propriétés avant accès, évitant les crashs au runtime."},
+      {"label": "D", "text": "Le type `unknown` transforme automatiquement les chaînes ISO en objets `Date`.", "isCorrect": false, "rationale": "Aucune transformation de valeur n'est réalisée au runtime par le système de typage de TypeScript."}
+    ],
+    "answer": "C",
+    "rationale": "`any` désactive purement et simplement le compilateur, créant un faux sentiment de sécurité. `unknown` impose quant à lui des gardes de types (*Type Guards*) préalables, garantissant la résilience du programme face aux données externes."
+  }
+];
+
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+let userAnswers = [];
+
+// Formate les extraits de code inline, guillemets et blocs de code
+function formatCode(text) {
+  if (!text) return '';
+  
+  // 1. Blocs de code multi-lignes ```...```
+  let formatted = text.replace(/```(?:ts|typescript|js|xml|json)?\n([\s\S]*?)```/g, '<pre class="code-box"><code>$1</code></pre>');
+  
+  // 2. Code inline entre backticks `...`
+  formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-term">$1</span>');
+  
+  // 3. Mots-clés isolés entre quotes '...', sans capturer les élisions françaises
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])'([a-zA-Z0-9_\-\.\/@\(\)=]+)'/g, '<span class="code-term">$1</span>');
+  
+  const parts = formatted.split(/(<pre[\s\S]*?<\/pre>)/g);
+  return parts.map(part => {
+    if (part.startsWith('<pre')) return part;
+    return part.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  }).join('');
+}
+
+function init() {
+  setupTheme();
+  setupKeyboard();
+  renderQuestion(0);
+  
+  document.getElementById('next-btn').addEventListener('click', handleNext);
+  document.getElementById('restart-btn').addEventListener('click', handleRestart);
+  document.getElementById('toggle-review-btn').addEventListener('click', handleToggleReview);
+  document.getElementById('hint-toggle-btn').addEventListener('click', toggleHint);
+}
+
+// Gestion du Thème Clair / Sombre
+function setupTheme() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const text = document.getElementById('theme-text');
+  
+  const saved = localStorage.getItem('poo_quiz_theme_s16') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+  
+  toggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('poo_quiz_theme_s16', next);
+    updateThemeUI(next);
+  });
+  
+  function updateThemeUI(t) {
+    if (t === 'dark') {
+      icon.textContent = '☀️';
+      text.textContent = 'Mode clair';
+    } else {
+      icon.textContent = '🌙';
+      text.textContent = 'Mode sombre';
+    }
+  }
+}
+
+function renderQuestion(index) {
+  answered = false;
+  const q = quizData[index];
+  
+  // Barre de progression
+  const progressPct = ((index) / quizData.length) * 100;
+  document.getElementById('progress-fill').style.width = progressPct + '%';
+  document.getElementById('progress-q-label').textContent = `Question ${index + 1} sur ${quizData.length}`;
+  document.getElementById('progress-score-pill').textContent = index > 0 
+    ? `Score : ${correctCount}/${index} (${Math.round((correctCount / index) * 100)}%)` 
+    : `Score : 0/0`;
+
+  // Métadonnées
+  document.getElementById('q-index-badge').textContent = `Question ${index < 9 ? '0' + (index + 1) : index + 1}`;
+  document.getElementById('q-category-tag').textContent = q.category || 'Sérialisation & Formats';
+  document.getElementById('q-counter').textContent = `${index + 1} / ${quizData.length}`;
+
+  // Texte de la question
+  document.getElementById('q-text').innerHTML = formatCode(q.question);
+
+  // Indice
+  const hintBody = document.getElementById('hint-body');
+  hintBody.innerHTML = formatCode(q.hint);
+  hintBody.classList.remove('open');
+  document.getElementById('hint-btn-label').textContent = "Afficher un indice";
+
+  // Carte de feedback & Bouton suivant
+  const fcard = document.getElementById('feedback-card');
+  fcard.style.display = 'none';
+  fcard.className = 'feedback-card';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'none';
+  if (index === quizData.length - 1) {
+    document.getElementById('next-btn-text').textContent = "Voir mes résultats 🎉";
+  } else {
+    document.getElementById('next-btn-text').textContent = "Question suivante";
+  }
+
+  // Options de réponse
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, optIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.type = 'button';
+    btn.dataset.idx = optIdx;
+    btn.innerHTML = `
+      <span class="opt-key-circle">${opt.label}</span>
+      <span class="opt-content">${formatCode(opt.text)}</span>
+      <span class="opt-status-icon"></span>
+    `;
+
+    btn.addEventListener('click', () => selectOption(optIdx));
+    grid.appendChild(btn);
+  });
+}
+
+function selectOption(selectedIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizData[currentQ];
+  const selectedOpt = q.options[selectedIdx];
+  const isCorrect = selectedOpt.isCorrect;
+  userAnswers[currentQ] = selectedIdx;
+
+  if (isCorrect) {
+    correctCount++;
+  }
+
+  const optionBtns = document.querySelectorAll('.option-btn');
+  optionBtns.forEach(btn => btn.disabled = true);
+
+  const selectedBtn = optionBtns[selectedIdx];
+  const selectedStatus = selectedBtn.querySelector('.opt-status-icon');
+  
+  if (isCorrect) {
+    selectedBtn.classList.add('selected-correct');
+    selectedStatus.textContent = '✓';
+  } else {
+    selectedBtn.classList.add('selected-incorrect');
+    selectedStatus.textContent = '✕';
+
+    const correctIdx = q.options.findIndex(o => o.isCorrect);
+    if (correctIdx !== -1) {
+      const correctBtn = optionBtns[correctIdx];
+      correctBtn.classList.add('revealed-correct');
+      const correctStatus = correctBtn.querySelector('.opt-status-icon');
+      correctStatus.textContent = '✓';
+    }
+  }
+
+  // Atténuer les options non sélectionnées
+  optionBtns.forEach(btn => {
+    if (!btn.classList.contains('selected-correct') && 
+        !btn.classList.contains('selected-incorrect') && 
+        !btn.classList.contains('revealed-correct')) {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  // Afficher la carte de feedback élégante
+  const fcard = document.getElementById('feedback-card');
+  const fheader = document.getElementById('feedback-header');
+  const fbody = document.getElementById('feedback-body');
+
+  fcard.style.display = 'block';
+
+  if (isCorrect) {
+    fcard.className = 'feedback-card correct';
+    fheader.innerHTML = '<span>✓</span> <span>Excellente réponse !</span>';
+    fbody.innerHTML = `<strong>Justification :</strong> ${formatCode(selectedOpt.rationale || q.rationale)}`;
+  } else {
+    fcard.className = 'feedback-card incorrect';
+    fheader.innerHTML = `<span>✕</span> <span>Ce n'est pas tout à fait ça. La bonne réponse est l'option ${q.answer}.</span>`;
+    const userReason = selectedOpt.rationale ? `<div style="margin-bottom: 8px; color: var(--incorrect-text);"><strong>Votre choix (${selectedOpt.label}) :</strong> ${formatCode(selectedOpt.rationale)}</div>` : '';
+    fbody.innerHTML = `${userReason}<div><strong>Explication :</strong> ${formatCode(q.rationale)}</div>`;
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'flex';
+  nextBtn.focus();
+}
+
+function toggleHint() {
+  const hintBody = document.getElementById('hint-body');
+  const label = document.getElementById('hint-btn-label');
+  hintBody.classList.toggle('open');
+  if (hintBody.classList.contains('open')) {
+    label.textContent = "Masquer l'indice";
+  } else {
+    label.textContent = "Afficher un indice";
+  }
+}
+
+function handleNext() {
+  currentQ++;
+  if (currentQ < quizData.length) {
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById('question-card').style.display = 'none';
+  document.getElementById('progress-container').style.display = 'none';
+  document.getElementById('results-card').style.display = 'block';
+
+  const total = quizData.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  const stroke = document.getElementById('circle-score-stroke');
+  stroke.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+  document.getElementById('score-percent-text').textContent = `${pct}%`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-incorrect').textContent = total - correctCount;
+  document.getElementById('stat-total').textContent = total;
+
+  const msgEl = document.getElementById('results-message');
+  const iconEl = document.getElementById('results-icon');
+
+  if (pct >= 90) {
+    iconEl.textContent = '🏆';
+    msgEl.innerHTML = `<strong>Excellente maîtrise !</strong> Vous maîtrisez parfaitement la sérialisation, le format JSON/XML, le patron DTO et la résolution du prototype perdu.`;
+    launchConfetti();
+  } else if (pct >= 75) {
+    iconEl.textContent = '🚀';
+    msgEl.innerHTML = `<strong>Très bon travail !</strong> Les notions fondamentales de transfert de données et de réhydratation d'entités sont solides. Parcourez le corrigé pour consolider les cas limites.`;
+    launchConfetti();
+  } else if (pct >= 50) {
+    iconEl.textContent = '👍';
+    msgEl.innerHTML = `<strong>Bases acquises !</strong> Les concepts de JSON et de persistance sont compris, mais veillez à bien revoir la réhydratation par constructeur et la sécurité (try/catch, sandbox).`;
+  } else {
+    iconEl.textContent = '📚';
+    msgEl.innerHTML = `<strong>En cours d'apprentissage !</strong> Prenez le temps de réviser la séance 16 sur les DTOs, la perte de méthodes lors de la désérialisation et relancez le quiz !`;
+  }
+}
+
+function handleToggleReview() {
+  const container = document.getElementById('review-container');
+  const btn = document.getElementById('toggle-review-btn');
+  const list = document.getElementById('review-list');
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    btn.innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  } else {
+    container.style.display = 'block';
+    btn.innerHTML = '<span>Masquer le corrigé ▴</span>';
+
+    list.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const userIdx = userAnswers[qIdx];
+      const isGood = userIdx !== undefined && q.options[userIdx].isCorrect;
+
+      const card = document.createElement('div');
+      card.className = 'review-item';
+
+      const header = document.createElement('div');
+      header.className = 'review-item-header';
+      header.innerHTML = `
+        <div class="review-item-title">
+          <span>${isGood ? '✅' : '❌'}</span>
+          <span><strong>Q${qIdx + 1}.</strong> ${q.question.replace(/```[\s\S]*?```/g, '[Code]').substring(0, 75)}...</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);">Détails ▾</span>
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'review-item-body';
+
+      let optionsHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
+      q.options.forEach((opt, oIdx) => {
+        const wasUser = oIdx === userIdx;
+        const wasCorrect = opt.isCorrect;
+        let borderCol = 'var(--opt-border)';
+        let bgCol = 'transparent';
+        let badge = '';
+
+        if (wasCorrect) {
+          borderCol = '#10b981';
+          bgCol = 'rgba(16, 185, 129, 0.08)';
+          badge = ' <strong style="color: #10b981;">(Bonne réponse)</strong>';
+        }
+        if (wasUser && !wasCorrect) {
+          borderCol = '#ef4444';
+          bgCol = 'rgba(239, 68, 68, 0.08)';
+          badge = ' <strong style="color: #ef4444;">(Votre choix)</strong>';
+        }
+
+        optionsHtml += `
+          <div style="padding: 10px 14px; border: 1px solid ${borderCol}; background: ${bgCol}; border-radius: 8px; font-size: 13.5px;">
+            <div><strong>${opt.label}.</strong> ${formatCode(opt.text)}${badge}</div>
+            ${opt.rationale ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">↳ ${formatCode(opt.rationale)}</div>` : ''}
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+
+      body.innerHTML = `
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 8px;">${formatCode(q.question)}</div>
+        ${optionsHtml}
+        <div style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #6366f1; font-size: 13px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">Explication globale :</strong> ${formatCode(q.rationale)}
+        </div>
+      `;
+
+      header.addEventListener('click', () => {
+        body.classList.toggle('open');
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+  }
+}
+
+function handleRestart() {
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+  userAnswers = [];
+
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('review-container').style.display = 'none';
+  document.getElementById('toggle-review-btn').innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  document.getElementById('progress-container').style.display = 'block';
+  document.getElementById('question-card').style.display = 'block';
+
+  renderQuestion(0);
+}
+
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+
+    if (document.getElementById('results-card').style.display === 'block') {
+      if (e.key === 'Enter') handleRestart();
+      return;
+    }
+
+    if (answered) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      return;
+    }
+
+    const q = quizData[currentQ];
+    if (!q) return;
+
+    let targetIdx = -1;
+    if (key === 'A' || key === '1') targetIdx = 0;
+    else if (key === 'B' || key === '2') targetIdx = 1;
+    else if (key === 'C' || key === '3') targetIdx = 2;
+    else if (key === 'D' || key === '4') targetIdx = 3;
+
+    if (targetIdx >= 0 && targetIdx < q.options.length) {
+      e.preventDefault();
+      selectOption(targetIdx);
+    }
+
+    if (key === 'H' || key === 'I') {
+      e.preventDefault();
+      toggleHint();
+    }
+  });
+}
+
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#3178c6', '#6366f1', '#7c3aed', '#10b981', '#fbbf24', '#38bdf8'];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.015 + 0.008
+    });
+  }
+
+  let animId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25;
+      p.alpha -= p.decay;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  loop();
+}
+
+// Initialisation globale
+init();
+</script>
+</body>
+</html>
