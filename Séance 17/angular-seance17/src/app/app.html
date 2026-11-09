@@ -1,0 +1,39 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('event-loop-clock') {
+          <app-event-loop-clock></app-event-loop-clock>
+        }
+        @case ('rest-protocols') {
+          <app-rest-protocols></app-rest-protocols>
+        }
+        @case ('http-infrastructure') {
+          <app-http-infrastructure></app-http-infrastructure>
+        }
+        @case ('http-resource') {
+          <app-http-resource></app-http-resource>
+        }
+        @case ('resource-lifecycle') {
+          <app-resource-lifecycle></app-resource-lifecycle>
+        }
+        @case ('dynamic-requests') {
+          <app-dynamic-requests></app-dynamic-requests>
+        }
+        @case ('dto-to-entity') {
+          <app-dto-to-entity></app-dto-to-entity>
+        }
+        @case ('anti-patterns') {
+          <app-anti-patterns></app-anti-patterns>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>
