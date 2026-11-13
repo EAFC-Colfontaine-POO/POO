@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz POO — Stockage Web &amp; Persistance Client</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      --bg-page: #090d16;
+      --bg-ambient-1: rgba(99, 102, 241, 0.16);
+      --bg-ambient-2: rgba(236, 72, 153, 0.12);
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --brand-blue: #3b82f6;
+      --brand-indigo: #6366f1;
+      --brand-purple: #8b5cf6;
+      --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+      
+      --opt-bg: rgba(255, 255, 255, 0.03);
+      --opt-border: rgba(255, 255, 255, 0.08);
+      --opt-hover-bg: rgba(255, 255, 255, 0.06);
+      --opt-hover-border: rgba(99, 102, 241, 0.45);
+      
+      --correct-bg: rgba(16, 185, 129, 0.12);
+      --correct-border: #10b981;
+      --correct-text: #34d399;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: rgba(239, 68, 68, 0.12);
+      --incorrect-border: #ef4444;
+      --incorrect-text: #f87171;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: rgba(245, 158, 11, 0.08);
+      --hint-border: rgba(245, 158, 11, 0.25);
+      --hint-text: #fbbf24;
+      
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --code-border: rgba(255, 255, 255, 0.12);
+      --code-color: #38bdf8;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8fafc;
+      --bg-ambient-1: rgba(99, 102, 241, 0.08);
+      --bg-ambient-2: rgba(236, 72, 153, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --opt-bg: #ffffff;
+      --opt-border: #e2e8f0;
+      --opt-hover-bg: #f8fafc;
+      --opt-hover-border: #6366f1;
+      
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --correct-text: #065f46;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: #fef2f2;
+      --incorrect-border: #ef4444;
+      --incorrect-text: #991b1b;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: #fffbeb;
+      --hint-border: #fde68a;
+      --hint-text: #92400e;
+      
+      --code-bg: #f1f5f9;
+      --code-border: #cbd5e1;
+      --code-color: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image: 
+        radial-gradient(circle at 15% 12%, var(--bg-ambient-1) 0%, transparent 45%),
+        radial-gradient(circle at 85% 88%, var(--bg-ambient-2) 0%, transparent 45%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-main);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .keyboard-badge {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    @media (min-width: 640px) {
+      .keyboard-badge { display: inline-flex; align-items: center; gap: 6px; }
+    }
+
+    /* Header Hero */
+    .header-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .course-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.12);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #a5b4fc;
+      box-shadow: 0 0 10px #a5b4fc;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .quiz-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto 16px;
+      font-weight: 500;
+    }
+
+    .tags-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-muted);
+    }
+
+    /* Progress section */
+    .progress-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-q-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-score-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .progress-track {
+      background: #e2e8f0;
+    }
+
+    .progress-bar-fill {
+      background: var(--brand-gradient);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .q-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-index-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+    }
+
+    .q-category-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .q-text {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text-main);
+      margin-bottom: 22px;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-color);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #38bdf8;
+      overflow-x: auto;
+      text-align: left;
+    }
+    [data-theme="light"] .code-box {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0369a1;
+    }
+
+    /* Hint box */
+    .hint-container {
+      margin-bottom: 22px;
+    }
+
+    .hint-btn {
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      color: var(--hint-text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hint-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .hint-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--hint-text);
+      line-height: 1.5;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .hint-body.open {
+      display: block;
+    }
+
+    /* Options List */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 18px;
+      border: 2px solid var(--opt-border);
+      background: var(--opt-bg);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      position: relative;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--opt-hover-border);
+      background: var(--opt-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .opt-key-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--opt-border);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .opt-content {
+      flex: 1;
+      padding-top: 4px;
+      line-height: 1.5;
+    }
+
+    .opt-status-icon {
+      font-size: 18px;
+      margin-left: 8px;
+      display: none;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    /* Option States */
+    .option-btn.selected-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .option-btn.selected-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.selected-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--incorrect-border) !important;
+      background: var(--incorrect-bg) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+    .option-btn.selected-incorrect .opt-key-circle {
+      background: var(--incorrect-badge-bg);
+      color: var(--incorrect-badge-text);
+    }
+    .option-btn.selected-incorrect .opt-status-icon {
+      display: inline-block;
+      color: var(--incorrect-text);
+    }
+
+    .option-btn.revealed-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      border-style: dashed;
+    }
+    .option-btn.revealed-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.revealed-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.dimmed {
+      opacity: 0.45;
+    }
+
+    /* Feedback Card */
+    .feedback-card {
+      display: none;
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .feedback-card.correct {
+      background: var(--correct-bg);
+      border-left: 4px solid var(--correct-border);
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+      border-right: 1px solid rgba(16, 185, 129, 0.2);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .feedback-card.incorrect {
+      background: var(--incorrect-bg);
+      border-left: 4px solid var(--incorrect-border);
+      border-top: 1px solid rgba(239, 68, 68, 0.2);
+      border-right: 1px solid rgba(239, 68, 68, 0.2);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .feedback-header {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .feedback-card.correct .feedback-header { color: var(--correct-text); }
+    .feedback-card.incorrect .feedback-header { color: var(--incorrect-text); }
+
+    .feedback-body {
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    [data-theme="light"] .feedback-body {
+      color: #334155;
+    }
+
+    /* Action bar */
+    .action-bar {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.55);
+    }
+
+    /* Results Card */
+    .results-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .results-trophy {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .results-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle-wrapper {
+      margin: 24px auto;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-percent-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .results-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .stat-num.good { color: #10b981; }
+    .stat-num.bad { color: #ef4444; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn-secondary {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--opt-hover-bg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Review View */
+    .review-container {
+      display: none;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .review-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-item {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .review-item-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .review-item-title {
+      font-weight: 600;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-item-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--card-border);
+    }
+    .review-item-body.open {
+      display: block;
+      padding-top: 14px;
+    }
+
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="quiz-container">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="keyboard-badge">
+      <span>⌨️ Raccourcis : [A-D] ou [1-4] · [Entrée] · [I]</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Basculer le thème">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-text">Mode clair</span>
+    </button>
+  </div>
+
+  <!-- Header Hero -->
+  <div class="header-hero">
+    <div class="course-badge">
+      <span class="badge-dot"></span>
+      Programmation Orientée Objet · EAFC Colfontaine
+    </div>
+    <h1 class="quiz-title">Séance 18 — Stockage Web &amp; Persistance Client</h1>
+    <p class="quiz-subtitle">Cookies · LocalStorage · SessionStorage · Sérialisation JSON &amp; DTO · Angular SSR &amp; Signal-First</p>
+    <div class="tags-row">
+      <span class="tag-pill">TypeScript</span>
+      <span class="tag-pill">POO</span>
+      <span class="tag-pill">Stockage Web</span>
+      <span class="tag-pill">Persistance</span>
+      <span class="tag-pill">23 questions</span>
+    </div>
+
+    <!-- Progress section -->
+    <div class="progress-section" id="progress-container">
+      <div class="progress-header">
+        <span class="progress-q-label" id="progress-q-label">Question 1 sur 23</span>
+        <span class="progress-score-pill" id="progress-score-pill">Score : 0/0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Question Card -->
+  <div class="card" id="question-card">
+    <div class="q-meta-bar">
+      <span class="q-index-badge" id="q-index-badge">Question 01</span>
+      <span class="q-category-tag" id="q-category-tag">Gestion des Erreurs</span>
+      <span style="font-size: 12px; color: var(--text-dim);" id="q-counter">1 / 23</span>
+    </div>
+
+    <div class="q-text" id="q-text"></div>
+
+    <div class="hint-container">
+      <button class="hint-btn" id="hint-toggle-btn" type="button">
+        <span>💡</span>
+        <span id="hint-btn-label">Afficher un indice</span>
+      </button>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <!-- Feedback card -->
+    <div class="feedback-card" id="feedback-card">
+      <div class="feedback-header" id="feedback-header"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="next-btn" id="next-btn" style="display: none;">
+        <span id="next-btn-text">Question suivante</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div class="card results-card" id="results-card" style="display: none;">
+    <div class="results-trophy" id="results-icon">🏆</div>
+    <h2 class="results-title" id="results-title">Quiz terminé !</h2>
+    
+    <div class="score-circle-wrapper">
+      <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <path stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path id="circle-score-stroke" stroke="url(#scoreGrad)" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3b82f6" />
+            <stop offset="50%" stop-color="#6366f1" />
+            <stop offset="100%" stop-color="#8b5cf6" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-percent-val" id="score-percent-text">0%</div>
+    </div>
+
+    <p class="results-message" id="results-message"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num good" id="stat-correct">0</div>
+        <div class="stat-label">Bonnes réponses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-incorrect">0</div>
+        <div class="stat-label">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">23</div>
+        <div class="stat-label">Questions</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="next-btn" id="restart-btn" type="button">
+        <span>🔄 Recommencer le quiz</span>
+      </button>
+      <button class="btn-secondary" id="toggle-review-btn" type="button">
+        <span>📋 Voir le corrigé complet</span>
+      </button>
+    </div>
+
+    <div class="review-container" id="review-container">
+      <div class="review-header">Détail des questions et explications</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const quizData = [{"question":"Quelle est la particularité majeure des cookies HTTP par rapport à LocalStorage et SessionStorage concernant les échanges web ?","hint":"Pensez à l'impact des cookies sur la bande passante et les en-têtes réseau envoyés au serveur distant.","options":[{"label":"A","text":"Ils sont détruits automatiquement dès que l'utilisateur rafraîchit la page avec la touche F5.","isCorrect":false,"rationale":"La durée de vie d'un cookie dépend de ses attributs Expires ou Max-Age; un simple rafraîchissement F5 ne le détruit pas."},{"label":"B","text":"Ils ne peuvent contenir que des données cryptées et illisibles par le moteur JavaScript du navigateur.","isCorrect":false,"rationale":"Les cookies contiennent du texte brut; seul l'attribut HttpOnly empêche JavaScript d'y accéder, sans pour autant chiffrer la donnée."},{"label":"C","text":"Ils partagent une capacité de stockage maximale de 5 Mo par origine avec LocalStorage.","isCorrect":false,"rationale":"La taille maximale d'un cookie est très limitée (environ 4 Ko), contrairement aux 5 à 10 Mo offerts par LocalStorage."},{"label":"D","text":"Ils sont transmis automatiquement au serveur à chaque requête HTTP vers le domaine configuré.","isCorrect":true,"rationale":"Les cookies ont été conçus pour donner un état au protocole HTTP et voyagent systématiquement dans les en-têtes HTTP de chaque requête vers le domaine."}],"number":1,"category":"Cookies HTTP","answer":"D","rationale":"Les cookies ont été conçus pour donner un état au protocole HTTP et voyagent systématiquement dans les en-têtes HTTP de chaque requête vers le domaine."},{"question":"Pourquoi est-il fortement recommandé d'ajouter l'attribut HttpOnly à un cookie contenant un jeton d'authentification ?","hint":"Considérez la menace d'un script malveillant injecté dans le navigateur du client (Cross-Site Scripting).","options":[{"label":"A","text":"Il autorise l'envoi du cookie uniquement vers des sous-domaines enregistrés en HTTP non sécurisé.","isCorrect":false,"rationale":"C'est l'attribut Secure qui gère la restriction au protocole HTTPS, tandis que HttpOnly concerne l'isolation vis-à-vis de JavaScript."},{"label":"B","text":"Il interdit à JavaScript d'accéder au cookie, protégeant ainsi le jeton contre le vol par faille XSS.","isCorrect":true,"rationale":"En bloquant l'accès à `document.cookie` via JavaScript, HttpOnly empêche un script malveillant injecté d'exfiltrer le jeton de session."},{"label":"C","text":"Il force le navigateur à chiffrer le contenu du cookie directement sur le disque dur du client.","isCorrect":false,"rationale":"HttpOnly restreint l'accès à l'API JavaScript mais n'applique aucun chiffrement de données sur le disque."},{"label":"D","text":"Il garantit que le cookie expire automatiquement dès que l'utilisateur ferme l'onglet en cours.","isCorrect":false,"rationale":"L'expiration à la fermeture dépend de la durée de session attribuée au cookie, pas du drapeau HttpOnly."}],"number":2,"category":"Cookies HTTP","answer":"B","rationale":"En bloquant l'accès à `document.cookie` via JavaScript, HttpOnly empêche un script malveillant injecté d'exfiltrer le jeton de session."},{"question":"Deux onglets distincts sont ouverts simultanément sur la même application web (`https://app.example.com`). Quelle est la différence d'isolation entre SessionStorage et LocalStorage ?","hint":"Réfléchissez au comportement du stockage si un utilisateur effectue deux réservations parallèles dans deux onglets.","options":[{"label":"A","text":"SessionStorage isole les données hermétiquement par onglet, tandis que LocalStorage partage les données entre tous les onglets du même domaine.","isCorrect":true,"rationale":"SessionStorage possède un contexte propre à chaque fenêtre/onglet, alors que LocalStorage est partagé par toute l'origine Web."},{"label":"B","text":"LocalStorage efface ses données dès la fermeture d'un onglet, alors que SessionStorage les conserve indéfiniment.","isCorrect":false,"rationale":"C'est l'inverse : SessionStorage s'efface à la fermeture de l'onglet, tandis que LocalStorage persiste durablement."},{"label":"C","text":"LocalStorage est limité à 4 Ko par domaine, alors que SessionStorage permet de stocker jusqu'à 50 Mo.","isCorrect":false,"rationale":"LocalStorage et SessionStorage offrent des capacités similaires de l'ordre de 5 Mo, les 4 Ko étant la limite des cookies."},{"label":"D","text":"SessionStorage permet de stocker des instances d'objets TypeScript, contrairement à LocalStorage qui ne prend que du texte.","isCorrect":false,"rationale":"Les deux API partagent exactement la même interface Storage et ne peuvent enregistrer que des chaînes de caractères."}],"number":3,"category":"Isolation & Origines","answer":"A","rationale":"SessionStorage possède un contexte propre à chaque fenêtre/onglet, alors que LocalStorage est partagé par toute l'origine Web."},{"question":"En environnement de développement local, une application front-end tourne sur `http://localhost:4200` et son API mock sur `http://localhost:3000`. Comment LocalStorage gère-t-il les données entre ces deux adresses ?","hint":"Rappelez-vous les trois éléments indissociables qui définissent une Origine Web au sens de la sécurité.","options":[{"label":"A","text":"Il crée deux espaces LocalStorage totalement distincts car les ports sont différents.","isCorrect":true,"rationale":"La règle de la même origine (Same-Origin Policy) exige l'identité stricte du triplet Protocole + Domaine + Port."},{"label":"B","text":"Il fusionne les deux stockages car le nom de domaine `localhost` est identique.","isCorrect":false,"rationale":"La différence de port (4200 vs 3000) constitue une origine distincte pour le navigateur."},{"label":"C","text":"Il partage automatiquement le stockage entre les deux adresses mais uniquement en mode lecture seule pour le port 3000.","isCorrect":false,"rationale":"Il n'y a aucun partage ni mode lecture seule : les deux instances de stockage sont totalement étanches."},{"label":"D","text":"Il bloque l'accès à LocalStorage sur le port 4200 pour des raisons de sécurité CORS.","isCorrect":false,"rationale":"CORS régit les requêtes HTTP asynchrones, pas l'accès au LocalStorage du domaine courant."}],"number":4,"category":"Isolation & Origines","answer":"A","rationale":"La règle de la même origine (Same-Origin Policy) exige l'identité stricte du triplet Protocole + Domaine + Port."},{"question":"Dans l'API Web Storage, que renvoie l'appel `localStorage.getItem('cle_inexistante')` si la clé demandée n'a jamais été enregistrée ?","hint":"Vérifiez le type de retour standard déclaré dans les définitions TypeScript du navigateur.","options":[{"label":"A","text":"`undefined`","isCorrect":false,"rationale":"L'API Storage n'utilise pas `undefined` pour marquer l'absence d'une clé."},{"label":"B","text":"Une chaîne de caractères vide `\"\"`","isCorrect":false,"rationale":"Une chaîne vide est une valeur valide enregistrée; une clé inexistante renvoie `null`."},{"label":"C","text":"Une exception de type `ReferenceError`","isCorrect":false,"rationale":"Consulter une clé inexistante ne déclenche aucune erreur d'exécution, la méthode retourne simplement `null`."},{"label":"D","text":"`null`","isCorrect":true,"rationale":"La spécification standard de l'interface Storage définit le type de retour comme `string | null`, renvoyant `null` en cas d'absence."}],"number":5,"category":"API Web Storage","answer":"D","rationale":"La spécification standard de l'interface Storage définit le type de retour comme `string | null`, renvoyant `null` en cas d'absence."},{"question":"Un développeur exécute `localStorage.clear()` dans son service d'authentification lors de la déconnexion d'un utilisateur. Quel problème architectural cette instruction risque-t-elle de causer ?","hint":"Réfléchissez à l'impact d'un nettoyage global sur les autres modules (ex: le thème UI, les brouillons).","options":[{"label":"A","text":"Elle détruit uniquement la dernière clé insérée sans toucher aux clés plus anciennes.","isCorrect":false,"rationale":"C'est la méthode `removeItem(cle)` qui cible un élément; `clear()` purge la totalité du domaine."},{"label":"B","text":"Elle vide l'intégralité du stockage du domaine, y compris les préférences ou données sauvegardées par d'autres services.","isCorrect":true,"rationale":"La méthode `clear()` réinitialise aveuglément tout le LocalStorage de l'origine sans distinction de préfixe ou de service."},{"label":"C","text":"Elle lève une erreur synchrone si plus de 10 clés sont stockées simultanément.","isCorrect":false,"rationale":"`clear()` s'exécute sans contrainte sur le nombre d'éléments à supprimer."},{"label":"D","text":"Elle réinitialise les variables de la mémoire vive sans modifier le stockage sur le disque dur.","isCorrect":false,"rationale":"`clear()` efface directement la persistance physique sur le disque pour le domaine concerné."}],"number":6,"category":"API Web Storage","answer":"B","rationale":"La méthode `clear()` réinitialise aveuglément tout le LocalStorage de l'origine sans distinction de préfixe ou de service."},{"question":"Considérez le fragment de code TypeScript suivant :\n\n```typescript\nlocalStorage.setItem('estConnecte', false as any);\nif (localStorage.getItem('estConnecte')) {\n  console.log('Connecté !');\n}\n```\n\nPourquoi le message 'Connecté !' s'affiche-t-il dans la console ?","hint":"Souvenez-vous du comportement de l'évaluation booléenne des chaînes de caractères (truthy / falsy) en JavaScript.","options":[{"label":"A","text":"Le cast `as any` désactive la vérification de type et force TypeScript à remplacer la valeur par `true`.","isCorrect":false,"rationale":"Le cast TypeScript s'efface complètement à la compilation et n'impacte pas le comportement runtime."},{"label":"B","text":"La méthode `getItem` renvoie toujours `true` si la clé demandée est trouvée dans le stockage.","isCorrect":false,"rationale":"`getItem` renvoie le contenu textuel associé à la clé et non un booléen de présence."},{"label":"C","text":"`getItem` retourne la chaîne `\"false\"`, et en JavaScript toute chaîne non vide est évaluée comme truthy.","isCorrect":true,"rationale":"`localStorage` convertit la valeur en texte `\"false\"`. Dans une condition `if`, une chaîne de 5 caractères n'est pas vide, donc vraie."},{"label":"D","text":"`setItem` convertit le booléen en nombre `0`, qui est considéré comme vrai dans un test logique.","isCorrect":false,"rationale":"Le nombre `0` est *falsy* en JavaScript, mais de toute façon `setItem` stocke la chaîne `\"false\"`."}],"number":7,"category":"API Web Storage","answer":"C","rationale":"`localStorage` convertit la valeur en texte `\"false\"`. Dans une condition `if`, une chaîne de 5 caractères n'est pas vide, donc vraie."},{"question":"Un script extrait une valeur numérique enregistrée dans le stockage sous la forme de la chaîne `\"0\"` :\n\n```typescript\nconst nb = localStorage.getItem('tentatives'); // \"0\"\nconst total = nb + 1;\n```\n\nQuels sont la valeur et le type de la variable `total` ?","hint":"Examinez la surcharge de l'opérateur `+` en JavaScript lorsqu'au moins un des opérandes est du texte.","options":[{"label":"A","text":"Une valeur `null` en raison de l'incompatibilité de type.","isCorrect":false,"rationale":"L'opération `\"0\" + 1` est parfaitement valide en JavaScript et donne la chaîne `\"01\"`."},{"label":"B","text":"La chaîne de caractères `\"01\"`.","isCorrect":true,"rationale":"Comme `nb` est une string, l'opérateur `+` réalise une concaténation textuelle au lieu d'une addition arithmétique."},{"label":"C","text":"Le nombre `1`.","isCorrect":false,"rationale":"Sans conversion explicite (`Number()` ou `JSON.parse()`), JavaScript ne transforme pas la chaîne en nombre lors d'une addition."},{"label":"D","text":"La valeur `NaN` (Not a Number).","isCorrect":false,"rationale":"L'opérateur `+` avec une chaîne effectue une concaténation valide sans produire `NaN`."}],"number":8,"category":"API Web Storage","answer":"B","rationale":"Comme `nb` est une string, l'opérateur `+` réalise une concaténation textuelle au lieu d'une addition arithmétique."},{"question":"Pourquoi l'écriture répétée de gros objets dans LocalStorage risque-t-elle de provoquer un gel de l'interface utilisateur (UI freeze) ?","hint":"Considérez la nature de l'accès au disque dur par rapport au modèle d'exécution mono-thread de JavaScript.","options":[{"label":"A","text":"L'API LocalStorage est 100 % synchrone et bloque le thread principal de l'Event Loop durant les accès disque.","isCorrect":true,"rationale":"Contrairement aux appels `fetch()`, la lecture/écriture dans LocalStorage bloque l'exécuteur unique de JavaScript jusqu'à la fin du transfert I/O."},{"label":"B","text":"Chaque appel à `setItem()` effectue en arrière-plan une requête HTTP bloquante vers un serveur distant.","isCorrect":false,"rationale":"LocalStorage est un stockage 100 % local sur le client, sans aucune interaction avec le réseau."},{"label":"C","text":"Le navigateur utilise la mémoire vidéo (GPU) pour sérialiser les chaînes, paralysant le moteur de rendu CSS.","isCorrect":false,"rationale":"LocalStorage s'appuie sur le processeur et le disque local, pas sur le processeur graphique."},{"label":"D","text":"Le moteur JavaScript redémarre intégralement le Garbage Collector lors de chaque modification de clé.","isCorrect":false,"rationale":"La sérialisation synchrone sur disque est la seule cause du blocage de l'Event Loop."}],"number":9,"category":"Performance & Event Loop","answer":"A","rationale":"Contrairement aux appels `fetch()`, la lecture/écriture dans LocalStorage bloque l'exécuteur unique de JavaScript jusqu'à la fin du transfert I/O."},{"question":"Lors d'une écriture dans LocalStorage, l'espace maximal de 5 Mo est atteint. Quelle est la réaction standard du navigateur et comment une application POO robuste doit-elle y faire face ?","hint":"Pensez aux mécanismes de gestion d'erreurs et d'exceptions robustes étudiés lors du Bloc B (S10).","options":[{"label":"A","text":"Il supprime silencieusement les éléments les plus anciens sans lever d'erreur.","isCorrect":false,"rationale":"LocalStorage ne gère pas de politique d'éviction automatique (LRU); il refuse l'écriture et lève une exception."},{"label":"B","text":"Il bascule automatiquement le stockage résiduel vers `SessionStorage` de manière transparente.","isCorrect":false,"rationale":"Chaque espace de stockage est indépendant et le navigateur ne transfère pas les données entre eux."},{"label":"C","text":"Il lève une `QuotaExceededError` (`DOMException`), qui doit être interceptée par un bloc `try / catch`.","isCorrect":true,"rationale":"Le dépassement de quota lève une exception native qu'il convient d'intercepter (cours S10) pour mettre en œuvre une stratégie de repli."},{"label":"D","text":"Il compresse automatiquement les données en GZIP pour libérer de la place sur le disque.","isCorrect":false,"rationale":"Aucune compression n'est appliquée par le navigateur; la taille des chaînes stockées est comptée en caractères."}],"number":10,"category":"Quota & Exceptions","answer":"C","rationale":"Le dépassement de quota lève une exception native qu'il convient d'intercepter (cours S10) pour mettre en œuvre une stratégie de repli."},{"question":"Comment fonctionne l'événement JavaScript global `window.addEventListener('storage', callback)` ?","hint":"Rappelez-vous la règle d'isolation émetteur/récepteur pour éviter les boucles d'auto-notification au sein d'un même onglet.","options":[{"label":"A","text":"Il s'exécute dans l'onglet courant juste avant que la donnée ne soit gravée sur le disque.","isCorrect":false,"rationale":"L'événement est postérieur à la persistance et vise spécifiquement la synchronisation inter-onglets."},{"label":"B","text":"Il se déclenche uniquement dans les AUTRES onglets du même domaine, et jamais dans l'onglet ayant initié la modification.","isCorrect":true,"rationale":"L'événement `storage` sert à informer les fenêtres sœurs d'un changement; l'onglet émetteur connaît déjà sa propre modification."},{"label":"C","text":"Il se déclenche chaque fois qu'une clé inexistante est lue par l'application.","isCorrect":false,"rationale":"Cet événement réagit aux opérations d'écriture (`setItem`), de suppression (`removeItem`) ou de nettoyage (`clear`)."},{"label":"D","text":"Il permet d'intercepter l'événement au niveau du serveur backend grâce à un canal WebSocket automatique.","isCorrect":false,"rationale":"L'événement `storage` est une API 100 % navigateur sans aucun composant serveur."}],"number":11,"category":"Événement storage","answer":"B","rationale":"L'événement `storage` sert à informer les fenêtres sœurs d'un changement; l'onglet émetteur connaît déjà sa propre modification."},{"question":"Un développeur tente de sauvegarder une instance de classe sans passer par `JSON.stringify` :\n\n```typescript\nconst article = new ArticlePanier('Clavier', 89);\nlocalStorage.setItem('produit', article as any);\n```\n\nQue contient réellement la clé `'produit'` dans LocalStorage ?","hint":"Réfléchissez au résultat produit par la méthode par défaut `Object.prototype.toString()` sur un objet.","options":[{"label":"A","text":"La valeur `null` car le type passé n'est pas une chaîne de caractères.","isCorrect":false,"rationale":"JavaScript coerce implicitement tout argument non-string en chaîne via `toString()` au lieu de stocker `null`."},{"label":"B","text":"La représentation JSON de l'objet : `\"{\"nom\":\"Clavier\",\"prix\":89}\"`.","isCorrect":false,"rationale":"LocalStorage n'effectue pas de sérialisation JSON automatique lors du passage d'un objet."},{"label":"C","text":"Une structure binaire contenant le prototype et les méthodes de la classe.","isCorrect":false,"rationale":"LocalStorage ne stocke pas de binaire ni de code exécutable, uniquement des chaînes de caractères."},{"label":"D","text":"La chaîne de caractères `\"[object Object]\"`.","isCorrect":true,"rationale":"Comme LocalStorage requiert du texte, JavaScript appelle `article.toString()`, ce qui produit la valeur inutilisable `\"[object Object]\"`."}],"number":12,"category":"Sérialisation JSON","answer":"D","rationale":"Comme LocalStorage requiert du texte, JavaScript appelle `article.toString()`, ce qui produit la valeur inutilisable `\"[object Object]\"`."},{"question":"Après avoir enregistré une instance de classe sérialisée en JSON, un développeur tente de la recharger :\n\n```typescript\nconst recup = JSON.parse(localStorage.getItem('compte')!) as CompteBancaire;\nrecup.retirer(50);\n```\n\nQue se produit-il lors de l'exécution de `recup.retirer(50)` ?","hint":"Rappelez-vous du « Drame du prototype perdu » abordé lors de la séance S16 sur la sérialisation.","options":[{"label":"A","text":"Une erreur `TypeError: recup.retirer is not a function` est levée.","isCorrect":true,"rationale":"`JSON.parse` reconstruit un objet littéral générique (sans prototype); le cast `as CompteBancaire` n'existe qu'à la compilation et n'ajoute pas les méthodes."},{"label":"B","text":"L'objet est réhydraté mais toutes ses propriétés privées `#` deviennent publiques.","isCorrect":false,"rationale":"`JSON.parse` ne reconstruit pas l'instance de classe initiale, donc la question des membres privés ne s'applique pas."},{"label":"C","text":"Le solde est débité mais la modification reste bloquée en mémoire sans impacter le stockage.","isCorrect":false,"rationale":"L'appel de la méthode échoue immédiatement avant tout traitement de données."},{"label":"D","text":"Le solde est débité avec succès car le cast TypeScript a restauré les méthodes de la classe.","isCorrect":false,"rationale":"Le typage TypeScript s'efface à la compilation; JavaScript voit un objet anonyme dépourvu de la méthode `retirer`."}],"number":13,"category":"Réhydratation & Prototype","answer":"A","rationale":"`JSON.parse` reconstruit un objet littéral générique (sans prototype); le cast `as CompteBancaire` n'existe qu'à la compilation et n'ajoute pas les méthodes."},{"question":"Quel est le rôle fondamental du patron de conception DTO (Data Transfer Object) dans l'architecture de persistance locale ?","hint":"Considérez le DTO comme une simple pochette de transport pour les valeurs brutes de l'objet.","options":[{"label":"A","text":"Définir un contrat d'interface contenant uniquement des données pures, dépourvues de méthodes, propre à la sérialisation.","isCorrect":true,"rationale":"Le DTO sert de pont inerte sérialisable entre l'état figé dans la chaîne JSON et l'entité métier vivante."},{"label":"B","text":"Chiffrer les données enregistrées sur le disque dur pour éviter leur lecture dans les DevTools.","isCorrect":false,"rationale":"Le DTO n'a pas de fonction de sécurité ou de chiffrement; il sert à la structuration du contrat de données."},{"label":"C","text":"Conserver les prototypes et les chaînes d'héritage intacts lors du passage dans `JSON.stringify`.","isCorrect":false,"rationale":"Un DTO est justement une structure plate sans prototype ni comportement."},{"label":"D","text":"Gérer les requêtes HTTP asynchrones vers le serveur pour synchroniser le LocalStorage.","isCorrect":false,"rationale":"Le DTO est une structure de données; les requêtes HTTP relèvent du rôle des services."}],"number":14,"category":"Patron DTO","answer":"A","rationale":"Le DTO sert de pont inerte sérialisable entre l'état figé dans la chaîne JSON et l'entité métier vivante."},{"question":"Dans le patron d'architecture POO étudié en cours, quelle est la responsabilité de la méthode `toDTO()` d'une entité métier ?","hint":"Réfléchissez au sens de l'exportation : passer de l'instance riche (avec méthodes) au format de transfert inerte.","options":[{"label":"A","text":"Reconstruire une instance complète de la classe à partir d'une chaîne JSON brute transmise par le stockage.","isCorrect":false,"rationale":"C'est la responsabilité de la fabrique statique `fromDTO()`, pas de la méthode d'instance `toDTO()`."},{"label":"B","text":"Convertir les champs et états de l'objet vivant en une structure DTO inerte prête à être sérialisée par `JSON.stringify()`.","isCorrect":true,"rationale":"L'entité maîtrise son encapsulation (S05) et décide quelles données exporter sous forme de DTO pour la sauvegarde."},{"label":"C","text":"Vérifier la validité des invariants métier lors de la réception des données du réseau.","isCorrect":false,"rationale":"La validation des invariants se fait dans le constructeur de l'entité et lors de l'exécution de `fromDTO()`."},{"label":"D","text":"Enregistrer directement l'objet dans le LocalStorage en contournant le service Angular.","isCorrect":false,"rationale":"L'entité ne doit pas interagir directement avec les API d'I/O du navigateur (principe SRP)."}],"number":15,"category":"Patron DTO","answer":"B","rationale":"L'entité maîtrise son encapsulation (S05) et décide quelles données exporter sous forme de DTO pour la sauvegarde."},{"question":"Quelle est la fonction clé de la méthode statique de fabrique `Entite.fromDTO(dto: EntiteDTO)` lors de la lecture des données depuis LocalStorage ?","hint":"Considérez l'étape de « résurrection » de l'objet : comment redonner ses méthodes et sa validité à un simple DTO.","options":[{"label":"A","text":"Transformer l'entité en un composant UI Angular réactif Signal-First.","isCorrect":false,"rationale":"`fromDTO()` produit une instance de classe du domaine métier, indépendante du framework d'affichage."},{"label":"B","text":"Réinstancier la classe avec `new`, réattacher le prototype, restaurer les méthodes et réexécuter la validation des invariants.","isCorrect":true,"rationale":"La fabrique `fromDTO` réhydrate le DTO JSON en une vraie instance dotée de comportements et garantit l'intégrité de l'objet."},{"label":"C","text":"Sérialiser l'objet DTO en chaîne de caractères pour l'écrire dans le fichier de configuration de l'application.","isCorrect":false,"rationale":"La sérialisation en chaîne est réalisée par `JSON.stringify()`, pas par `fromDTO()`."},{"label":"D","text":"Supprimer les clés obsolètes ou corrompues directement dans le navigateur sans créer d'objet.","isCorrect":false,"rationale":"La méthode `fromDTO()` se concentre sur la création d'instances d'entités à partir de données valides."}],"number":16,"category":"Patron DTO","answer":"B","rationale":"La fabrique `fromDTO` réhydrate le DTO JSON en une vraie instance dotée de comportements et garantit l'intégrité de l'objet."},{"question":"Pourquoi est-il fortement déconseillé d'accéder directement à `window.localStorage` depuis un composant Angular ?","hint":"Pensez aux principes SOLID (S11) et au fait qu'Angular s'exécute aussi côté serveur où `window` n'existe pas.","options":[{"label":"A","text":"Le compilateur Angular (AOT) refuse de builder une application qui contient des références à l'objet `window`.","isCorrect":false,"rationale":"Le compilateur AOT n'interdit pas l'accès à `window`, mais cela pose de graves problèmes d'architecture et de runtime SSR."},{"label":"B","text":"Cela viole le principe SRP (S11), rend le composant difficile à tester (S21) et provoque des crashs lors du rendu côté serveur (SSR).","isCorrect":true,"rationale":"L'accès direct couple le composant à l'environnement DOM du navigateur, brisant la testabilité et la compatibilité SSR Node.js."},{"label":"C","text":"Les composants Angular ne sont pas autorisés à exécuter du code synchrone pendant le cycle de vie `ngOnInit`.","isCorrect":false,"rationale":"Les composants exécutent couramment du code synchrone; le problème réside dans le couplage et la rupture de responsabilité."},{"label":"D","text":"L'accès direct depuis un composant réduit la capacité de stockage globale du domaine à 4 Ko.","isCorrect":false,"rationale":"La capacité du stockage dépend du navigateur et de l'origine, pas de l'endroit du code où il est appelé."}],"number":17,"category":"Angular & SRP","answer":"B","rationale":"L'accès direct couple le composant à l'environnement DOM du navigateur, brisant la testabilité et la compatibilité SSR Node.js."},{"question":"Dans une application Angular 22 exécutée en mode Server-Side Rendering (SSR avec Node.js), quelle précaution technique prémunit le Service de stockage contre un crash serveur ?","hint":"Réfléchissez aux objets globaux absents de l'environnement d'exécution Node.js par rapport au navigateur.","options":[{"label":"A","text":"Remplacer l'injection de dépendances par des variables globales déclarées dans `main.ts`.","isCorrect":false,"rationale":"Les variables globales n'instancient pas les API du navigateur sur un serveur Node.js et aggravent le couplage."},{"label":"B","text":"Utiliser l'opérateur `@Input()` pour recevoir les données du serveur avant de lire le LocalStorage.","isCorrect":false,"rationale":"Les décorateurs `@Input()` s'appliquent aux composants et n'ont aucun rapport avec la sécurité d'accès au stockage dans un service."},{"label":"C","text":"Vérifier la plateforme d'exécution via `isPlatformBrowser(platformId)` ou tester `typeof localStorage !== 'undefined'`.","isCorrect":true,"rationale":"Côté serveur (Node.js), `localStorage` et `window` n'existent pas. Il faut donc conditionner les appels à l'environnement navigateur."},{"label":"D","text":"Forcer le stockage à utiliser la mémoire RAM du serveur de manière permanente.","isCorrect":false,"rationale":"Le LocalStorage est un concept strictement client; le serveur ne doit pas stocker les données locales des utilisateurs dans sa RAM."}],"number":18,"category":"Angular & SSR","answer":"C","rationale":"Côté serveur (Node.js), `localStorage` et `window` n'existent pas. Il faut donc conditionner les appels à l'environnement navigateur."},{"question":"Dans le cadre de l'approche **Signal-First** d'Angular 22, comment un Service de persistance locale doit-il exposer ses données aux composants UI ?","hint":"Considérez le patron recommandé dans le cours : encapsulation du signal modifiable et exposition en lecture seule.","options":[{"label":"A","text":"En renvoyant la chaîne JSON brute directement pour que chaque composant effectue son propre `JSON.parse`.","isCorrect":false,"rationale":"Exposer du JSON brut obligerait les composants à gérer la sérialisation, violant l'encapsulation du service."},{"label":"B","text":"En forçant le rechargement de la page via `window.location.reload()` après chaque écriture sur le disque.","isCorrect":false,"rationale":"Recharger la page brise l'expérience SPA (Single Page Application) réactive."},{"label":"C","text":"Via un Signal en lecture seule (`asReadonly()`), mis à jour par le service lors de chaque modification sauvegardée.","isCorrect":true,"rationale":"Le service conserve la mutation du signal (`#tachesSignal.set()`) tout en exposant une vue réactive et immuable aux composants."},{"label":"D","text":"En réémettant une promesse `Promise<T>` non résolue à chaque cycle de détection de changements.","isCorrect":false,"rationale":"Les promesses ne sont pas le mécanisme de réactivité idiomatique dans l'approche Signal-First d'Angular 22."}],"number":19,"category":"Angular Signal-First","answer":"C","rationale":"Le service conserve la mutation du signal (`#tachesSignal.set()`) tout en exposant une vue réactive et immuable aux composants."},{"question":"Quelle est la limite de capacité de stockage indicative généralement allouée par les navigateurs modernes pour `LocalStorage` par origine ?","hint":"Distinguez la taille minuscule des cookies de l'espace accordé à la persistance Web Storage.","options":[{"label":"A","text":"10 Go par sous-domaine.","isCorrect":false,"rationale":"10 Go est une capacité irréaliste pour le stockage texte synchrone en LocalStorage."},{"label":"B","text":"Illimitée, tant qu'il reste de la place sur le disque dur du client.","isCorrect":false,"rationale":"LocalStorage est strictement bridé par le navigateur pour éviter le remplissage abusif du disque."},{"label":"C","text":"Exactement 4 Ko.","isCorrect":false,"rationale":"4 Ko est la limite de taille d'un cookie HTTP, pas de LocalStorage."},{"label":"D","text":"Entre 5 et 10 Mo.","isCorrect":true,"rationale":"C'est la taille standard allouée par origine pour LocalStorage (contrairement aux ~4 Ko des cookies)."}],"number":20,"category":"Capacités & Limites","answer":"D","rationale":"C'est la taille standard allouée par origine pour LocalStorage (contrairement aux ~4 Ko des cookies)."},{"question":"Pourquoi LocalStorage devient-il inefficace lorsqu'une application doit stocker et rechercher parmi plusieurs milliers d'enregistrements ?","hint":"Pensez à l'absence de fonctionnalités de requêtage structuré (comme SQL ou les index) dans un stockage texte brut.","options":[{"label":"A","text":"Il est dépourvu d'indexation et de moteur de requêtes : il faut tout lire, tout parser en RAM, puis réécrire tout le bloc.","isCorrect":true,"rationale":"Le stockage clé-valeur textuel synchrone exige de charger et sérialiser l'ensemble du volume pour la moindre recherche ou modification."},{"label":"B","text":"Il refuse de stocker des chaînes qui contiennent des tableaux d'objets.","isCorrect":false,"rationale":"LocalStorage accepte n'importe quelle chaîne textuelle, y compris des tableaux JSON volumineux."},{"label":"C","text":"Il bloque toutes les requêtes de lecture dès qu'un second onglet est ouvert sur le site.","isCorrect":false,"rationale":"Plusieurs onglets d'une même origine peuvent lire LocalStorage simultanément sans blocage d'accès."},{"label":"D","text":"Il efface automatiquement les données si le nombre total de clés dépasse 100.","isCorrect":false,"rationale":"Il n'y a pas de limite sur le nombre de clés tant que la taille totale en Mo respecte le quota."}],"number":21,"category":"Limites du LocalStorage","answer":"A","rationale":"Le stockage clé-valeur textuel synchrone exige de charger et sérialiser l'ensemble du volume pour la moindre recherche ou modification."},{"question":"Une application doit sauvegarder la préférence d'un utilisateur pour le mode sombre (thème UI). Cette donnée doit persister après le redémarrage du PC sans nécessiter de serveur. Quel outil est le plus approprié ?","hint":"Évaluez les besoins : donnée très légère, persistance illimitée sur le client, aucun besoin réseau.","options":[{"label":"A","text":"Un Cookie `HttpOnly`","isCorrect":false,"rationale":"Le cookie `HttpOnly` voyagerait inutilement sur le réseau à chaque requête HTTP et serait inaccessible au JS de l'UI."},{"label":"B","text":"IndexedDB avec Dexie.js","isCorrect":false,"rationale":"Utiliser IndexedDB pour une simple chaîne 'sombre'/'clair' introduirait une complexité inutile pour un besoin trivial."},{"label":"C","text":"LocalStorage","isCorrect":true,"rationale":"Le thème est une préférence simple, peu volumineuse, purement cliente et qui doit persister indéfiniment."},{"label":"D","text":"SessionStorage","isCorrect":false,"rationale":"SessionStorage s'effacerait dès la fermeture de l'onglet, obligeant l'utilisateur à réactiver le thème à chaque visite."}],"number":22,"category":"Cas d'usage","answer":"C","rationale":"Le thème est une préférence simple, peu volumineuse, purement cliente et qui doit persister indéfiniment."},{"question":"Au cours d'une session de réservation de billets de train en 4 étapes dans un seul onglet, où est-il le plus judicieux de stocker les choix temporaires de l'utilisateur ?","hint":"Pensez à l'isolation par onglet pour éviter que deux parcours d'achat simultanés n'écrasent leurs données.","options":[{"label":"A","text":"Dans un fichier local téléchargeable","isCorrect":false,"rationale":"Demander à l'utilisateur de télécharger un fichier pour naviguer dans un wizard constitue une mauvaise expérience UX."},{"label":"B","text":"SessionStorage","isCorrect":true,"rationale":"SessionStorage conserve les étapes pendant la session de l'onglet et garantit l'isolation si l'utilisateur ouvre une autre réservation en parallèle dans un 2e onglet."},{"label":"C","text":"LocalStorage","isCorrect":false,"rationale":"LocalStorage entremêlerait les données si l'utilisateur ouvrait deux onglets de réservation simultanés sur le même site."},{"label":"D","text":"Un Cookie `Secure`","isCorrect":false,"rationale":"Le stockage d'étapes de réservation dans des cookies surchargerait inutilement chaque requête réseau."}],"number":23,"category":"Cas d'usage","answer":"B","rationale":"SessionStorage conserve les étapes pendant la session de l'onglet et garantit l'isolation si l'utilisateur ouvre une autre réservation en parallèle dans un 2e onglet."}]
+;
+
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+let userAnswers = [];
+
+// Formate les extraits de code inline, guillemets et blocs de code
+function formatCode(text) {
+  if (!text) return '';
+  
+  // 1. Blocs de code multi-lignes ```ts ... ```
+  let formatted = text.replace(/```(?:ts|typescript|js)?\n([\s\S]*?)```/g, '<pre class="code-box"><code>$1</code></pre>');
+  
+  // 2. Code inline entre backticks `...`
+  formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-term">$1</span>');
+  
+  // 3. Mots-clés isolés entre quotes '...', sans capturer les apostrophes françaises
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])'([a-zA-Z0-9_\-\.\/@\(\)=]+)'/g, '<span class="code-term">$1</span>');
+  
+  const parts = formatted.split(/(<pre[\s\S]*?<\/pre>)/g);
+  return parts.map(part => {
+    if (part.startsWith('<pre')) return part;
+    return part.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  }).join('');
+}
+
+// Initialisation
+function init() {
+  setupTheme();
+  setupKeyboard();
+  renderQuestion(0);
+  
+  document.getElementById('next-btn').addEventListener('click', handleNext);
+  document.getElementById('restart-btn').addEventListener('click', handleRestart);
+  document.getElementById('toggle-review-btn').addEventListener('click', handleToggleReview);
+  document.getElementById('hint-toggle-btn').addEventListener('click', toggleHint);
+}
+
+// Gestion du Thème Clair / Sombre
+function setupTheme() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const text = document.getElementById('theme-text');
+  
+  const saved = localStorage.getItem('poo_quiz_theme_s18') || localStorage.getItem('poo_quiz_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+  
+  toggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('poo_quiz_theme_s18', next);
+    updateThemeUI(next);
+  });
+  
+  function updateThemeUI(t) {
+    if (t === 'dark') {
+      icon.textContent = '☀️';
+      text.textContent = 'Mode clair';
+    } else {
+      icon.textContent = '🌙';
+      text.textContent = 'Mode sombre';
+    }
+  }
+}
+
+// Affichage d'une question
+function renderQuestion(index) {
+  answered = false;
+  const q = quizData[index];
+  
+  // Barre de progression
+  const progressPct = ((index) / quizData.length) * 100;
+  document.getElementById('progress-fill').style.width = progressPct + '%';
+  document.getElementById('progress-q-label').textContent = `Question ${index + 1} sur ${quizData.length}`;
+  document.getElementById('progress-score-pill').textContent = index > 0 
+    ? `Score : ${correctCount}/${index} (${Math.round((correctCount / index) * 100)}%)` 
+    : `Score : 0/0`;
+
+  // Métadonnées
+  document.getElementById('q-index-badge').textContent = `Question ${index < 9 ? '0' + (index + 1) : index + 1}`;
+  document.getElementById('q-category-tag').textContent = q.category || 'Stockage Web';
+  document.getElementById('q-counter').textContent = `${index + 1} / ${quizData.length}`;
+
+  // Texte de la question
+  document.getElementById('q-text').innerHTML = formatCode(q.question);
+
+  // Indice
+  const hintBody = document.getElementById('hint-body');
+  hintBody.innerHTML = formatCode(q.hint);
+  hintBody.classList.remove('open');
+  document.getElementById('hint-btn-label').textContent = "Afficher un indice";
+
+  // Carte de feedback & Bouton suivant
+  const fcard = document.getElementById('feedback-card');
+  fcard.style.display = 'none';
+  fcard.className = 'feedback-card';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'none';
+  if (index === quizData.length - 1) {
+    document.getElementById('next-btn-text').textContent = "Voir mes résultats 🎉";
+  } else {
+    document.getElementById('next-btn-text').textContent = "Question suivante";
+  }
+
+  // Options de réponse
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, optIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.type = 'button';
+    btn.dataset.idx = optIdx;
+    btn.innerHTML = `
+      <span class="opt-key-circle">${opt.label}</span>
+      <span class="opt-content">${formatCode(opt.text)}</span>
+      <span class="opt-status-icon"></span>
+    `;
+
+    btn.addEventListener('click', () => selectOption(optIdx));
+    grid.appendChild(btn);
+  });
+}
+
+// Sélection d'une option
+function selectOption(selectedIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizData[currentQ];
+  const selectedOpt = q.options[selectedIdx];
+  const isCorrect = selectedOpt.isCorrect;
+  userAnswers[currentQ] = selectedIdx;
+
+  if (isCorrect) {
+    correctCount++;
+  }
+
+  const optionBtns = document.querySelectorAll('.option-btn');
+  optionBtns.forEach(btn => btn.disabled = true);
+
+  const selectedBtn = optionBtns[selectedIdx];
+  const selectedStatus = selectedBtn.querySelector('.opt-status-icon');
+  
+  if (isCorrect) {
+    selectedBtn.classList.add('selected-correct');
+    selectedStatus.textContent = '✓';
+
+    // Révéler les autres bonnes réponses éventuelles en pointillé
+    optionBtns.forEach((btn, idx) => {
+      if (idx !== selectedIdx && q.options[idx].isCorrect) {
+        btn.classList.add('revealed-correct');
+        btn.querySelector('.opt-status-icon').textContent = '✓';
+      }
+    });
+  } else {
+    selectedBtn.classList.add('selected-incorrect');
+    selectedStatus.textContent = '✕';
+
+    // Révéler toutes les bonnes réponses
+    optionBtns.forEach((btn, idx) => {
+      if (q.options[idx].isCorrect) {
+        btn.classList.add('revealed-correct');
+        btn.querySelector('.opt-status-icon').textContent = '✓';
+      }
+    });
+  }
+
+  // Atténuer les options neutres non sélectionnées
+  optionBtns.forEach(btn => {
+    if (!btn.classList.contains('selected-correct') && 
+        !btn.classList.contains('selected-incorrect') && 
+        !btn.classList.contains('revealed-correct')) {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  // Afficher la carte de feedback élégante
+  const fcard = document.getElementById('feedback-card');
+  const fheader = document.getElementById('feedback-header');
+  const fbody = document.getElementById('feedback-body');
+
+  fcard.style.display = 'block';
+
+  const correctLabels = q.options.filter(o => o.isCorrect).map(o => o.label).join(', ');
+
+  let specificNote = selectedOpt.rationale 
+    ? `<div style="margin-bottom: 8px;"><strong>Votre choix (${selectedOpt.label}) :</strong> ${formatCode(selectedOpt.rationale)}</div>` 
+    : '';
+
+  if (isCorrect) {
+    fcard.className = 'feedback-card correct';
+    fheader.innerHTML = '<span>✓</span> <span>Excellente réponse !</span>';
+    fbody.innerHTML = `${specificNote}<div><strong>Explication :</strong> ${formatCode(q.rationale)}</div>`;
+  } else {
+    fcard.className = 'feedback-card incorrect';
+    const pluriel = correctLabels.includes(',') ? 'étaient les options' : 'est l\'option';
+    fheader.innerHTML = `<span>✕</span> <span>Ce n'est pas tout à fait ça. La bonne réponse ${pluriel} ${correctLabels}.</span>`;
+    fbody.innerHTML = `${specificNote}<div><strong>Explication :</strong> ${formatCode(q.rationale)}</div>`;
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'flex';
+  nextBtn.focus();
+}
+
+// Bascule de l'indice
+function toggleHint() {
+  const hintBody = document.getElementById('hint-body');
+  const label = document.getElementById('hint-btn-label');
+  hintBody.classList.toggle('open');
+  if (hintBody.classList.contains('open')) {
+    label.textContent = "Masquer l'indice";
+  } else {
+    label.textContent = "Afficher un indice";
+  }
+}
+
+// Question suivante ou fin
+function handleNext() {
+  currentQ++;
+  if (currentQ < quizData.length) {
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+// Écran de fin et résultats
+function showResults() {
+  document.getElementById('question-card').style.display = 'none';
+  document.getElementById('progress-container').style.display = 'none';
+  document.getElementById('results-card').style.display = 'block';
+
+  const total = quizData.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  const stroke = document.getElementById('circle-score-stroke');
+  stroke.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+  document.getElementById('score-percent-text').textContent = `${pct}%`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-incorrect').textContent = total - correctCount;
+  document.getElementById('stat-total').textContent = total;
+
+  const msgEl = document.getElementById('results-message');
+  const iconEl = document.getElementById('results-icon');
+
+  if (pct >= 90) {
+    iconEl.textContent = '🏆';
+    msgEl.innerHTML = `<strong>Maîtrise remarquable !</strong> Vous maîtrisez parfaitement les cookies, le Web Storage, la sérialisation JSON, le patron DTO et les pièges d'Angular SSR.`;
+    launchConfetti();
+  } else if (pct >= 75) {
+    iconEl.textContent = '🚀';
+    msgEl.innerHTML = `<strong>Très bon score !</strong> Les bases du <span class="code-term">LocalStorage</span>, de l.isolation par origine et du patron <span class="code-term">DTO</span> sont bien assimilées. Consultez le corrigé pour consolider les subtilités.`;
+    launchConfetti();
+  } else if (pct >= 50) {
+    iconEl.textContent = '👍';
+    msgEl.innerHTML = `<strong>Bases en place !</strong> La distinction entre cookies, LocalStorage et SessionStorage est comprise, mais attention aux pièges de la sérialisation JSON et du <span class="code-term">prototype perdu</span>.`;
+  } else {
+    iconEl.textContent = '📚';
+    msgEl.innerHTML = `<strong>En apprentissage !</strong> Relisez les notes de cours sur le Web Storage, les DTO et la sérialisation, puis retentez l.évaluation pour progresser !`;
+  }
+}
+
+// Corrigé interactif complet
+function handleToggleReview() {
+  const container = document.getElementById('review-container');
+  const btn = document.getElementById('toggle-review-btn');
+  const list = document.getElementById('review-list');
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    btn.innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  } else {
+    container.style.display = 'block';
+    btn.innerHTML = '<span>Masquer le corrigé ▴</span>';
+
+    list.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const userIdx = userAnswers[qIdx];
+      const isGood = userIdx !== undefined && q.options[userIdx].isCorrect;
+
+      const card = document.createElement('div');
+      card.className = 'review-item';
+
+      const header = document.createElement('div');
+      header.className = 'review-item-header';
+      header.innerHTML = `
+        <div class="review-item-title">
+          <span>${isGood ? '✅' : '❌'}</span>
+          <span><strong>Q${qIdx + 1}.</strong> ${q.question.replace(/```[\s\S]*?```/g, '[Code]').substring(0, 75)}...</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);">Détails ▾</span>
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'review-item-body';
+
+      let optionsHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
+      q.options.forEach((opt, oIdx) => {
+        const wasUser = oIdx === userIdx;
+        const wasCorrect = opt.isCorrect;
+        let borderCol = 'var(--opt-border)';
+        let bgCol = 'transparent';
+        let badge = '';
+
+        if (wasCorrect) {
+          borderCol = '#10b981';
+          bgCol = 'rgba(16, 185, 129, 0.08)';
+          badge = ' <strong style="color: #10b981;">(Bonne réponse)</strong>';
+        }
+        if (wasUser && !wasCorrect) {
+          borderCol = '#ef4444';
+          bgCol = 'rgba(239, 68, 68, 0.08)';
+          badge = ' <strong style="color: #ef4444;">(Votre choix)</strong>';
+        }
+
+        optionsHtml += `
+          <div style="padding: 10px 14px; border: 1px solid ${borderCol}; background: ${bgCol}; border-radius: 8px; font-size: 13.5px;">
+            <div><strong>${opt.label}.</strong> ${formatCode(opt.text)}${badge}</div>
+            ${opt.rationale ? `<div style="font-size: 12.5px; margin-top: 4px; color: var(--text-dim);">${formatCode(opt.rationale)}</div>` : ''}
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+
+      body.innerHTML = `
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 8px;">${formatCode(q.question)}</div>
+        ${optionsHtml}
+        <div style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #6366f1; font-size: 13px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">Synthèse :</strong> ${formatCode(q.rationale)}
+        </div>
+      `;
+
+      header.addEventListener('click', () => {
+        body.classList.toggle('open');
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+  }
+}
+
+// Recommencer
+function handleRestart() {
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+  userAnswers = [];
+
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('review-container').style.display = 'none';
+  document.getElementById('toggle-review-btn').innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  document.getElementById('progress-container').style.display = 'block';
+  document.getElementById('question-card').style.display = 'block';
+
+  renderQuestion(0);
+}
+
+// Raccourcis Clavier
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+
+    if (document.getElementById('results-card').style.display === 'block') {
+      if (e.key === 'Enter') handleRestart();
+      return;
+    }
+
+    if (answered) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      return;
+    }
+
+    const q = quizData[currentQ];
+    if (!q) return;
+
+    let targetIdx = -1;
+    if (key === 'A' || key === '1') targetIdx = 0;
+    else if (key === 'B' || key === '2') targetIdx = 1;
+    else if (key === 'C' || key === '3') targetIdx = 2;
+    else if (key === 'D' || key === '4') targetIdx = 3;
+
+    if (targetIdx >= 0 && targetIdx < q.options.length) {
+      e.preventDefault();
+      selectOption(targetIdx);
+    }
+
+    if (key === 'H' || key === 'I') {
+      e.preventDefault();
+      toggleHint();
+    }
+  });
+}
+
+// Animation Confettis
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#3b82f6', '#6366f1', '#8b5cf6', '#10b981', '#fbbf24', '#ec4899'];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.015 + 0.008
+    });
+  }
+
+  let animId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25;
+      p.alpha -= p.decay;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  loop();
+}
+
+// Lancement
+init();
+</script>
+</body>
+</html>

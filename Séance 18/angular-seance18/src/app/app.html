@@ -1,0 +1,36 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('trilogy-hall') {
+          <app-trilogy-hall></app-trilogy-hall>
+        }
+        @case ('storage-api') {
+          <app-storage-api></app-storage-api>
+        }
+        @case ('event-loop-quota') {
+          <app-event-loop-quota></app-event-loop-quota>
+        }
+        @case ('poo-clash') {
+          <app-poo-clash></app-poo-clash>
+        }
+        @case ('multi-tabs') {
+          <app-multi-tabs></app-multi-tabs>
+        }
+        @case ('pocket-notes') {
+          <app-pocket-notes></app-pocket-notes>
+        }
+        @case ('five-mb-wall') {
+          <app-five-mb-wall></app-five-mb-wall>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>
