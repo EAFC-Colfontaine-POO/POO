@@ -1,0 +1,39 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('impedance-mismatch') {
+          <app-impedance-mismatch></app-impedance-mismatch>
+        }
+        @case ('typed-database') {
+          <app-typed-database></app-typed-database>
+        }
+        @case ('btree-indexes') {
+          <app-btree-indexes></app-btree-indexes>
+        }
+        @case ('fluent-api') {
+          <app-fluent-api></app-fluent-api>
+        }
+        @case ('acid-transactions') {
+          <app-acid-transactions></app-acid-transactions>
+        }
+        @case ('schema-migrations') {
+          <app-schema-migrations></app-schema-migrations>
+        }
+        @case ('anti-patterns') {
+          <app-anti-patterns></app-anti-patterns>
+        }
+        @case ('bibliotech-demo') {
+          <app-bibliotech-demo></app-bibliotech-demo>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>

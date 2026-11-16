@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz POO — IndexedDB &amp; Dexie.js</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      --bg-page: #090d16;
+      --bg-ambient-1: rgba(99, 102, 241, 0.16);
+      --bg-ambient-2: rgba(236, 72, 153, 0.12);
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --brand-blue: #3b82f6;
+      --brand-indigo: #6366f1;
+      --brand-purple: #8b5cf6;
+      --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+      
+      --opt-bg: rgba(255, 255, 255, 0.03);
+      --opt-border: rgba(255, 255, 255, 0.08);
+      --opt-hover-bg: rgba(255, 255, 255, 0.06);
+      --opt-hover-border: rgba(99, 102, 241, 0.45);
+      
+      --correct-bg: rgba(16, 185, 129, 0.12);
+      --correct-border: #10b981;
+      --correct-text: #34d399;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: rgba(239, 68, 68, 0.12);
+      --incorrect-border: #ef4444;
+      --incorrect-text: #f87171;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: rgba(245, 158, 11, 0.08);
+      --hint-border: rgba(245, 158, 11, 0.25);
+      --hint-text: #fbbf24;
+      
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --code-border: rgba(255, 255, 255, 0.12);
+      --code-color: #38bdf8;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8fafc;
+      --bg-ambient-1: rgba(99, 102, 241, 0.08);
+      --bg-ambient-2: rgba(236, 72, 153, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --opt-bg: #ffffff;
+      --opt-border: #e2e8f0;
+      --opt-hover-bg: #f8fafc;
+      --opt-hover-border: #6366f1;
+      
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --correct-text: #065f46;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: #fef2f2;
+      --incorrect-border: #ef4444;
+      --incorrect-text: #991b1b;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: #fffbeb;
+      --hint-border: #fde68a;
+      --hint-text: #92400e;
+      
+      --code-bg: #f1f5f9;
+      --code-border: #cbd5e1;
+      --code-color: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image: 
+        radial-gradient(circle at 15% 12%, var(--bg-ambient-1) 0%, transparent 45%),
+        radial-gradient(circle at 85% 88%, var(--bg-ambient-2) 0%, transparent 45%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-main);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .keyboard-badge {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    @media (min-width: 640px) {
+      .keyboard-badge { display: inline-flex; align-items: center; gap: 6px; }
+    }
+
+    /* Header Hero */
+    .header-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .course-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.12);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #a5b4fc;
+      box-shadow: 0 0 10px #a5b4fc;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .quiz-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto 16px;
+      font-weight: 500;
+    }
+
+    .tags-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-muted);
+    }
+
+    /* Progress section */
+    .progress-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-q-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-score-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .progress-track {
+      background: #e2e8f0;
+    }
+
+    .progress-bar-fill {
+      background: var(--brand-gradient);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .q-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-index-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+    }
+
+    .q-category-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .q-text {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text-main);
+      margin-bottom: 22px;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-color);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #38bdf8;
+      overflow-x: auto;
+      text-align: left;
+    }
+    [data-theme="light"] .code-box {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0369a1;
+    }
+
+    /* Hint box */
+    .hint-container {
+      margin-bottom: 22px;
+    }
+
+    .hint-btn {
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      color: var(--hint-text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hint-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .hint-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--hint-text);
+      line-height: 1.5;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .hint-body.open {
+      display: block;
+    }
+
+    /* Options List */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 18px;
+      border: 2px solid var(--opt-border);
+      background: var(--opt-bg);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      position: relative;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--opt-hover-border);
+      background: var(--opt-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .opt-key-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--opt-border);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .opt-content {
+      flex: 1;
+      padding-top: 4px;
+      line-height: 1.5;
+    }
+
+    .opt-status-icon {
+      font-size: 18px;
+      margin-left: 8px;
+      display: none;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    /* Option States */
+    .option-btn.selected-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .option-btn.selected-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.selected-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--incorrect-border) !important;
+      background: var(--incorrect-bg) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+    .option-btn.selected-incorrect .opt-key-circle {
+      background: var(--incorrect-badge-bg);
+      color: var(--incorrect-badge-text);
+    }
+    .option-btn.selected-incorrect .opt-status-icon {
+      display: inline-block;
+      color: var(--incorrect-text);
+    }
+
+    .option-btn.revealed-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      border-style: dashed;
+    }
+    .option-btn.revealed-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.revealed-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.dimmed {
+      opacity: 0.45;
+    }
+
+    /* Feedback Card */
+    .feedback-card {
+      display: none;
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .feedback-card.correct {
+      background: var(--correct-bg);
+      border-left: 4px solid var(--correct-border);
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+      border-right: 1px solid rgba(16, 185, 129, 0.2);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .feedback-card.incorrect {
+      background: var(--incorrect-bg);
+      border-left: 4px solid var(--incorrect-border);
+      border-top: 1px solid rgba(239, 68, 68, 0.2);
+      border-right: 1px solid rgba(239, 68, 68, 0.2);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .feedback-header {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .feedback-card.correct .feedback-header { color: var(--correct-text); }
+    .feedback-card.incorrect .feedback-header { color: var(--incorrect-text); }
+
+    .feedback-body {
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    [data-theme="light"] .feedback-body {
+      color: #334155;
+    }
+
+    /* Action bar */
+    .action-bar {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.55);
+    }
+
+    /* Results Card */
+    .results-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .results-trophy {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .results-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle-wrapper {
+      margin: 24px auto;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-percent-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .results-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .stat-num.good { color: #10b981; }
+    .stat-num.bad { color: #ef4444; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn-secondary {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--opt-hover-bg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Review View */
+    .review-container {
+      display: none;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .review-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-item {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .review-item-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .review-item-title {
+      font-weight: 600;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-item-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--card-border);
+    }
+    .review-item-body.open {
+      display: block;
+      padding-top: 14px;
+    }
+
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="quiz-container">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="keyboard-badge">
+      <span>⌨️ Raccourcis : [A-D] ou [1-4] · [Entrée] · [I]</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Basculer le thème">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-text">Mode clair</span>
+    </button>
+  </div>
+
+  <!-- Header Hero -->
+  <div class="header-hero">
+    <div class="course-badge">
+      <span class="badge-dot"></span>
+      Programmation Orientée Objet · EAFC Colfontaine
+    </div>
+    <h1 class="quiz-title">Séance 19 — IndexedDB &amp; Dexie.js</h1>
+    <p class="quiz-subtitle">IndexedDB · Structured Clone · Dexie.js · Index B-Tree · Transactions ACID · Migrations</p>
+    <div class="tags-row">
+      <span class="tag-pill">TypeScript</span>
+      <span class="tag-pill">POO</span>
+      <span class="tag-pill">IndexedDB</span>
+      <span class="tag-pill">Dexie.js</span>
+      <span class="tag-pill">23 questions</span>
+    </div>
+
+    <!-- Progress section -->
+    <div class="progress-section" id="progress-container">
+      <div class="progress-header">
+        <span class="progress-q-label" id="progress-q-label">Question 1 sur 23</span>
+        <span class="progress-score-pill" id="progress-score-pill">Score : 0/0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Question Card -->
+  <div class="card" id="question-card">
+    <div class="q-meta-bar">
+      <span class="q-index-badge" id="q-index-badge">Question 01</span>
+      <span class="q-category-tag" id="q-category-tag">Gestion des Erreurs</span>
+      <span style="font-size: 12px; color: var(--text-dim);" id="q-counter">1 / 23</span>
+    </div>
+
+    <div class="q-text" id="q-text"></div>
+
+    <div class="hint-container">
+      <button class="hint-btn" id="hint-toggle-btn" type="button">
+        <span>💡</span>
+        <span id="hint-btn-label">Afficher un indice</span>
+      </button>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <!-- Feedback card -->
+    <div class="feedback-card" id="feedback-card">
+      <div class="feedback-header" id="feedback-header"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="next-btn" id="next-btn" style="display: none;">
+        <span id="next-btn-text">Question suivante</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div class="card results-card" id="results-card" style="display: none;">
+    <div class="results-trophy" id="results-icon">🏆</div>
+    <h2 class="results-title" id="results-title">Quiz terminé !</h2>
+    
+    <div class="score-circle-wrapper">
+      <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <path stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path id="circle-score-stroke" stroke="url(#scoreGrad)" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3b82f6" />
+            <stop offset="50%" stop-color="#6366f1" />
+            <stop offset="100%" stop-color="#8b5cf6" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-percent-val" id="score-percent-text">0%</div>
+    </div>
+
+    <p class="results-message" id="results-message"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num good" id="stat-correct">0</div>
+        <div class="stat-label">Bonnes réponses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-incorrect">0</div>
+        <div class="stat-label">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">23</div>
+        <div class="stat-label">Questions</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="next-btn" id="restart-btn" type="button">
+        <span>🔄 Recommencer le quiz</span>
+      </button>
+      <button class="btn-secondary" id="toggle-review-btn" type="button">
+        <span>📋 Voir le corrigé complet</span>
+      </button>
+    </div>
+
+    <div class="review-container" id="review-container">
+      <div class="review-header">Détail des questions et explications</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const quizData = [{"question":"Quelle est la différence majeure d'architecture et de performance entre LocalStorage et IndexedDB dans un navigateur web ?","hint":"Pensez aux trois obstacles de LocalStorage examinés lors du cours (taille limite, gel du thread et absence d'index).","options":[{"label":"A","text":"LocalStorage utilise des index B-Tree pour accélérer les requêtes, tandis qu'IndexedDB effectue un balayage linéaire O(n) sur du texte brut.","isCorrect":false,"rationale":"LocalStorage ne possède aucun index et exige un balayage JS manuel, contrairement à IndexedDB qui intègre un véritable moteur d'index B-Tree."},{"label":"B","text":"IndexedDB nécessite obligatoirement un serveur SQL distant pour fonctionner, tandis que LocalStorage est le seul système 100% local du navigateur.","isCorrect":false,"rationale":"IndexedDB est un moteur NoSQL entièrement embarqué dans le navigateur client, fonctionnant sans aucun serveur distant."},{"label":"C","text":"LocalStorage permet de stocker des objets de plusieurs gigaoctets de manière asynchrone, alors qu'IndexedDB est limité à 5 Mo et bloque l'Event Loop.","isCorrect":false,"rationale":"Cette affirmation inverse la capacité et le mode d'exécution des deux systèmes de stockage web."},{"label":"D","text":"IndexedDB est asynchrone, offre un stockage de plusieurs gigaoctets et repose sur un moteur NoSQL indexé, alors que LocalStorage est synchrone, limité à environ 5 Mo et gèle le thread principal.","isCorrect":true,"rationale":"IndexedDB résout les trois limitations fondamentales de LocalStorage en proposant un stockage asynchrone volumineux, structuré et interrogeable via des index B-Tree."}],"number":1,"category":"Comparatif Stockage","answer":"D","rationale":"IndexedDB résout les trois limitations fondamentales de LocalStorage en proposant un stockage asynchrone volumineux, structuré et interrogeable via des index B-Tree."},{"question":"Grâce à l'algorithme natif de *Structured Clone*, IndexedDB est capable de stocker directement :","hint":"Réfléchissez au type de structures de données que l'on peut sauvegarder sans les transformer au préalable en texte JSON.","options":[{"label":"A","text":"Des objets JavaScript complexes, des tableaux imbriqués, des instances de Date et des Uint8Array sans nécessiter de conversion textuelle.","isCorrect":true,"rationale":"L'algorithme Structured Clone du navigateur permet à IndexedDB de persister des structures de données riches (objets, tableaux, dates, données binaires) sans passer par JSON.stringify()."},{"label":"B","text":"Des tables relationnelles strictes nécessitant la déclaration préalable de toutes les colonnes SQL.","isCorrect":false,"rationale":"IndexedDB est une base NoSQL d'objets (Object Stores) et non un moteur relationnel à colonnes fixes."},{"label":"C","text":"Des méthodes de classe et des fonctions d'instance exécutables qui sont restaurées à la lecture.","isCorrect":false,"rationale":"Les méthodes et le prototype des classes ne sont pas sérialisés par Structured Clone ; seules les propriétés de données sont conservées."},{"label":"D","text":"Uniquement des chaînes de caractères brutes qu'il faut obligatoirement encoder en Base64.","isCorrect":false,"rationale":"Cette contrainte s'applique à LocalStorage, pas à IndexedDB qui gère la sérialisation binaire d'objets complexes."}],"number":2,"category":"Structured Clone","answer":"A","rationale":"L'algorithme Structured Clone du navigateur permet à IndexedDB de persister des structures de données riches (objets, tableaux, dates, données binaires) sans passer par JSON.stringify()."},{"question":"Le Gouffre Objet-Relationnel (*Impedance Mismatch*) décrit la difficulté à faire correspondre le modèle POO et les tables SQL. Comment le modèle NoSQL d'IndexedDB résout-il cette friction ?","hint":"Rappelez-vous la métaphore de la voiture garée entière dans le garage vs démontée pièce par pièce dans différentes tables.","options":[{"label":"A","text":"IndexedDB interdit l'utilisation de tableaux ou de sous-objets pour forcer la platification des données.","isCorrect":false,"rationale":"IndexedDB supporte au contraire nativement les tableaux et sous-structures complexes dans un même enregistrement."},{"label":"B","text":"L'objet métier est enregistré d'un seul bloc avec ses tableaux et sous-objets, évitant le démontage en tables multiples et les requêtes JOIN.","isCorrect":true,"rationale":"En stockant l'entité entière sous forme de document/objet dans un Object Store, IndexedDB évite la décomposition artificielle dans des tables relationnelles normalisées."},{"label":"C","text":"IndexedDB convertit chaque objet en un schéma XML rigide avant de l'écrire sur le disque.","isCorrect":false,"rationale":"IndexedDB n'utilise pas le format XML ; il s'appuie sur le clonage structuré des objets JavaScript."},{"label":"D","text":"IndexedDB intègre un ORM automatique qui décompose l'objet en tables relationnelles sous le capot.","isCorrect":false,"rationale":"IndexedDB ne convertit pas les données en tables SQL relationnelles sous le capot ; il s'agit d'un magasin NoSQL d'objets."}],"number":3,"category":"Modèle NoSQL","answer":"B","rationale":"En stockant l'entité entière sous forme de document/objet dans un Object Store, IndexedDB évite la décomposition artificielle dans des tables relationnelles normalisées."},{"question":"Pourquoi est-il fortement recommandé d'utiliser Dexie.js pour interagir avec IndexedDB dans une application TypeScript / POO ?","hint":"Considérez le rôle d'une bibliothèque d'enrobage (wrapper) face à une API Web événementielle datant de 2011.","options":[{"label":"A","text":"Dexie.js fournit une abstraction orientée objet, des typages forts via Table<T, K>, une gestion par Promises/async-await et une API de requêtes fluide.","isCorrect":true,"rationale":"Dexie.js masque la verbosité de l'API événementielle d'IndexedDB (onsuccess/onerror) en offrant une interface moderne basée sur les Promises et le typage TypeScript."},{"label":"B","text":"Dexie.js ajoute la possibilité d'exécuter directement des requêtes SQL complexes avec la clause JOIN.","isCorrect":false,"rationale":"Dexie.js ne fournit pas de syntaxe SQL mais une Fluent API de requêtes orientée objet."},{"label":"C","text":"Dexie.js embarque son propre moteur de base de données complet qui remplace le moteur natif du navigateur.","isCorrect":false,"rationale":"Dexie.js est un wrapper léger (quelques ko) qui s'appuie sur le moteur IndexedDB déjà présent dans le navigateur."},{"label":"D","text":"Dexie.js transforme IndexedDB en une base de données synchrone pour simplifier le code.","isCorrect":false,"rationale":"Dexie.js reste entièrement asynchrone afin d'éviter tout blocage du thread principal de l'application."}],"number":4,"category":"Dexie.js","answer":"A","rationale":"Dexie.js masque la verbosité de l'API événementielle d'IndexedDB (onsuccess/onerror) en offrant une interface moderne basée sur les Promises et le typage TypeScript."},{"question":"Lors de la déclaration d'un magasin d'objets Dexie via `this.version(1).stores({...})`, quelle est la règle concernant le schéma ?","hint":"Rappelez-vous que chaque index supplémentaire ralentit les écritures et consomme de l'espace disque.","options":[{"label":"A","text":"On doit obligatoirement lister toutes les propriétés de la classe sous peine de les voir ignorées lors de la sauvegarde.","isCorrect":false,"rationale":"Il s'agit d'un réflexe SQL erroné ; Dexie persiste automatiquement l'ensemble des propriétés de l'objet, qu'elles soient dans le schéma ou non."},{"label":"B","text":"Le schéma doit définir explicitement les types de données TypeScript (ex: string, number, boolean) pour chaque champ.","isCorrect":false,"rationale":"La chaîne de définition du schéma Dexie ne spécifie pas les types de données, mais uniquement la nature des index."},{"label":"C","text":"On ne doit lister que des clés primaires auto-incrémentées ++id à l'exclusion de tout index secondaire.","isCorrect":false,"rationale":"Dexie supporte de nombreux types d'index secondaires (uniques, multi-entry, composés) utiles pour la recherche."},{"label":"D","text":"On ne déclare dans le schéma que la clé primaire et les propriétés utilisées pour les requêtes (.where()), car tout l'objet est stocké automatiquement.","isCorrect":true,"rationale":"Le schéma Dexie n'est pas une définition de table SQL, mais une déclaration des index de recherche. Les propriétés non listées sont quand même sauvegardées intégralement."}],"number":5,"category":"Schémas & Index","answer":"D","rationale":"Le schéma Dexie n'est pas une définition de table SQL, mais une déclaration des index de recherche. Les propriétés non listées sont quand même sauvegardées intégralement."},{"question":"Quelle est la différence de complexité algorithmique entre la recherche d'une donnée non indexée et une recherche via un index B-Tree dans Dexie ?","hint":"Pensez au nombre de comparaisons dans une recherche dichotomique par rapport à une lecture intégrale mot par mot.","options":[{"label":"A","text":"La recherche non indexée nécessite un balayage complet en O(n), tandis que l'index B-Tree s'exécute en O(log n).","isCorrect":true,"rationale":"L'arbre équilibré B-Tree divise l'espace de recherche à chaque étape, passant de n comparaisons à seulement log₂(n) étapes."},{"label":"B","text":"L'index B-Tree s'exécute en O(n log n) car il trie la base de données à chaque lecture.","isCorrect":false,"rationale":"Le tri de l'index B-Tree est maintenu au fil des écritures, permettant une lecture en O(log n) sans retrier la base."},{"label":"C","text":"Les deux approches ont exactement la même complexité en O(n), mais l'index consomme moins de mémoire vive.","isCorrect":false,"rationale":"L'index modifie fondamentalement la complexité algorithmique de recherche en évitant le parcours séquentiel."},{"label":"D","text":"La recherche non indexée s'exécute en O(1), alors que l'index B-Tree demande une complexité en O(n²).","isCorrect":false,"rationale":"Parcourir un ensemble non indexé ne peut pas se faire en temps constant O(1), et un index B-Tree accélère les recherches au lieu de les ralentir."}],"number":6,"category":"Indexation B-Tree","answer":"A","rationale":"L'arbre équilibré B-Tree divise l'espace de recherche à chaque étape, passant de n comparaisons à seulement log₂(n) étapes."},{"question":"Dans le cadre d'une application Offline-First devant synchroniser ses données entre plusieurs appareils, quelle stratégie de clé primaire convient le mieux ?","hint":"Réfléchissez au risque de collision si deux téléphones non connectés créent simultanément un élément avec une clé incrémentale.","options":[{"label":"A","text":"Une clé auto-incrémentée ++id, car le navigateur attribue des numéros uniques synchronisés à l'échelle mondiale.","isCorrect":false,"rationale":"Deux appareils hors-ligne créant des objets séparément généreront les mêmes identifiants auto-incrémentés (`1`, `2`, ...), provoquant des collisions lors de la synchronisation."},{"label":"B","text":"Un index composé basé uniquement sur l'heure locale exacte de création de l'enregistrement.","isCorrect":false,"rationale":"L'horloge système peut être imprécise ou identique sur deux appareils, ce qui n'assure pas l'unicité d'une clé primaire."},{"label":"C","text":"Une clé numérique attribuée obligatoirement par le serveur distant avant toute sauvegarde sur le disque local.","isCorrect":false,"rationale":"Imposer un aller-retour serveur pour obtenir un identifiant empêche l'application de fonctionner en mode hors-ligne."},{"label":"D","text":"Une clé métier explicite générée localement par UUID (ex: crypto.randomUUID()), évitant toute collision d'identifiants lors de la fusion.","isCorrect":true,"rationale":"Les UUID générés localement garantissent l'unicité universelle des enregistrements créés hors-ligne par différents clients."}],"number":7,"category":"Clés Primaires","answer":"D","rationale":"Les UUID générés localement garantissent l'unicité universelle des enregistrements créés hors-ligne par différents clients."},{"question":"Dans la déclaration de schéma Dexie `utilisateurs: 'id, &email, role'`, à quoi sert le préfixe `&` devant la propriété `email` ?","hint":"C'est la protection physique de la base de données contre les doublons.","options":[{"label":"A","text":"Il indique que la propriété email est optionnelle et peut prendre la valeur null.","isCorrect":false,"rationale":"L'opérateur pour les champs optionnels n'utilise pas le symbole `&` dans la syntaxe des schémas Dexie."},{"label":"B","text":"Il indique qu'email est la clé primaire principale de l'Object Store.","isCorrect":false,"rationale":"La clé primaire est toujours le tout premier champ déclaré dans la chaîne de schéma (`id` dans cet exemple)."},{"label":"C","text":"Il définit une contrainte d'unicité physique : IndexedDB refusera toute insertion d'un doublon en levant une Dexie.ConstraintError.","isCorrect":true,"rationale":"Le symbole `&` indique un index unique au niveau du disque, garantissant l'intégrité de la donnée au-delà des validations applicatives."},{"label":"D","text":"Il active la recherche par préfixe insensible à la casse sur l'adresse email.","isCorrect":false,"rationale":"La recherche par préfixe s'effectue via des méthodes de l'API de requête (`startsWithIgnoreCase`), pas avec le symbole `&`."}],"number":8,"category":"Schémas & Index","answer":"C","rationale":"Le symbole `&` indique un index unique au niveau du disque, garantissant l'intégrité de la donnée au-delà des validations applicatives."},{"question":"Considérez le schéma `recettes: 'id, titre, *ingredients'`. Que permet d'accomplir le préfixe `*` (multi-entry) sur la propriété `ingredients` (un tableau de chaînes) ?","hint":"Pensez à la manière de rechercher un ingrédient précis dans 50 000 recettes sans parcourir tous les tableaux en mémoire.","options":[{"label":"A","text":"Il indexe individuellement chaque élément du tableau, permettant de trouver directement toutes les recettes contenant un ingrédient donné.","isCorrect":true,"rationale":"L'index multi-entry décompose le tableau pour créer une entrée d'index pour chaque valeur, autorisant des requêtes ciblées directes."},{"label":"B","text":"Il exige la présence d'une table associative externe nommée Recette_Ingredient.","isCorrect":false,"rationale":"Justement, l'index multi-entry NoSQL élimine le besoin d'une table de jointure relationnelle intermédiaire."},{"label":"C","text":"Il déclare la propriété ingredients comme étant la clé primaire de la table.","isCorrect":false,"rationale":"Le symbole `*` ne définit pas une clé primaire, mais un index multi-entry pour les tableaux."},{"label":"D","text":"Il force le tableau ingredients à ne contenir que des valeurs uniques au sein de l'objet.","isCorrect":false,"rationale":"Le symbole `*` n'impose pas d'unicité au sein du tableau, mais indexe chaque élément pour la recherche."}],"number":9,"category":"Schémas & Index","answer":"A","rationale":"L'index multi-entry décompose le tableau pour créer une entrée d'index pour chaque valeur, autorisant des requêtes ciblées directes."},{"question":"À quel besoin répond la déclaration d'un index composé tel que `[statut+priorite]` dans un schéma Dexie ?","hint":"Considérez le filtrage fréquent sur des paires de valeurs récurrentes (ex: tâches 'EN_COURS' ET de priorité 'HAUTE').","options":[{"label":"A","text":"À fusionner les valeurs des deux propriétés en une seule chaîne de caractères lors de l'affichage.","isCorrect":false,"rationale":"L'index composé n'altère pas l'affichage des données ; il s'agit d'une structure d'indexation interne."},{"label":"B","text":"À exécuter des recherches ultra-rapides sur la combinaison exacte de deux critères sans devoir filtrer le second en mémoire JS.","isCorrect":true,"rationale":"L'index composé combine les deux propriétés dans une même structure B-Tree pour cibler directement la paire recherchée."},{"label":"C","text":"À empêcher l'insertion d'objets où statut et priorite ont des valeurs identiques.","isCorrect":false,"rationale":"Les crochets ne définissent pas une contrainte d'égalité entre champs, mais une clé de recherche combinée."},{"label":"D","text":"À créer automatiquement deux index distincts et indépendants pour chaque propriété.","isCorrect":false,"rationale":"Pour des index séparés, il faut les lister avec une virgule (`'statut, priorite'`), et non entre crochets."}],"number":10,"category":"Schémas & Index","answer":"B","rationale":"L'index composé combine les deux propriétés dans une même structure B-Tree pour cibler directement la paire recherchée."},{"question":"Lorsqu'on extrait des objets d'un Object Store avec `await db.taches.toArray()`, pourquoi la réhydratation via une méthode statique type `Tache.fromDTO()` est-elle nécessaire ?","hint":"Revenez au piège du prototype perdu étudié dès la Séance 16.","options":[{"label":"A","text":"Parce que les données en base sont chiffrées et doivent être décodées par le constructeur.","isCorrect":false,"rationale":"Dexie ne chiffre pas automatiquement les données par défaut."},{"label":"B","text":"Parce que la méthode toArray() supprime automatiquement l'identifiant primaire des objets.","isCorrect":false,"rationale":"La méthode `toArray()` conserve la clé primaire et l'ensemble des propriétés sérialisées."},{"label":"C","text":"Parce qu'IndexedDB stocke uniquement les données (DTO) : les objets lus n'ont plus leur prototype ni leurs méthodes de classe.","isCorrect":true,"rationale":"La persistance dépouille l'objet de son prototype. Pour réutiliser les méthodes métier de l'entité, il faut instancier une nouvelle classe à partir du DTO."},{"label":"D","text":"Parce que Dexie retourne les objets sous forme de chaînes de caractères brutes qu'il faut désérialiser.","isCorrect":false,"rationale":"Dexie retourne des objets JavaScript découpés en propriétés, pas des chaînes JSON brutes."}],"number":11,"category":"Réhydratation & Prototype","answer":"C","rationale":"La persistance dépouille l'objet de son prototype. Pour réutiliser les méthodes métier de l'entité, il faut instancier une nouvelle classe à partir du DTO."},{"question":"Quelle méthode de la Fluent API Dexie permet de réaliser une recherche instantanée par préfixe insensible à la casse sur un champ indexé `nom` ?","hint":"Cherchez la méthode pensée pour l'autocomplétion dynamique dans un champ de recherche.","options":[{"label":"A","text":"db.clients.filter(c => c.nom.toLowerCase().includes(saisie)).toArray()","isCorrect":false,"rationale":"Cette approche effectue un filtrage JS en mémoire sur tous les éléments, sans tirer parti de l'index B-Tree."},{"label":"B","text":"db.clients.orderBy('nom').find(saisie)","isCorrect":false,"rationale":"`find()` n'est pas la méthode appropriée de la Fluent API Dexie pour rechercher un préfixe."},{"label":"C","text":"db.clients.where('nom').equals(saisie).toArray()","isCorrect":false,"rationale":"La méthode `equals()` cherche une correspondance exacte et stricte, ne convenant pas à l'autocomplétion par préfixe."},{"label":"D","text":"db.clients.where('nom').startsWithIgnoreCase(saisie).limit(10).toArray()","isCorrect":true,"rationale":"Cette méthode exploite l'index B-Tree pour extraire rapidement les enregistrements dont la clé commence par la chaîne spécifiée, sans tenir compte de la casse."}],"number":12,"category":"Requêtes Dexie","answer":"D","rationale":"Cette méthode exploite l'index B-Tree pour extraire rapidement les enregistrements dont la clé commence par la chaîne spécifiée, sans tenir compte de la casse."},{"question":"Quelle est la recommandation d'ingénierie pour combiner un filtrage sur un critère indexé et un critère non indexé dans une même requête Dexie ?","hint":"Appliquez le principe : l'index pour dégrossir la recherche, le filtre mémoire pour affiner le résultat.","options":[{"label":"A","text":"Charger toute la base avec `.toArray()` et réaliser l'intégralité des filtrages avec l'API `Array.prototype.filter()`.","isCorrect":false,"rationale":"Charger des milliers d'objets non filtrés en mémoire vive dégrade inutilement les performances."},{"label":"B","text":"Créer deux transactions séparées et fusionner manuellement les tableaux dans le composant.","isCorrect":false,"rationale":"Multiplier les transactions n'est pas la manière adéquate de composer des conditions de recherche."},{"label":"C","text":"Utiliser `.where()` sur le champ indexé pour éliminer rapidement la majorité des données, puis enchaîner avec `.filter()` en mémoire JS pour le second critère.","isCorrect":true,"rationale":"Cette stratégie équilibrée permet d'utiliser le B-Tree pour réduire l'ensemble des résultats à quelques éléments avant d'appliquer le filtre JS en mémoire."},{"label":"D","text":"Déclarer impérativement un nouvel index dans le schéma pour chaque critère possible de l'application.","isCorrect":false,"rationale":"Multiplier inutilement les index alourdit l'empreinte disque et ralentit la performance des écritures."}],"number":13,"category":"Requêtes Dexie","answer":"C","rationale":"Cette stratégie équilibrée permet d'utiliser le B-Tree pour réduire l'ensemble des résultats à quelques éléments avant d'appliquer le filtre JS en mémoire."},{"question":"Comment interroge-t-on efficacement une plage de dates de création dans Dexie sur une propriété indexée `dateCreationISO` qui stocke des chaînes ISO 8601 ?","hint":"Rappelez-vous la propriété clé du format ISO 8601 (ex: `'2026-10-01' < '2026-10-31'`) pour le tri textuel.","options":[{"label":"A","text":"En utilisant `.where('dateCreationISO').between(debutISO, finISO)`.","isCorrect":true,"rationale":"Les chaînes au format ISO 8601 se triant naturellement par ordre lexicographique, la méthode `between()` exploite directement l'index B-Tree."},{"label":"B","text":"En passant un tableau de deux dates à la méthode `.equals([debutISO, finISO])`.","isCorrect":false,"rationale":"La méthode `equals()` avec un tableau est réservée aux index composés, pas aux recherches d'intervalles sur un seul champ."},{"label":"C","text":"En convertissant les dates en objets `Date` dans un `.filter()` JS après avoir extrait tous les enregistrements.","isCorrect":false,"rationale":"Cette méthode ignore l'indexation B-Tree de la colonne ISO 8601 et force un scan en mémoire."},{"label":"D","text":"En appelant la méthode `.includes(debutISO)` sur l'Object Store.","isCorrect":false,"rationale":"`includes()` n'est pas une méthode de bornage d'intervalle sur un index Dexie."}],"number":14,"category":"Requêtes Dexie","answer":"A","rationale":"Les chaînes au format ISO 8601 se triant naturellement par ordre lexicographique, la méthode `between()` exploite directement l'index B-Tree."},{"question":"Dans le contexte des transactions ACID, que garantit la propriété d'**Atomicité** ?","hint":"Associez ce terme à la règle fondamentale du « Tout ou Rien ».","options":[{"label":"A","text":"Que le groupe d'opérations d'écriture forme un bloc insécable : soit toutes réussissent (COMMIT), soit toutes sont annulées (ROLLBACK).","isCorrect":true,"rationale":"L'atomicité garantit qu'une transaction ne peut jamais s'arrêter à mi-chemin, évitant les états partiellement écrits."},{"label":"B","text":"Que deux transactions simultanées n'observent jamais leurs modifications temporaires respectives.","isCorrect":false,"rationale":"Cette propriété correspond au pilier d'Isolation d'ACID."},{"label":"C","text":"Que les contraintes d'unicité et les types de données sont strictement vérifiés avant écriture.","isCorrect":false,"rationale":"Cette propriété correspond au pilier de Cohérence (Consistency) d'ACID."},{"label":"D","text":"Que les données écrites survivent à un redémarrage ou à une coupure de courant.","isCorrect":false,"rationale":"Cette propriété correspond au pilier de Durabilité (Durability) d'ACID."}],"number":15,"category":"Transactions ACID","answer":"A","rationale":"L'atomicité garantit qu'une transaction ne peut jamais s'arrêter à mi-chemin, évitant les états partiellement écrits."},{"question":"Que garantit la propriété d'**Isolation** (le \"I\" d'ACID) dans IndexedDB ?","hint":"Réfléchissez au comportement de la base si deux onglets modifient les mêmes données simultanément.","options":[{"label":"A","text":"Chaque table de la base de données est sauvegardée dans un fichier physique séparé sur le disque.","isCorrect":false,"rationale":"L'isolation ne concerne pas la structuration physique des fichiers sur le système de fichiers."},{"label":"B","text":"Deux transactions s'exécutant en parallèle ne peuvent pas observer les états intermédiaires non encore validés l'une de l'autre.","isCorrect":true,"rationale":"L'isolation empêche les lectures 'sales' (*dirty reads*) en cloisonnant l'espace d'écriture de chaque transaction jusqu'à sa validation."},{"label":"C","text":"La base de données fonctionne exclusivement hors-ligne et ne communique jamais avec le réseau.","isCorrect":false,"rationale":"L'isolation dans ACID est un concept de concurrence de données, pas une caractéristique d'état réseau."},{"label":"D","text":"Toutes les erreurs et exceptions survenues pendant l'écriture sont masquées à l'utilisateur.","isCorrect":false,"rationale":"L'isolation n'est pas un mécanisme de masquage des erreurs d'application."}],"number":16,"category":"Transactions ACID","answer":"B","rationale":"L'isolation empêche les lectures 'sales' (*dirty reads*) en cloisonnant l'espace d'écriture de chaque transaction jusqu'à sa validation."},{"question":"Quelle est la syntaxe correcte pour exécuter une transaction en lecture-écriture dans Dexie impliquant les tables `comptes` et `commandes` ?","hint":"Examinez les arguments requis : le mode de verrouillage, la liste des tables impactées, et la fonction asynchrone.","options":[{"label":"A","text":"db.transaction('readwrite', db.comptes.concat(db.commandes), () => { ... });","isCorrect":false,"rationale":"Le mode en écriture se note `'rw'` dans Dexie, et les tables doivent être transmises dans un tableau."},{"label":"B","text":"db.startTransaction(['comptes', 'commandes']);","isCorrect":false,"rationale":"Dexie n'utilise pas de méthode `startTransaction()` ; la portée est délimitée par le bloc de la fonction callback."},{"label":"C","text":"await db.comptes.transaction('rw', async () => { await db.commandes.update(...); });","isCorrect":false,"rationale":"La transaction globale s'invoque sur l'instance de la base `db`, et non sur une table individuelle lorsqu'elle concerne plusieurs tables."},{"label":"D","text":"await db.transaction('rw', [db.comptes, db.commandes], async () => { ... });","isCorrect":true,"rationale":"La méthode `db.transaction()` prend le mode (`'r'` ou `'rw'`), le tableau des tables verrouillées et la fonction callback asynchrone."}],"number":17,"category":"Transactions ACID","answer":"D","rationale":"La méthode `db.transaction()` prend le mode (`'r'` ou `'rw'`), le tableau des tables verrouillées et la fonction callback asynchrone."},{"question":"Comment Dexie détermine-t-il automatiquement s'il doit valider (COMMIT) ou annuler (ROLLBACK) une transaction ?","hint":"Pensez au comportement par défaut des Promises (résolution vs rejet) passé à `db.transaction()`.","options":[{"label":"A","text":"Toute transaction effectue un COMMIT par défaut, et il faut écrire un script de nettoyage manuel en cas d'erreur.","isCorrect":false,"rationale":"IndexedDB et Dexie restaurent automatiquement l'état initial en cas d'échec sans laisser de données partielles."},{"label":"B","text":"Le ROLLBACK n'a lieu que si la fenêtre du navigateur est fermée pendant l'exécution.","isCorrect":false,"rationale":"Toute exception TypeScript/JavaScript non captée au sein du bloc transactionnel déclenche un ROLLBACK instantané."},{"label":"C","text":"Le développeur doit obligatoirement appeler tx.commit() ou tx.rollback() manuellement à la fin du bloc.","isCorrect":false,"rationale":"Dexie gère le cycle de vie de la transaction automatiquement sans nécessiter d'appel manuel à commit/rollback."},{"label":"D","text":"Si le bloc asynchrone se termine sans erreur, le COMMIT est automatique ; si une exception est levée, le ROLLBACK est automatique.","isCorrect":true,"rationale":"Dexie surveille le résultat de la Promise retournée par le bloc : le succès valide l'écriture, tandis qu'un rejet (exception) annule l'ensemble des modifications."}],"number":18,"category":"Transactions ACID","answer":"D","rationale":"Dexie surveille le résultat de la Promise retournée par le bloc : le succès valide l'écriture, tandis qu'un rejet (exception) annule l'ensemble des modifications."},{"question":"Pourquoi est-il strictement déconseillé d'exécuter un appel réseau HTTP (`fetch` ou `httpResource`) à l'intérieur d'un bloc `db.transaction()` Dexie ?","hint":"Rappelez-vous la règle d'or : exécuter d'abord les requêtes réseau, puis ouvrir la transaction locale ultra-rapide.","options":[{"label":"A","text":"L'attente du réseau libère l'Event Loop, ce qui pousse IndexedDB à fermer automatiquement la transaction et provoquer une TransactionInactiveError.","isCorrect":true,"rationale":"IndexedDB ferme automatiquement une transaction active dès qu'aucun travail sur la base n'a lieu pendant un tour d'Event Loop (ce qui arrive lors de l'attente d'une réponse réseau)."},{"label":"B","text":"IndexedDB bloque physiquement la carte réseau du système pendant le verrouillage des tables.","isCorrect":false,"rationale":"IndexedDB n'a aucun contrôle sur le matériel ni sur la carte réseau du système."},{"label":"C","text":"Les appels réseau transforment automatiquement la transaction de lecture-écriture ('rw') en lecture seule ('r').","isCorrect":false,"rationale":"Le réseau ne modifie pas le mode de la transaction, il provoque sa fermeture prématurée par inactivité."},{"label":"D","text":"Le serveur distant recevrait les requêtes HTTP en double à cause des mécanismes de retente de Dexie.","isCorrect":false,"rationale":"Dexie ne relance pas de requêtes HTTP distantes en cas d'échec transactionnel."}],"number":19,"category":"Transactions ACID","answer":"A","rationale":"IndexedDB ferme automatiquement une transaction active dès qu'aucun travail sur la base n'a lieu pendant un tour d'Event Loop (ce qui arrive lors de l'attente d'une réponse réseau)."},{"question":"Quelle est la règle essentielle pour modifier le schéma d'une base de données Dexie déjà installée chez des milliers d'utilisateurs ?","hint":"Pensez à la préservation des données de production lors d'un déploiement applicatif.","options":[{"label":"A","text":"Modifier directement la chaîne de texte de version(1).stores({...}) avec les nouveaux index.","isCorrect":false,"rationale":"Modifier `version(1)` directement empêche Dexie de détecter la nécessité d'une migration et peut entraîner des incohérences ou des pertes de données."},{"label":"B","text":"Appeler db.delete() au chargement du service pour réinitialiser proprement la base client.","isCorrect":false,"rationale":"Appeler `db.delete()` supprime définitivement toutes les données sauvegardées par l'utilisateur."},{"label":"C","text":"Demander aux utilisateurs de vider manuellement le cache de leur navigateur à chaque mise à jour.","isCorrect":false,"rationale":"La gestion des migrations doit être totalement transparente pour l'utilisateur et gérée au niveau du code de l'application."},{"label":"D","text":"Conserver intacte la déclaration version(1) et empiler une version(2) avec un bloc .upgrade() pour transformer la structure et les données.","isCorrect":true,"rationale":"On ne modifie jamais une version publiée. L'empilement séquentiel des versions permet à Dexie d'exécuter les migrations nécessaires sans détruire les données existantes."}],"number":20,"category":"Migrations & Versions","answer":"D","rationale":"On ne modifie jamais une version publiée. L'empilement séquentiel des versions permet à Dexie d'exécuter les migrations nécessaires sans détruire les données existantes."},{"question":"Que se passe-t-il lorsqu'un utilisateur possédant la `version(1)` d'une base ouvre une mise à jour applicative contenant les déclarations `version(1)` et `version(2)` associées à une méthode `.upgrade()` ?","hint":"Considérez l'automatisation du processus de migration au démarrage de l'application.","options":[{"label":"A","text":"Dexie déclenche une erreur fatale et refuse de démarrer tant que l'utilisateur n'a pas réinstallé l'application.","isCorrect":false,"rationale":"Dexie gère les migrations de manière fluide et automatique au démarrage sans bloquer l'application."},{"label":"B","text":"Dexie supprime la base de données v1 et recrée une base v2 totalement vide.","isCorrect":false,"rationale":"Le but de la méthode `.upgrade()` est précisément de transformer les données existantes sans les effacer."},{"label":"C","text":"Dexie compare les numéros de version, ouvre une transaction de migration et exécute le script .upgrade() pour adapter les données sans perte.","isCorrect":true,"rationale":"Dexie détecte le décalage entre la version physique sur le disque et le code, et applique la chaîne de migration de manière atomique et sécurisée."},{"label":"D","text":"Dexie ignore la version 2 et continue d'utiliser la structure de la version 1.","isCorrect":false,"rationale":"Dexie monte automatiquement la base vers la dernière version déclarée dans le code TypeScript."}],"number":21,"category":"Migrations & Versions","answer":"C","rationale":"Dexie détecte le décalage entre la version physique sur le disque et le code, et applique la chaîne de migration de manière atomique et sécurisée."},{"question":"Quel est le problème principal de l'anti-pattern consistant à déclarer TOUTES les propriétés d'une entité dans la chaîne `stores({...})` de Dexie ?","hint":"Rappelez-vous la différence entre stocker un objet et indexer une propriété.","options":[{"label":"A","text":"Dexie refuse d'ouvrir la base si le schéma contient plus de trois propriétés déclarées.","isCorrect":false,"rationale":"Dexie ne limite pas arbitrairement le nombre d'index à trois, mais les performances globales en souffrent."},{"label":"B","text":"Chaque champ déclaré génère un arbre B-Tree superflu qui consomme du disque et ralentit les opérations d'écriture.","isCorrect":true,"rationale":"Multiplier les index inutiles dégrade inutilement les performances d'insertion et de mise à jour tout en augmentant l'empreinte mémoire."},{"label":"C","text":"Les propriétés listées dans le schéma sont automatiquement effacées de l'objet d'origine.","isCorrect":false,"rationale":"La déclaration d'un index n'efface ni n'altère les propriétés des objets sauvegardés."},{"label":"D","text":"Cela force IndexedDB à repasser en mode de stockage texte synchrone.","isCorrect":false,"rationale":"IndexedDB reste un moteur NoSQL asynchrone quelle que soit la configuration du schéma."}],"number":22,"category":"Schémas & Index","answer":"B","rationale":"Multiplier les index inutiles dégrade inutilement les performances d'insertion et de mise à jour tout en augmentant l'empreinte mémoire."},{"question":"Que risque-t-il d'arriver si un développeur oublie l'instruction `await` lors de l'appel d'une opération d'écriture Dexie (ex: `db.taches.add(dto)`) avant de recharger l'affichage ?","hint":"Pensez au désynchronisme causé par les Promises non attendues.","options":[{"label":"A","text":"La lecture suivante peut s'exécuter avant la fin de l'écriture sur le disque, entraînant un affichage de données obsolètes.","isCorrect":true,"rationale":"L'appel étant asynchrone, le code qui suit immédiatement s'exécute de façon concurrente avant la résolution de la écriture en base."},{"label":"B","text":"Dexie annule immédiatement l'écriture et supprime l'Object Store concerné.","isCorrect":false,"rationale":"Dexie n'annule pas l'écriture ; celle-ci s'exécute en arrière-plan mais sa fin n'est pas synchronisée avec la suite du code."},{"label":"C","text":"Le compilateur TypeScript bloque immédiatement la compilation avec une erreur de syntaxe irrécupérable.","isCorrect":false,"rationale":"Omettre `await` sur une Promise est valide en syntaxe JavaScript/TypeScript, mais crée des conditions de concurrence logique (*race conditions*)."},{"label":"D","text":"L'opération devient automatiquement synchrone sans aucun effet secondaire.","isCorrect":false,"rationale":"Omettre `await` ne rend pas l'opération synchrone ; elle continue de s'exécuter de manière asynchrone."}],"number":23,"category":"Asynchrone & Promises","answer":"A","rationale":"L'appel étant asynchrone, le code qui suit immédiatement s'exécute de façon concurrente avant la résolution de la écriture en base."},{"question":"Dans une architecture Angular Signal-First, quel est le rôle clé d'un Service vis-à-vis de la base Dexie.js ?","hint":"Considérez le besoin d'adapter de l'asynchrone (Dexie Promises) avec de la réactivité pour le template (Angular Signals).","options":[{"label":"A","text":"Empêcher le déroulement des transactions ACID pour accélérer l'interface utilisateur.","isCorrect":false,"rationale":"Le service ne cherche pas à contourner la sécurité transactionnelle de la base de données."},{"label":"B","text":"Transformer les requêtes Dexie en composants HTML dynamiques.","isCorrect":false,"rationale":"La génération de HTML relève de la responsabilité des composants et des templates, non des services."},{"label":"C","text":"Remplacer intégralement Dexie en stockant toutes les entités uniquement dans des tableaux en mémoire.","isCorrect":false,"rationale":"Le service ne remplace pas la persistance ; il orchestre l'accès au stockage Dexie."},{"label":"D","text":"Faire le pont entre les opérations asynchrones de Dexie (Promises / await) et l'état réactif synchrone requis par l'UI via les Signaux (signal()).","isCorrect":true,"rationale":"Le service encapsule les appels asynchrones vers la base de données locale et met à jour les signaux réactifs consommés de manière synchrone par les composants."}],"number":24,"category":"Angular Signal-First","answer":"D","rationale":"Le service encapsule les appels asynchrones vers la base de données locale et met à jour les signaux réactifs consommés de manière synchrone par les composants."},{"question":"Dans quel onglet des outils de développement des navigateurs Chromium (Chrome, Edge) peut-on inspecter le contenu physique des Object Stores Dexie et de leurs index ?","hint":"Cherchez la section consacrée au stockage applicatif client dans les DevTools.","options":[{"label":"A","text":"Onglet Réseau (Network) -> sous-menu XHR / Fetch.","isCorrect":false,"rationale":"L'onglet Réseau inspecte le trafic HTTP distant, pas les bases de données physiques locales du navigateur."},{"label":"B","text":"Onglet Application (ou Stockage) -> sous-menu IndexedDB -> nom de la base de données.","isCorrect":true,"rationale":"L'onglet Application des DevTools permet de visualiser la structure des bases IndexedDB, le contenu des Object Stores et les index créés."},{"label":"C","text":"Onglet Console -> en exécutant la commande window.getDatabase().","isCorrect":false,"rationale":"Les DevTools disposent d'une interface graphique dédiée dans l'onglet Application pour explorer IndexedDB sans commande."},{"label":"D","text":"Onglet Éléments (Elements) -> sous-menu DOM Storage.","isCorrect":false,"rationale":"L'onglet Éléments inspecte l'arbre DOM HTML de la page."}],"number":25,"category":"Débogage DevTools","answer":"B","rationale":"L'onglet Application des DevTools permet de visualiser la structure des bases IndexedDB, le contenu des Object Stores et les index créés."}]
+;
+
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+let userAnswers = [];
+
+// Formate les extraits de code inline, guillemets et blocs de code
+function formatCode(text) {
+  if (!text) return '';
+  
+  // 1. Blocs de code multi-lignes ```ts ... ```
+  let formatted = text.replace(/```(?:ts|typescript|js)?\n([\s\S]*?)```/g, '<pre class="code-box"><code>$1</code></pre>');
+  
+  // 2. Code inline entre backticks `...`
+  formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-term">$1</span>');
+  
+  // 3. Mots-clés isolés entre quotes '...', sans capturer les apostrophes françaises
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])'([a-zA-Z0-9_\-\.\/@\(\)=]+)'/g, '<span class="code-term">$1</span>');
+  
+  const parts = formatted.split(/(<pre[\s\S]*?<\/pre>)/g);
+  return parts.map(part => {
+    if (part.startsWith('<pre')) return part;
+    return part.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  }).join('');
+}
+
+// Initialisation
+function init() {
+  setupTheme();
+  setupKeyboard();
+  renderQuestion(0);
+  
+  document.getElementById('next-btn').addEventListener('click', handleNext);
+  document.getElementById('restart-btn').addEventListener('click', handleRestart);
+  document.getElementById('toggle-review-btn').addEventListener('click', handleToggleReview);
+  document.getElementById('hint-toggle-btn').addEventListener('click', toggleHint);
+}
+
+// Gestion du Thème Clair / Sombre
+function setupTheme() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const text = document.getElementById('theme-text');
+  
+  const saved = localStorage.getItem('poo_quiz_theme_s19') || localStorage.getItem('poo_quiz_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+  
+  toggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('poo_quiz_theme_s19', next);
+    updateThemeUI(next);
+  });
+  
+  function updateThemeUI(t) {
+    if (t === 'dark') {
+      icon.textContent = '☀️';
+      text.textContent = 'Mode clair';
+    } else {
+      icon.textContent = '🌙';
+      text.textContent = 'Mode sombre';
+    }
+  }
+}
+
+// Affichage d'une question
+function renderQuestion(index) {
+  answered = false;
+  const q = quizData[index];
+  
+  // Barre de progression
+  const progressPct = ((index) / quizData.length) * 100;
+  document.getElementById('progress-fill').style.width = progressPct + '%';
+  document.getElementById('progress-q-label').textContent = `Question ${index + 1} sur ${quizData.length}`;
+  document.getElementById('progress-score-pill').textContent = index > 0 
+    ? `Score : ${correctCount}/${index} (${Math.round((correctCount / index) * 100)}%)` 
+    : `Score : 0/0`;
+
+  // Métadonnées
+  document.getElementById('q-index-badge').textContent = `Question ${index < 9 ? '0' + (index + 1) : index + 1}`;
+  document.getElementById('q-category-tag').textContent = q.category || 'IndexedDB & Dexie.js';
+  document.getElementById('q-counter').textContent = `${index + 1} / ${quizData.length}`;
+
+  // Texte de la question
+  document.getElementById('q-text').innerHTML = formatCode(q.question);
+
+  // Indice
+  const hintBody = document.getElementById('hint-body');
+  hintBody.innerHTML = formatCode(q.hint);
+  hintBody.classList.remove('open');
+  document.getElementById('hint-btn-label').textContent = "Afficher un indice";
+
+  // Carte de feedback & Bouton suivant
+  const fcard = document.getElementById('feedback-card');
+  fcard.style.display = 'none';
+  fcard.className = 'feedback-card';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'none';
+  if (index === quizData.length - 1) {
+    document.getElementById('next-btn-text').textContent = "Voir mes résultats 🎉";
+  } else {
+    document.getElementById('next-btn-text').textContent = "Question suivante";
+  }
+
+  // Options de réponse
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, optIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.type = 'button';
+    btn.dataset.idx = optIdx;
+    btn.innerHTML = `
+      <span class="opt-key-circle">${opt.label}</span>
+      <span class="opt-content">${formatCode(opt.text)}</span>
+      <span class="opt-status-icon"></span>
+    `;
+
+    btn.addEventListener('click', () => selectOption(optIdx));
+    grid.appendChild(btn);
+  });
+}
+
+// Sélection d'une option
+function selectOption(selectedIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizData[currentQ];
+  const selectedOpt = q.options[selectedIdx];
+  const isCorrect = selectedOpt.isCorrect;
+  userAnswers[currentQ] = selectedIdx;
+
+  if (isCorrect) {
+    correctCount++;
+  }
+
+  const optionBtns = document.querySelectorAll('.option-btn');
+  optionBtns.forEach(btn => btn.disabled = true);
+
+  const selectedBtn = optionBtns[selectedIdx];
+  const selectedStatus = selectedBtn.querySelector('.opt-status-icon');
+  
+  if (isCorrect) {
+    selectedBtn.classList.add('selected-correct');
+    selectedStatus.textContent = '✓';
+
+    // Révéler les autres bonnes réponses éventuelles en pointillé
+    optionBtns.forEach((btn, idx) => {
+      if (idx !== selectedIdx && q.options[idx].isCorrect) {
+        btn.classList.add('revealed-correct');
+        btn.querySelector('.opt-status-icon').textContent = '✓';
+      }
+    });
+  } else {
+    selectedBtn.classList.add('selected-incorrect');
+    selectedStatus.textContent = '✕';
+
+    // Révéler toutes les bonnes réponses
+    optionBtns.forEach((btn, idx) => {
+      if (q.options[idx].isCorrect) {
+        btn.classList.add('revealed-correct');
+        btn.querySelector('.opt-status-icon').textContent = '✓';
+      }
+    });
+  }
+
+  // Atténuer les options neutres non sélectionnées
+  optionBtns.forEach(btn => {
+    if (!btn.classList.contains('selected-correct') && 
+        !btn.classList.contains('selected-incorrect') && 
+        !btn.classList.contains('revealed-correct')) {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  // Afficher la carte de feedback élégante
+  const fcard = document.getElementById('feedback-card');
+  const fheader = document.getElementById('feedback-header');
+  const fbody = document.getElementById('feedback-body');
+
+  fcard.style.display = 'block';
+
+  const correctLabels = q.options.filter(o => o.isCorrect).map(o => o.label).join(', ');
+
+  let specificNote = selectedOpt.rationale 
+    ? `<div style="margin-bottom: 8px;"><strong>Votre choix (${selectedOpt.label}) :</strong> ${formatCode(selectedOpt.rationale)}</div>` 
+    : '';
+
+  if (isCorrect) {
+    fcard.className = 'feedback-card correct';
+    fheader.innerHTML = '<span>✓</span> <span>Excellente réponse !</span>';
+    fbody.innerHTML = `${specificNote}<div><strong>Explication :</strong> ${formatCode(q.rationale)}</div>`;
+  } else {
+    fcard.className = 'feedback-card incorrect';
+    const pluriel = correctLabels.includes(',') ? 'étaient les options' : 'est l\'option';
+    fheader.innerHTML = `<span>✕</span> <span>Ce n'est pas tout à fait ça. La bonne réponse ${pluriel} ${correctLabels}.</span>`;
+    fbody.innerHTML = `${specificNote}<div><strong>Explication :</strong> ${formatCode(q.rationale)}</div>`;
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'flex';
+  nextBtn.focus();
+}
+
+// Bascule de l'indice
+function toggleHint() {
+  const hintBody = document.getElementById('hint-body');
+  const label = document.getElementById('hint-btn-label');
+  hintBody.classList.toggle('open');
+  if (hintBody.classList.contains('open')) {
+    label.textContent = "Masquer l'indice";
+  } else {
+    label.textContent = "Afficher un indice";
+  }
+}
+
+// Question suivante ou fin
+function handleNext() {
+  currentQ++;
+  if (currentQ < quizData.length) {
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+// Écran de fin et résultats
+function showResults() {
+  document.getElementById('question-card').style.display = 'none';
+  document.getElementById('progress-container').style.display = 'none';
+  document.getElementById('results-card').style.display = 'block';
+
+  const total = quizData.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  const stroke = document.getElementById('circle-score-stroke');
+  stroke.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+  document.getElementById('score-percent-text').textContent = `${pct}%`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-incorrect').textContent = total - correctCount;
+  document.getElementById('stat-total').textContent = total;
+
+  const msgEl = document.getElementById('results-message');
+  const iconEl = document.getElementById('results-icon');
+
+  if (pct >= 90) {
+    iconEl.textContent = '🏆';
+    msgEl.innerHTML = `<strong>Maîtrise remarquable !</strong> Vous maîtrisez parfaitement IndexedDB, Dexie.js, les index B-Tree, les transactions ACID et les migrations de schéma.`;
+    launchConfetti();
+  } else if (pct >= 75) {
+    iconEl.textContent = '🚀';
+    msgEl.innerHTML = `<strong>Très bon score !</strong> Les bases d'<span class="code-term">IndexedDB</span>, de la Fluent API <span class="code-term">Dexie</span> et des transactions sont bien assimilées. Consultez le corrigé pour consolider les subtilités.`;
+    launchConfetti();
+  } else if (pct >= 50) {
+    iconEl.textContent = '👍';
+    msgEl.innerHTML = `<strong>Bases en place !</strong> La distinction entre LocalStorage et IndexedDB est comprise, mais attention aux pièges des index multi-entry, des transactions et des migrations <span class="code-term">.upgrade()</span>.`;
+  } else {
+    iconEl.textContent = '📚';
+    msgEl.innerHTML = `<strong>En apprentissage !</strong> Relisez les notes de cours sur IndexedDB, Dexie.js et les transactions ACID, puis retentez l.évaluation pour progresser !`;
+  }
+}
+
+// Corrigé interactif complet
+function handleToggleReview() {
+  const container = document.getElementById('review-container');
+  const btn = document.getElementById('toggle-review-btn');
+  const list = document.getElementById('review-list');
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    btn.innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  } else {
+    container.style.display = 'block';
+    btn.innerHTML = '<span>Masquer le corrigé ▴</span>';
+
+    list.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const userIdx = userAnswers[qIdx];
+      const isGood = userIdx !== undefined && q.options[userIdx].isCorrect;
+
+      const card = document.createElement('div');
+      card.className = 'review-item';
+
+      const header = document.createElement('div');
+      header.className = 'review-item-header';
+      header.innerHTML = `
+        <div class="review-item-title">
+          <span>${isGood ? '✅' : '❌'}</span>
+          <span><strong>Q${qIdx + 1}.</strong> ${q.question.replace(/```[\s\S]*?```/g, '[Code]').substring(0, 75)}...</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);">Détails ▾</span>
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'review-item-body';
+
+      let optionsHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
+      q.options.forEach((opt, oIdx) => {
+        const wasUser = oIdx === userIdx;
+        const wasCorrect = opt.isCorrect;
+        let borderCol = 'var(--opt-border)';
+        let bgCol = 'transparent';
+        let badge = '';
+
+        if (wasCorrect) {
+          borderCol = '#10b981';
+          bgCol = 'rgba(16, 185, 129, 0.08)';
+          badge = ' <strong style="color: #10b981;">(Bonne réponse)</strong>';
+        }
+        if (wasUser && !wasCorrect) {
+          borderCol = '#ef4444';
+          bgCol = 'rgba(239, 68, 68, 0.08)';
+          badge = ' <strong style="color: #ef4444;">(Votre choix)</strong>';
+        }
+
+        optionsHtml += `
+          <div style="padding: 10px 14px; border: 1px solid ${borderCol}; background: ${bgCol}; border-radius: 8px; font-size: 13.5px;">
+            <div><strong>${opt.label}.</strong> ${formatCode(opt.text)}${badge}</div>
+            ${opt.rationale ? `<div style="font-size: 12.5px; margin-top: 4px; color: var(--text-dim);">${formatCode(opt.rationale)}</div>` : ''}
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+
+      body.innerHTML = `
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 8px;">${formatCode(q.question)}</div>
+        ${optionsHtml}
+        <div style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #6366f1; font-size: 13px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">Synthèse :</strong> ${formatCode(q.rationale)}
+        </div>
+      `;
+
+      header.addEventListener('click', () => {
+        body.classList.toggle('open');
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+  }
+}
+
+// Recommencer
+function handleRestart() {
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+  userAnswers = [];
+
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('review-container').style.display = 'none';
+  document.getElementById('toggle-review-btn').innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  document.getElementById('progress-container').style.display = 'block';
+  document.getElementById('question-card').style.display = 'block';
+
+  renderQuestion(0);
+}
+
+// Raccourcis Clavier
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+
+    if (document.getElementById('results-card').style.display === 'block') {
+      if (e.key === 'Enter') handleRestart();
+      return;
+    }
+
+    if (answered) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      return;
+    }
+
+    const q = quizData[currentQ];
+    if (!q) return;
+
+    let targetIdx = -1;
+    if (key === 'A' || key === '1') targetIdx = 0;
+    else if (key === 'B' || key === '2') targetIdx = 1;
+    else if (key === 'C' || key === '3') targetIdx = 2;
+    else if (key === 'D' || key === '4') targetIdx = 3;
+
+    if (targetIdx >= 0 && targetIdx < q.options.length) {
+      e.preventDefault();
+      selectOption(targetIdx);
+    }
+
+    if (key === 'H' || key === 'I') {
+      e.preventDefault();
+      toggleHint();
+    }
+  });
+}
+
+// Animation Confettis
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#3b82f6', '#6366f1', '#8b5cf6', '#10b981', '#fbbf24', '#ec4899'];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.015 + 0.008
+    });
+  }
+
+  let animId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25;
+      p.alpha -= p.decay;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  loop();
+}
+
+// Lancement
+init();
+</script>
+</body>
+</html>
