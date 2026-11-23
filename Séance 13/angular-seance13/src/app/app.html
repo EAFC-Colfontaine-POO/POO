@@ -1,0 +1,36 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('zone-vs-dag') {
+          <app-zone-vs-dag></app-zone-vs-dag>
+        }
+        @case ('trio-primitives') {
+          <app-trio-primitives></app-trio-primitives>
+        }
+        @case ('memory-immutability') {
+          <app-memory-immutability></app-memory-immutability>
+        }
+        @case ('component-comm') {
+          <app-component-comm></app-component-comm>
+        }
+        @case ('oop-encapsulation') {
+          <app-oop-encapsulation></app-oop-encapsulation>
+        }
+        @case ('fritkot-demo') {
+          <app-fritkot-demo></app-fritkot-demo>
+        }
+        @case ('antipattern-scanner') {
+          <app-antipattern-scanner></app-antipattern-scanner>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>

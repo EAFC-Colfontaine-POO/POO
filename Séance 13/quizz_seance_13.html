@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Angular 22 — Architecture Signal-First & Réactivité Zoneless</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      --bg-page: #090d16;
+      --bg-ambient-1: rgba(221, 0, 49, 0.14);
+      --bg-ambient-2: rgba(124, 58, 237, 0.14);
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --brand-red: #dd0031;
+      --brand-indigo: #6366f1;
+      --brand-purple: #7c3aed;
+      --brand-gradient: linear-gradient(135deg, #e11d48 0%, #6366f1 50%, #7c3aed 100%);
+      
+      --opt-bg: rgba(255, 255, 255, 0.03);
+      --opt-border: rgba(255, 255, 255, 0.08);
+      --opt-hover-bg: rgba(255, 255, 255, 0.06);
+      --opt-hover-border: rgba(99, 102, 241, 0.45);
+      
+      --correct-bg: rgba(16, 185, 129, 0.12);
+      --correct-border: #10b981;
+      --correct-text: #34d399;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: rgba(239, 68, 68, 0.12);
+      --incorrect-border: #ef4444;
+      --incorrect-text: #f87171;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: rgba(245, 158, 11, 0.08);
+      --hint-border: rgba(245, 158, 11, 0.25);
+      --hint-text: #fbbf24;
+      
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --code-border: rgba(255, 255, 255, 0.12);
+      --code-color: #38bdf8;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8fafc;
+      --bg-ambient-1: rgba(225, 29, 72, 0.08);
+      --bg-ambient-2: rgba(99, 102, 241, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --opt-bg: #ffffff;
+      --opt-border: #e2e8f0;
+      --opt-hover-bg: #f8fafc;
+      --opt-hover-border: #6366f1;
+      
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --correct-text: #065f46;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: #fef2f2;
+      --incorrect-border: #ef4444;
+      --incorrect-text: #991b1b;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: #fffbeb;
+      --hint-border: #fde68a;
+      --hint-text: #92400e;
+      
+      --code-bg: #f1f5f9;
+      --code-border: #cbd5e1;
+      --code-color: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image: 
+        radial-gradient(circle at 12% 10%, var(--bg-ambient-1) 0%, transparent 45%),
+        radial-gradient(circle at 88% 90%, var(--bg-ambient-2) 0%, transparent 45%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-main);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .keyboard-badge {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    @media (min-width: 640px) {
+      .keyboard-badge { display: inline-flex; align-items: center; gap: 6px; }
+    }
+
+    .header-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .course-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 9999px;
+      background: rgba(225, 29, 72, 0.12);
+      color: #fb7185;
+      border: 1px solid rgba(225, 29, 72, 0.3);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #fb7185;
+      box-shadow: 0 0 10px #fb7185;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .quiz-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto 16px;
+      font-weight: 500;
+    }
+
+    .tags-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-muted);
+    }
+
+    .progress-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-q-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-score-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .progress-track {
+      background: #e2e8f0;
+    }
+
+    .progress-bar-fill {
+      background: var(--brand-gradient);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(225, 29, 72, 0.5);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .q-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-index-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #fb7185;
+      background: rgba(225, 29, 72, 0.12);
+      border: 1px solid rgba(225, 29, 72, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+    }
+
+    .q-category-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .q-text {
+      font-size: 18.5px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text-main);
+      margin-bottom: 22px;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-color);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #38bdf8;
+      overflow-x: auto;
+      text-align: left;
+    }
+    [data-theme="light"] .code-box {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0369a1;
+    }
+
+    .hint-container {
+      margin-bottom: 22px;
+    }
+
+    .hint-btn {
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      color: var(--hint-text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hint-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .hint-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--hint-text);
+      line-height: 1.5;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .hint-body.open {
+      display: block;
+    }
+
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 18px;
+      border: 2px solid var(--opt-border);
+      background: var(--opt-bg);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      position: relative;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--opt-hover-border);
+      background: var(--opt-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .opt-key-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--opt-border);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .opt-content {
+      flex: 1;
+      padding-top: 4px;
+      line-height: 1.5;
+    }
+
+    .opt-status-icon {
+      font-size: 18px;
+      margin-left: 8px;
+      display: none;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    .option-btn.selected-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .option-btn.selected-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.selected-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--incorrect-border) !important;
+      background: var(--incorrect-bg) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+    .option-btn.selected-incorrect .opt-key-circle {
+      background: var(--incorrect-badge-bg);
+      color: var(--incorrect-badge-text);
+    }
+    .option-btn.selected-incorrect .opt-status-icon {
+      display: inline-block;
+      color: var(--incorrect-text);
+    }
+
+    .option-btn.revealed-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      border-style: dashed;
+    }
+    .option-btn.revealed-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.revealed-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.dimmed {
+      opacity: 0.45;
+    }
+
+    .feedback-card {
+      display: none;
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .feedback-card.correct {
+      background: var(--correct-bg);
+      border-left: 4px solid var(--correct-border);
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+      border-right: 1px solid rgba(16, 185, 129, 0.2);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .feedback-card.incorrect {
+      background: var(--incorrect-bg);
+      border-left: 4px solid var(--incorrect-border);
+      border-top: 1px solid rgba(239, 68, 68, 0.2);
+      border-right: 1px solid rgba(239, 68, 68, 0.2);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .feedback-header {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .feedback-card.correct .feedback-header { color: var(--correct-text); }
+    .feedback-card.incorrect .feedback-header { color: var(--incorrect-text); }
+
+    .feedback-body {
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    [data-theme="light"] .feedback-body {
+      color: #334155;
+    }
+
+    .action-bar {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(225, 29, 72, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(225, 29, 72, 0.55);
+    }
+
+    .results-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .results-trophy {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .results-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle-wrapper {
+      margin: 24px auto;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-percent-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .results-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .stat-num.good { color: #10b981; }
+    .stat-num.bad { color: #ef4444; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn-secondary {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--opt-hover-bg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .review-container {
+      display: none;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .review-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-item {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .review-item-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .review-item-title {
+      font-weight: 600;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-item-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--card-border);
+    }
+    .review-item-body.open {
+      display: block;
+      padding-top: 14px;
+    }
+
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="quiz-container">
+  <!-- Barre Supérieure -->
+  <div class="top-bar">
+    <div class="keyboard-badge">
+      <span>⌨️ Raccourcis : [A-D] ou [1-4] · [Entrée] · [I]</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Basculer le thème">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-text">Mode clair</span>
+    </button>
+  </div>
+
+  <!-- En-tête Hero -->
+  <div class="header-hero">
+    <div class="course-badge">
+      <span class="badge-dot"></span>
+      Architecture Logicielle & Angular 22 · EAFC Colfontaine
+    </div>
+    <h1 class="quiz-title">Séance 13 — Architecture Signal-First & Réactivité Zoneless</h1>
+    <p class="quiz-subtitle">Signaux réactifs · Computed & Mémoisation · Effects & Invariants · Inputs/Outputs/Models · Graphe DAG</p>
+    <div class="tags-row">
+      <span class="tag-pill">Angular 22</span>
+      <span class="tag-pill">Signals</span>
+      <span class="tag-pill">Zoneless DAG</span>
+      <span class="tag-pill">Computed</span>
+      <span class="tag-pill">POO Clean Code</span>
+      <span class="tag-pill">23 questions</span>
+    </div>
+
+    <!-- Barre de Progression -->
+    <div class="progress-section" id="progress-container">
+      <div class="progress-header">
+        <span class="progress-q-label" id="progress-q-label">Question 1 sur 23</span>
+        <span class="progress-score-pill" id="progress-score-pill">Score : 0/0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Carte Principale de Question -->
+  <div class="card" id="question-card">
+    <div class="q-meta-bar">
+      <span class="q-index-badge" id="q-index-badge">Question 01</span>
+      <span class="q-category-tag" id="q-category-tag">Architecture Zoneless & DAG</span>
+      <span style="font-size: 12px; color: var(--text-dim);" id="q-counter">1 / 23</span>
+    </div>
+
+    <div class="q-text" id="q-text"></div>
+
+    <div class="hint-container">
+      <button class="hint-btn" id="hint-toggle-btn" type="button">
+        <span>💡</span>
+        <span id="hint-btn-label">Afficher un indice</span>
+      </button>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <!-- Carte de Feedback Rétroactive -->
+    <div class="feedback-card" id="feedback-card">
+      <div class="feedback-header" id="feedback-header"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="next-btn" id="next-btn" style="display: none;">
+        <span id="next-btn-text">Question suivante</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Écran des Résultats -->
+  <div class="card results-card" id="results-card" style="display: none;">
+    <div class="results-trophy" id="results-icon">🏆</div>
+    <h2 class="results-title" id="results-title">Quiz terminé !</h2>
+    
+    <div class="score-circle-wrapper">
+      <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <path stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path id="circle-score-stroke" stroke="url(#scoreGrad)" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#e11d48" />
+            <stop offset="50%" stop-color="#6366f1" />
+            <stop offset="100%" stop-color="#7c3aed" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-percent-val" id="score-percent-text">0%</div>
+    </div>
+
+    <p class="results-message" id="results-message"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num good" id="stat-correct">0</div>
+        <div class="stat-label">Bonnes réponses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-incorrect">0</div>
+        <div class="stat-label">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">23</div>
+        <div class="stat-label">Questions</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="next-btn" id="restart-btn" type="button">
+        <span>🔄 Recommencer le quiz</span>
+      </button>
+      <button class="btn-secondary" id="toggle-review-btn" type="button">
+        <span>📋 Voir le corrigé complet</span>
+      </button>
+    </div>
+
+    <div class="review-container" id="review-container">
+      <div class="review-header">Détail des questions et explications</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  {
+    number: 1,
+    category: "Architecture Zoneless & DAG",
+    question: "Pourquoi Angular 22 privilégie-t-il l'approche Signal-First au lieu de la détection de changements patrimoniale basée sur Zone.js ?",
+    hint: "Pensez à l'analogie entre inspecter toutes les voies d'une gare à chaque passage de train et avoir un câble optique relié au panneau d'affichage.",
+    options: [
+      { label: "A", text: "Les Signals suppriment complètement le besoin d'utiliser du code HTML dans les templates de composants Angular.", isCorrect: false, rationale: "L'utilisation du HTML et des templates déclaratifs reste fondamentale dans l'architecture des composants Angular." },
+      { label: "B", text: "Zone.js ne fonctionnait que sur les navigateurs mobiles et ralentissait les applications exécutées sur ordinateur de bureau.", isCorrect: false, rationale: "Zone.js fonctionnait sur tous les navigateurs web, mais appliquait un balayage global coûteux en ressources processeur." },
+      { label: "C", text: "Zone.js exigeait la compilation manuelle du code TypeScript avant chaque mise à jour visuelle de l'interface utilisateur.", isCorrect: false, rationale: "La compilation TypeScript intervient au moment du build ou du serveur de développement, et non dynamiquement à l'exécution lors de la détection de changements." },
+      { label: "D", text: "Zone.js parcourt l'ensemble de l'arbre des composants lors de chaque événement asynchrone, tandis que les Signals ciblent de façon atomique les seuls nœuds du DOM impactés via un graphe de dépendances (DAG).", isCorrect: true, rationale: "Le passage à un graphe orienté acyclique permet de ne notifier que les consommateurs directs d'une donnée modifiée sans réévaluer inutilement l'ensemble des composants de l'application." }
+    ],
+    answer: "D",
+    rationale: "Le passage à un graphe orienté acyclique (DAG) permet de ne notifier que les consommateurs directs d'une donnée modifiée sans réévaluer inutilement l'ensemble de l'arbre des composants."
+  },
+  {
+    number: 2,
+    category: "Lecture & Syntaxe Template",
+    question: "Dans un composant Angular, vous définissez le signal suivant : `public prenom = signal<string>('Alexandre');`. Comment devez-vous lire la valeur de ce signal dans le template HTML ?",
+    hint: "Seule l'exécution de la fonction permet à l'hameçon réactif de s'accrocher au contexte courant.",
+    options: [
+      { label: "A", text: "<p>{{ prenom }}</p>", isCorrect: false, rationale: "Omettre les parenthèses référence l'objet fonction lui-même au lieu d'évaluer et de retourner sa valeur contenue." },
+      { label: "B", text: "<p>{{ get(prenom) }}</p>", isCorrect: false, rationale: "Il n'existe pas de fonction globale `get()` dans Angular pour lire la valeur d'un signal réactif." },
+      { label: "C", text: "<p>{{ prenom() }}</p>", isCorrect: true, rationale: "L'invocation fonctionnelle avec des parenthèses permet à Angular d'enregistrer le template comme un abonné direct du signal." },
+      { label: "D", text: "<p>{{ prenom.value }}</p>", isCorrect: false, rationale: "L'accès par propriété `.value` est une convention utilisée dans d'autres bibliothèques mais pas pour les Signals Angular, qui sont des accesseurs fonctionnels." }
+    ],
+    answer: "C",
+    rationale: "L'invocation fonctionnelle `prenom()` avec des parenthèses enregistre le template comme un abonné direct du signal dans le graphe réactif."
+  },
+  {
+    number: 3,
+    category: "Mutations : set vs update",
+    question: "Quelle est la différence fondamentale entre les méthodes `.set()` et `.update()` sur un `WritableSignal<T>` ?",
+    hint: "Réfléchissez au cas où vous souhaitez incrémenter un compteur existant par rapport à celui de remplacer totalement le contenu d'un champ.",
+    options: [
+      { label: "A", text: "`.set()` remplace la valeur de manière autonome, tandis que `.update()` calcule la nouvelle valeur à partir de l'état existant via une fonction de transformation.", isCorrect: true, rationale: "`.set()` s'utilise pour une nouvelle valeur indépendante de l'ancienne, alors que `.update()` prend la valeur actuelle en argument pour produire le nouvel état." },
+      { label: "B", text: "`.set()` est réservé aux types primitifs (number, string), alors que `.update()` ne fonctionne qu'avec des objets et des tableaux.", isCorrect: false, rationale: "Les deux méthodes fonctionnent indifféremment avec des types primitifs, des objets ou des collections." },
+      { label: "C", text: "`.set()` peut être appelé au sein d'un `computed()`, alors que `.update()` est réservé exclusivement aux constructeurs.", isCorrect: false, rationale: "Toute mutation d'état via `.set()` ou `.update()` est strictement interdite à l'intérieur d'un signal calculé `computed()`." },
+      { label: "D", text: "`.update()` est une opération asynchrone retournant une Promise, contrairement à `.set()` qui exécute une mutation synchrone.", isCorrect: false, rationale: "Les deux méthodes appliquent la modification d'état de manière strictement synchrone." }
+    ],
+    answer: "A",
+    rationale: "`.set()` remplace la valeur de manière inconditionnelle, tandis que `.update()` prend la valeur précédente en argument pour projeter un nouvel état de façon atomique et prédictible."
+  },
+  {
+    number: 4,
+    category: "Immutabilité & Détection d'Égalité",
+    question: "Un développeur tente d'ajouter un élément à une liste stockée dans un signal de la manière suivante : `this.panier().push('Pomme');`. Pourquoi l'interface graphique ne se met-elle pas à jour ?",
+    hint: "Rappelez-vous les notions de Pile, Tas et d'immutabilité abordées en Séance 12.",
+    options: [
+      { label: "A", text: "L'interface utilisateur ne s'actualise qu'après un délai de rafraîchissement fixe géré par Zone.js.", isCorrect: false, rationale: "La réactivité fine des Signals ne repose pas sur un timer mais sur la notification immédiate lors d'un changement de référence." },
+      { label: "B", text: "La méthode `.push()` est interceptée et désactivée par le compilateur Angular sur les signaux.", isCorrect: false, rationale: "JavaScript exécute normalement la méthode `.push()` sur le tableau sous-jacent, mais le conteneur du signal n'est pas notifié de la mutation." },
+      { label: "C", text: "En mutant le tableau directement dans le Tas (Heap), l'adresse mémoire ne change pas et le contrôle d'égalité `Object.is` conclut à l'absence de modification.", isCorrect: true, rationale: "Angular vérifie les changements de référence d'objets avec `Object.is` ; modifier un objet sur place conserve la même adresse mémoire et ne réveille pas le graphe réactif." },
+      { label: "D", text: "Les signaux Angular ne peuvent pas contenir de types complexes comme des tableaux ou des objets.", isCorrect: false, rationale: "Les signaux gèrent parfaitement les tableaux et objets complexes, à condition de respecter l'immutabilité lors de leurs mises à jour." }
+    ],
+    answer: "C",
+    rationale: "Angular vérifie les transitions d'état via `Object.is`. En modifiant le tableau sur place, sa référence mémoire dans le Tas reste identique et aucun événement réactif n'est émis."
+  },
+  {
+    number: 5,
+    category: "Manipulation Immuable de Tableaux",
+    question: "Quelle est la syntaxe correcte et immuable pour ajouter un élément à un signal contenant un tableau `panier = signal<string[]>(['Pomme']);` ?",
+    hint: "Il faut fournir une nouvelle adresse mémoire au signal grâce à une fonction de mise à jour.",
+    options: [
+      { label: "A", text: "`this.panier.mutate(liste => liste.add('Poire'));`", isCorrect: false, rationale: "La méthode `.mutate()` a été retirée du framework Angular au profit de l'immutabilité stricte garantie par `.update()`." },
+      { label: "B", text: "`this.panier.set(this.panier().push('Poire'));`", isCorrect: false, rationale: "La méthode `.push()` retourne la nouvelle longueur du tableau (un nombre) et non le tableau lui-même, ce qui affecterait un type incorrect au signal." },
+      { label: "C", text: "`this.panier().concat('Poire');`", isCorrect: false, rationale: "Bien que `.concat()` produise un nouveau tableau, la méthode ne met pas à jour la valeur contenue dans le signal réactif." },
+      { label: "D", text: "`this.panier.update(anciens => [...anciens, 'Poire']);`", isCorrect: true, rationale: "L'opérateur de décomposition (spread) instancie une nouvelle référence de tableau dans le Tas, permettant à `Object.is` de détecter la modification d'adresse." }
+    ],
+    answer: "D",
+    rationale: "L'opérateur spread `[...anciens, 'Poire']` instancie une nouvelle référence de tableau en mémoire, assurant la notification immédiate du graphe de dépendances."
+  },
+  {
+    number: 6,
+    category: "Signaux Dérivés (computed)",
+    question: "Concernant les signaux dérivés créés avec la primitive `computed()`, quelle affirmation est exacte ?",
+    hint: "Pensez à l'analogie avec les formules de calcul dans une feuille de calcul Excel.",
+    options: [
+      { label: "A", text: "Ils réévaluent immédiatement leur fonction à chaque cycle processeur, même si personne ne lit leur valeur.", isCorrect: false, rationale: "Le calcul est reporté jusqu'à ce qu'un consommateur (template ou autre calcul) lise effectivement la valeur du signal." },
+      { label: "B", text: "Ils sont conçus pour effectuer des requêtes HTTP de manière asynchrone.", isCorrect: false, rationale: "La fonction transmise à `computed()` doit être synchrone et pure, sans aucun effet secondaire." },
+      { label: "C", text: "Ils sont évalués de façon paresseuse (*lazy*) lors de leur première lecture et mémorisés (*memoized*) tant que leurs dépendances ne changent pas.", isCorrect: true, rationale: "Un `computed()` ne s'exécute pas à sa déclaration et réutilise son résultat en cache tant qu'aucun de ses signaux sources n'est modifié." },
+      { label: "D", text: "Ils possèdent leurs propres méthodes `.set()` et `.update()` pour modifier manuellement leur valeur.", isCorrect: false, rationale: "Un `computed()` produit un signal de type `Signal<T>` strictement en lecture seule." }
+    ],
+    answer: "C",
+    rationale: "Les signaux dérivés sont évalués de façon paresseuse (*lazy*) et mémorisés (*memoized*). Ils ne se recalculent que si au moins l'un de leurs signaux sources a muté."
+  },
+  {
+    number: 7,
+    category: "Propagation & Invalidation de Cache",
+    question: "Considérons le bloc de code TypeScript suivant :\n\n```ts\nconst prixHT = signal<number>(100);\nconst tva = signal<number>(0.20);\nconst prixTTC = computed(() => prixHT() * (1 + tva()));\n```\n\nSi l'instruction `prixHT.set(200);` est exécutée, que se produira-t-il lors de la prochaine lecture de `prixTTC()` ?",
+    hint: "Le graphe de dépendances (DAG) sait exactement quel signal dérivé dépend de `prixHT`.",
+    options: [
+      { label: "A", text: "`prixTTC()` réévalue sa fonction pure et retourne la nouvelle valeur `240`.", isCorrect: true, rationale: "La modification d'un signal source invalide le cache du `computed()`, déclenchant son re-calcul lors de la lecture suivante." },
+      { label: "B", text: "Une erreur de compilation survient car `prixTTC` n'a pas été marqué comme mutable.", isCorrect: false, rationale: "Un signal `computed()` est par nature en lecture seule et n'a pas besoin d'être marqué comme mutable." },
+      { label: "C", text: "Angular lève une exception `NG0600` car le signal source a évolué sans réinstancier le `computed()`.", isCorrect: false, rationale: "Le suivi des dépendances au sein du graphe est entièrement automatique et ne provoque aucune erreur de ce type." },
+      { label: "D", text: "`prixTTC()` continue de retourner `120` car sa valeur a été figée lors de sa déclaration initialisation.", isCorrect: false, rationale: "Le signal calculé réagit automatiquement aux évolutions de ses sources réactives dès qu'il est réinterrogé." }
+    ],
+    answer: "A",
+    rationale: "La mutation du signal source `prixHT` marque `prixTTC` comme 'périmé'. À la prochaine lecture, la formule pure est réévaluée pour produire `200 * 1.20 = 240`."
+  },
+  {
+    number: 8,
+    category: "Pureté des Signaux Calculés",
+    question: "Quelle règle essentielle doit impérativement respecter la fonction passée en argument à `computed()` ?",
+    hint: "Pensez aux principes de programmation fonctionnelle vus dans le cours de POO.",
+    options: [
+      { label: "A", text: "Elle doit appeler au moins une fois la méthode `.set()` d'un signal externe pour notifier le composant parent.", isCorrect: false, rationale: "Modifier un autre signal depuis un `computed()` constitue un effet de bord strictement interdit." },
+      { label: "B", text: "Elle ne doit lire la valeur que d'un seul et unique signal source à la fois.", isCorrect: false, rationale: "Un `computed()` peut lire et combiner un nombre illimité de signaux sources." },
+      { label: "C", text: "Elle doit être une fonction pure, déterministe, sans effets de bord ni écriture dans d'autres signaux.", isCorrect: true, rationale: "Garantir la pureté de la fonction évite les boucles infinies et préserve l'intégrité du graphe de dépendances." },
+      { label: "D", text: "Elle doit être obligatoirement déclarée avec le mot-clé `async` et retourner une `Promise`.", isCorrect: false, rationale: "Le calcul d'un `computed()` doit être strictement synchrone." }
+    ],
+    answer: "C",
+    rationale: "La fonction passée à `computed()` doit être pure et sans effets de bord afin d'éviter les cycles infinis et de garantir la cohérence mathématique du graphe DAG."
+  },
+  {
+    number: 9,
+    category: "Effets de Bord & Boucles Réactives",
+    question: "Que se passe-t-il si un développeur tente d'écrire directement dans un signal source à l'intérieur d'un `effect()` sans option particulière ?\n\n```ts\neffect(() => {\n  this.total.set(this.quantite() * this.prix());\n});\n```",
+    hint: "Pour dériver un état à partir d'autres signaux, quelle primitive doit-on toujours utiliser à la place de `effect()` ?",
+    options: [
+      { label: "A", text: "L'effet est simplement ignoré par le moteur réactif et ne s'exécute jamais.", isCorrect: false, rationale: "L'effet tente de s'exécuter lors de l'initialisation et déclenche immédiatement une exception runtime." },
+      { label: "B", text: "Le signal `total` est automatiquement transformé en signal de type `computed`.", isCorrect: false, rationale: "Le type des variables TypeScript ne change pas dynamiquement lors de l'exécution d'un effet." },
+      { label: "C", text: "Angular lève l'erreur `NG0600 (Writing to signals forbidden)` pour prévenir la création de boucles réactives infinies.", isCorrect: true, rationale: "L'écriture dans les signaux depuis un effet est bloquée par défaut pour éviter des cycles de recalcul incontrôlés ; un `computed()` doit être utilisé." },
+      { label: "D", text: "Le code s'exécute sans erreur et remplace la valeur du signal `total` instantanément.", isCorrect: false, rationale: "Le framework rejette explicitement cette pratique à l'exécution pour protéger le flux unidirectionnel des données." }
+    ],
+    answer: "C",
+    rationale: "Angular bloque l'écriture de signaux dans un effet (`NG0600`) afin d'empêcher les cascades de mutations. Pour synchroniser un état dépendant, il faut utiliser `computed()`."
+  },
+  {
+    number: 10,
+    category: "Contexte d'Injection (effect)",
+    question: "Où un `effect()` doit-il être obligatoirement déclaré au sein d'un composant Angular ?",
+    hint: "Pensez au moment où les dépendances du composant sont injectées lors de son instanciation.",
+    options: [
+      { label: "A", text: "Exclusivement au sein du hook de destruction `ngOnDestroy()`.", isCorrect: false, rationale: "`ngOnDestroy` intervient au moment de la destruction du composant, ce qui est trop tardif pour enregistrer la surveillance réactive d'un effet." },
+      { label: "B", text: "Directement au sein des balises `<script>` du template HTML.", isCorrect: false, rationale: "`effect()` est une fonction TypeScript d'Angular réservée au code de la classe du composant." },
+      { label: "C", text: "Dans un contexte d'injection, tel que le constructeur (`constructor`) ou lors de l'initialisation directe d'un attribut de classe.", isCorrect: true, rationale: "L'effet nécessite un contexte d'injection pour s'associer au cycle de vie du composant et se détruire automatiquement lorsque le composant quitte l'écran." },
+      { label: "D", text: "À l'intérieur de n'importe quelle méthode appelée lors d'un clic bouton utilisateur.", isCorrect: false, rationale: "Déclarer un effet dans une méthode ordinaire lève l'erreur runtime `NG0203` en raison de l'absence de contexte d'injection disponible." }
+    ],
+    answer: "C",
+    rationale: "Un effet réactif nécessite un contexte d'injection actif (constructeur ou initialisation de propriété) afin de sier automatiquement son cycle de vie à celui du composant hôte."
+  },
+  {
+    number: 11,
+    category: "Nettoyage & Cycle de Vie (onCleanup)",
+    question: "Quel est le rôle du paramètre `onCleanup` disponible dans la fonction de rappel de `effect()` ?",
+    hint: "Faites le parallèle avec la libération de ressources (`finally` ou destruction d'observables).",
+    options: [
+      { label: "A", text: "Annuler la dernière modification du signal si une exception est levée pendant l'effet.", isCorrect: false, rationale: "Il ne s'agit pas d'un mécanisme de rollback de transaction d'état." },
+      { label: "B", text: "Remplacer l'effet de bord par une valeur en cache sous forme de `computed()`.", isCorrect: false, rationale: "`onCleanup` s'occupe de la gestion du cycle de vie des ressources externes et ne transforme pas l'effet en signal calculé." },
+      { label: "C", text: "Enregistrer une fonction de nettoyage qui sera exécutée juste avant la ré-exécution suivante de l'effet ou lors de la destruction du composant.", isCorrect: true, rationale: "`onCleanup` permet de libérer des ressources externes (comme annuler des timers ou désabonner des écouteurs) pour éviter les fuites mémoire." },
+      { label: "D", text: "Réinitialiser automatiquement tous les signaux lus dans l'effet à leur valeur initiale.", isCorrect: false, rationale: "`onCleanup` ne modifie aucunement la valeur des signaux réactifs surveillés." }
+    ],
+    answer: "C",
+    rationale: "`onCleanup` enregistre un callback de libération (clearTimeout, démontage d'écouteurs DOM natifs) exécuté avant le recalcul suivant ou lors de la destruction du composant."
+  },
+  {
+    number: 12,
+    category: "Cas d'Usage Légitimes des Effets",
+    question: "Parmi les cas d'usage suivants, lequel constitue une utilisation tout à fait légitime de la primitive `effect()` ?",
+    hint: "Demandez-vous si l'action vise à dériver une donnée interne ou à interagir avec une API extérieure au composant.",
+    options: [
+      { label: "A", text: "Filtrer une liste de produits en fonction d'un terme de recherche saisi par l'utilisateur.", isCorrect: false, rationale: "Le filtrage d'une collection est une opération pure sur des données devant utiliser `computed()`." },
+      { label: "B", text: "Synchroniser la valeur d'un signal représentant un panier d'achat avec le `localStorage` du navigateur à chaque modification.", isCorrect: true, rationale: "Interagir avec le `localStorage` correspond à une opération sur le monde extérieur (hors du modèle de données Angular), ce qui qualifie un effet de bord légitime." },
+      { label: "C", text: "Concaténer le prénom et le nom d'un utilisateur pour obtenir son nom complet.", isCorrect: false, rationale: "La combinaison de chaînes de caractères issues d'états réactifs s'exprime sous forme de signal dérivé via `computed()`." },
+      { label: "D", text: "Calculer le montant de la TVA à partir d'un signal représentant le prix hors taxe.", isCorrect: false, rationale: "La dérivation d'un montant monétaire est une projection d'état pure qui doit être gérée par un `computed()`." }
+    ],
+    answer: "B",
+    rationale: "Les effets (`effect()`) sont exclusivement réservés aux effets de bord avec le monde extérieur (API Web Storage, Canvas, logs de télémétrie). Toute projection de données interne relève de `computed()`."
+  },
+  {
+    number: 13,
+    category: "Entrées Réactives (input.required)",
+    question: "Dans Angular Signal-First, comment déclare-t-on une propriété d'entrée obligatoire dans un composant enfant ?",
+    hint: "La variante obligatoire est directement accessible via une méthode attachée à la fonction d'entrée.",
+    options: [
+      { label: "A", text: "`@Input({ required: true }) quantite!: number;`", isCorrect: false, rationale: "Il s'agit de la syntaxe patrimoniale basée sur un décorateur, remplacée en Signal-First par la fonction `input.required()`." },
+      { label: "B", text: "`quantite = input.required<number>();`", isCorrect: true, rationale: "La fonction `input.required()` crée un signal d'entrée en lecture seule dont l'omission par le parent génère une erreur de compilation TypeScript immédiate." },
+      { label: "C", text: "`quantite = signal.required<number>();`", isCorrect: false, rationale: "La méthode `required` est disponible sur `input`, et non sur la fonction `signal`." },
+      { label: "D", text: "`quantite = input<number>(0, { mandatory: true });`", isCorrect: false, rationale: "L'option `mandatory` n'existe pas dans la signature de la fonction `input()`." }
+    ],
+    answer: "B",
+    rationale: "La fonction `input.required<T>()` crée un signal en lecture seule qui impose au parent de renseigner obligatoirement cette propriété sous peine d'erreur de typage au build."
+  },
+  {
+    number: 14,
+    category: "Coercition & Transformation (transform)",
+    question: "À quoi sert l'option `transform` dans la déclaration d'une entrée réactive comme `tarif = input(0, { transform: numberAttribute });` ?",
+    hint: "Pensez aux attributs HTML écrits sous forme de chaînes qui doivent être manipulés comme des types primitifs stricts en TypeScript.",
+    options: [
+      { label: "A", text: "Rendre la valeur de l'entrée totalement invisible dans les outils de développement.", isCorrect: false, rationale: "La fonction `transform` n'a aucun rapport avec la sécurité ou le masquage de données dans les outils d'inspection." },
+      { label: "B", text: "Appliquer un formatage visuel monétaire avec le symbole € directement dans le DOM.", isCorrect: false, rationale: "La fonction de conversion transforme le type de la donnée en mémoire, elle ne remplace pas l'utilisation d'un Pipe de présentation." },
+      { label: "C", text: "Convertir automatiquement la valeur transmise depuis l'attribut HTML (comme le texte `\"89\"`) dans le type TypeScript attendu (`number`).", isCorrect: true, rationale: "`transform` effectue la coercition de type lors du passage d'attributs HTML sans nécessiter de code de conversion manuel." },
+      { label: "D", text: "Exiger que le composant parent fournisse obligatoirement une fonction au lieu d'une valeur.", isCorrect: false, rationale: "Le parent transmet une valeur ou une chaîne d'attribut HTML standard, qui est convertie à la réception par la fonction spécifiée." }
+    ],
+    answer: "C",
+    rationale: "`transform` opère la coercition de type à la volée (ex: transformer une chaîne d'attribut HTML en number ou boolean) sans code répétitif de validation."
+  },
+  {
+    number: 15,
+    category: "Sorties d'Événements (output)",
+    question: "Dans un composant enfant, vous déclarez : `commandeValidee = output<string>();`. Comment émettez-vous un événement vers le composant parent ?",
+    hint: "La méthode conserve le nom classique utilisé historiquement pour l'émission d'événements dans Angular.",
+    options: [
+      { label: "A", text: "`this.commandeValidee('Commande #123 validée !');`", isCorrect: false, rationale: "L'émetteur de sortie n'est pas une fonction invocable directement avec la charge utile en argument." },
+      { label: "B", text: "`this.commandeValidee.next('Commande #123 validée !');`", isCorrect: false, rationale: "La méthode `.next()` est propre aux `Subject` de la bibliothèque RxJS, alors que `output()` est une fonction émettrice légère et native." },
+      { label: "C", text: "`this.commandeValidee.emit('Commande #123 validée !');`", isCorrect: true, rationale: "L'objet `OutputEmitterRef` renvoyé par `output()` expose la méthode `.emit()` pour transmettre la charge utile au parent." },
+      { label: "D", text: "`this.commandeValidee.set('Commande #123 validée !');`", isCorrect: false, rationale: "La primitive `output()` n'est pas un `WritableSignal` et ne possède pas de méthode `.set()`." }
+    ],
+    answer: "C",
+    rationale: "La primitive `output()` renvoie un `OutputEmitterRef` qui expose la méthode native et allégée `.emit()` pour propager des événements au parent."
+  },
+  {
+    number: 16,
+    category: "Liaison Bidirectionnelle (model)",
+    question: "Quel est le rôle principal de la fonction `model()` dans la communication entre composants ?",
+    hint: "Pensez à la métaphore de la « boîte à bananes » `[(propriete)]` utilisée dans le template du parent.",
+    options: [
+      { label: "A", text: "Remplacer l'utilisation des services injectables d'Angular.", isCorrect: false, rationale: "`model()` s'applique aux échanges directs parent-enfant et ne remplace pas la gestion d'état globale par des services." },
+      { label: "B", text: "Générer automatiquement une interface TypeScript à partir d'une table de base de données.", isCorrect: false, rationale: "`model()` est une primitive de communication réactive inter-composants, et non un générateur de code ORM." },
+      { label: "C", text: "Unifier la liaison bidirectionnelle (Two-Way Binding) en permettant à l'enfant et au parent de lire et de synchroniser une même donnée via une seule déclaration.", isCorrect: true, rationale: "`model()` remplace le couple verbeux `@Input()` et `@Output()Change` en fournissant un signal synchronisé automatiquement dans les deux sens." },
+      { label: "D", text: "Masquer l'état d'un composant enfant pour empêcher le parent de le consulter.", isCorrect: false, rationale: "La primitive `model()` vise au contraire à partager et synchroniser l'état réactif entre le parent et l'enfant." }
+    ],
+    answer: "C",
+    rationale: "La fonction `model()` simplifie le Two-Way Binding en créant un signal d'entrée modifiable par l'enfant qui répercute automatiquement ses mutations vers le signal parent."
+  },
+  {
+    number: 17,
+    category: "Syntaxe de Liaison Template",
+    question: "Comment le composant parent lie-t-il son propre signal `moteurAllume` à la propriété `actif` définie via `actif = model<boolean>(false);` chez l'enfant ?",
+    hint: "La syntaxe associe le symbole de réception de données et le symbole d'écoute d'événements.",
+    options: [
+      { label: "A", text: "<app-interrupteur {actif}=\"moteurAllume()\" />", isCorrect: false, rationale: "Cette syntaxe avec accolades n'existe pas pour le binding de propriétés dans Angular." },
+      { label: "B", text: "<app-interrupteur [(actif)]=\"moteurAllume\" />", isCorrect: true, rationale: "La syntaxe combinée avec crochets et parenthèses (boîte à bananes) établit la liaison bidirectionnelle réactive sur un `ModelSignal`." },
+      { label: "C", text: "<app-interrupteur (actif)=\"moteurAllume\" />", isCorrect: false, rationale: "Les parenthèses seules écoutent uniquement un événement émis par l'enfant vers le parent." },
+      { label: "D", text: "<app-interrupteur [actif]=\"moteurAllume\" />", isCorrect: false, rationale: "Les crochets seuls établissent uniquement une liaison unidirectionnelle descendante (lecture seule pour l'enfant)." }
+    ],
+    answer: "B",
+    rationale: "La syntaxe en « boîte à bananes » `[(actif)]=\"moteurAllume\"` lie le signal parent au `ModelSignal` de l'enfant pour une synchronisation bilatérale transparente."
+  },
+  {
+    number: 18,
+    category: "Encapsulation POO (Private Source)",
+    question: "Selon le motif *Private Source, Public Readonly* présenté pour garantir l'encapsulation POO, quelle est la structure recommandée pour exposer un signal d'état dans un composant ?",
+    hint: "Il faut isoler la source mutable en privé et exposer sa projection non modifiable via une méthode dédiée.",
+    options: [
+      { label: "A", text: "`private readonly _solde = signal<number>(1000);`\n`public readonly solde: Signal<number> = this._solde.asReadonly();`", isCorrect: true, rationale: "Le signal source modifiable reste protégé à l'intérieur de la classe, tandis que le monde extérieur ne peut consulter qu'une vue en lecture seule." },
+      { label: "B", text: "`public readonly solde = signal<number>(1000);`", isCorrect: false, rationale: "Le mot-clé `readonly` de TypeScript empêche la réassignation de la variable, mais n'interdit pas l'exécution de `solde.set(...)` sur l'objet." },
+      { label: "C", text: "`private solde = signal<number>(1000);` sans aucune propriété publique.", isCorrect: false, rationale: "Si la propriété est strictement privée sans accesseur public, le template HTML du composant ne pourra pas afficher la donnée." },
+      { label: "D", text: "`public solde = signal<number>(1000);`", isCorrect: false, rationale: "Exposer directement un `WritableSignal` public détruit l'encapsulation en autorisant n'importe quelle classe externe à modifier l'état avec `.set()`." }
+    ],
+    answer: "A",
+    rationale: "Conserver le `WritableSignal` en privé et exposer sa projection `asReadonly()` garantit l'encapsulation : seul le composant maître peut altérer son état."
+  },
+  {
+    number: 19,
+    category: "Invariants Métier & Protection d'État",
+    question: "Pourquoi est-il essentiel de passer par des méthodes métier (comme `retirer(montant: number)`) plutôt que de laisser des composants tiers modifier directement un `WritableSignal` ?",
+    hint: "Pensez aux principes d'encapsulation (Séance 05) et de gestion des exceptions (Séance 10) appliqués à la protection des données.",
+    options: [
+      { label: "A", text: "Parce que modifier un signal sans méthode métier désactive le rafraîchissement du template HTML.", isCorrect: false, rationale: "Le rafraîchissement s'effectuerait normalement, mais le composant prendrait le risque d'afficher un état métier invalide." },
+      { label: "B", text: "Parce que les méthodes `.set()` et `.update()` ne fonctionnent pas lorsqu'elles sont appelées hors du constructeur.", isCorrect: false, rationale: "Un `WritableSignal` peut être muté n'importe où dans le code s'il est exposé publiquement." },
+      { label: "C", text: "Pour forcer Angular à réactiver Zone.js lors des opérations bancaires.", isCorrect: false, rationale: "L'architecture réactive fine fonctionne indépendamment de Zone.js et ne nécessite aucun retour au Dirty Checking global." },
+      { label: "D", text: "Cela garantit la vérification des invariants métier (par exemple refuser un montant négatif ou un solde insuffisant) avant d'appliquer toute mutation.", isCorrect: true, rationale: "Les méthodes métier centralisent le contrôle des règles de gestion et évitent la corruption de l'état interne de l'objet." }
+    ],
+    answer: "D",
+    rationale: "Encapsuler les modifications derrière des méthodes publiques permet de valider les règles métier et de rejeter les transitions d'état illégitimes avant toute mutation."
+  },
+  {
+    number: 20,
+    category: "Contrôle de Flux & Optimisation DOM",
+    question: "Dans le flux de contrôle d'Angular, quelle est l'utilité principale de la clause `track` au sein du bloc `@for` ?\n\n```html\n@for (article of commande(); track article.id) {\n  <app-ligne-commande [article]=\"article\" />\n}\n```",
+    hint: "Il s'agit du remplacement moderne et obligatoire de l'ancienne option `trackBy` utilisée avec `*ngFor`.",
+    options: [
+      { label: "A", text: "Fournir une clé d'identification unique à chaque élément afin d'optimiser les réagencements du DOM lors des modifications du tableau.", isCorrect: true, rationale: "`track` permet au moteur d'Angular d'associer précisément chaque nœud du DOM à son identifiant, évitant de détruire et reconstruire toute la liste." },
+      { label: "B", text: "Convertir les éléments du tableau en signaux individuels.", isCorrect: false, rationale: "Le bloc `@for` se contente d'itérer sur la collection fournie sans modifier le type des éléments." },
+      { label: "C", text: "Filtrer automatiquement les éléments dont la valeur d'identifiant est nulle.", isCorrect: false, rationale: "La clause `track` n'effectue aucun filtrage des données de la collection." },
+      { label: "D", text: "Trier le tableau `commande()` par ordre croissant d'identifiant avant d'effectuer le rendu.", isCorrect: false, rationale: "La clause `track` n'altère pas l'ordre des éléments du tableau d'origine." }
+    ],
+    answer: "A",
+    rationale: "La clé `track` identifie formellement chaque élément. En cas d'ajout ou de tri, Angular réordonne ou met à jour les seuls nœuds concernés sans détruire le DOM."
+  },
+  {
+    number: 21,
+    category: "Empreinte & Débogage Zoneless",
+    question: "Quel est l'impact direct de l'architecture *Zoneless* dans Angular 22 sur l'empreinte de l'application et sur le débogage ?",
+    hint: "Rappelez-vous ce que Zone.js ajoutait au binaire et la façon dont ses intercepteurs obscurcissaient les piles d'erreurs dans la console.",
+    options: [
+      { label: "A", text: "Les opérations asynchrones avec `async/await` ne sont plus supportées par le navigateur.", isCorrect: false, rationale: "L'un des avantages majeurs du mode Zoneless est justement d'exploiter le support natif de `async/await` sans interférence." },
+      { label: "B", text: "Le poids du bundle final est allégé (suppression des ~30-40 ko de Zone.js) et les piles d'appels d'erreurs (*stack traces*) deviennent claires et natives.", isCorrect: true, rationale: "Retirer Zone.js élimine les intercepteurs globaux (*monkey patching*), ce qui réduit la taille des fichiers compilés et clarifie les piles d'erreurs." },
+      { label: "C", text: "L'application gagne en poids car chaque signal nécessite l'inclusion d'un polyfill lourd.", isCorrect: false, rationale: "Les Signals sont nativement intégrés dans le cœur du framework et n'ajoutent aucun surcoût de bundle." },
+      { label: "D", text: "Le débogage devient plus complexe car les erreurs sont réparties dans plusieurs processus système isolés.", isCorrect: false, rationale: "Au contraire, l'absence d'intercepteurs Zone.js fournit des piles d'appels JavaScript natives beaucoup plus lisibles." }
+    ],
+    answer: "B",
+    rationale: "L'abandon de Zone.js allège le bundle initial d'environ 30 à 40 ko et supprime le monkey-patching des API Web, rétablissant des piles d'appels natives et lisibles."
+  },
+  {
+    number: 22,
+    category: "Graphe Réactif (DAG) & Cycles",
+    question: "Qu'arrive-t-il si un développeur conçoit un graphe de dépendances réactif circulaire (par exemple le Signal A qui met à jour le Signal B, qui déclenche en retour la mutation du Signal A) ?",
+    hint: "Pensez au caractère « Acyclique » du graphe de dépendances (DAG).",
+    options: [
+      { label: "A", text: "Les deux signaux sont automatiquement convertis en variables statiques non réactives.", isCorrect: false, rationale: "Le typage et la nature réactive des primitives ne sont pas altérés dynamiquement par le framework à l'exécution." },
+      { label: "B", text: "Angular détecte le cycle et stoppe silencieusement la mise à jour sans avertissement.", isCorrect: false, rationale: "Le moteur réactif tente d'évaluer la chaîne de dépendances jusqu'à l'épuisement des ressources de la pile d'exécutions." },
+      { label: "C", text: "Une récursion infinie survient, provoquant un dépassement de la taille maximale de la pile d'appels (*Maximum call stack size exceeded*).", isCorrect: true, rationale: "Le graphe réactif d'Angular est un Graphe Orienté Acyclique (DAG) ; réintroduire une boucle fermée casse l'acyclicité et provoque une récursion infinie." },
+      { label: "D", text: "Le navigateur bascule automatiquement en mode de détection globale Zone.js pour résoudre le conflit.", isCorrect: false, rationale: "L'architecture Zoneless ne bascule pas sur Zone.js en cas d'erreur de conception réactive." }
+    ],
+    answer: "C",
+    rationale: "Le modèle réactif repose sur un graphe orienté acyclique (DAG). Créer une dépendance circulaire engendre une boucle de notification infinie saturant la pile d'appels."
+  },
+  {
+    number: 23,
+    category: "Typage TypeScript & Conteneur Réactif",
+    question: "Un étudiant tente d'exécuter le code suivant dans un composant Angular :\n\n```ts\nexport class MonComposant {\n  compteur = signal<number>(0);\n\n  incrementer(): void {\n    this.compteur = this.compteur + 1;\n  }\n}\n```\n\nQuelle sera la réaction du compilateur TypeScript ?",
+    hint: "Ne confondez pas le conteneur réactif (`WritableSignal`) et la valeur sous-jacente (`number`).",
+    options: [
+      { label: "A", text: "Le signal `compteur` est automatiquement transformé en un signal de type `input()`.", isCorrect: false, rationale: "Les types de primitives réactives ne sont jamais intervertis automatiquement par le compilateur." },
+      { label: "B", text: "Une erreur de typage survient car `compteur` est un objet de type `WritableSignal<number>` et non une variable numérique simple.", isCorrect: true, rationale: "On ne peut pas appliquer directement l'opérateur d'addition `+` entre un objet Signal et un nombre ; il faut lire la valeur via `this.compteur()` et la faire évoluer via `this.compteur.update(...)`." },
+      { label: "C", text: "Une erreur survient uniquement si le composant est exécuté en mode Zoneless.", isCorrect: false, rationale: "L'erreur est levée au niveau du compilateur TypeScript, indépendamment de la configuration du moteur de détection d'Angular." },
+      { label: "D", text: "Le code compile et s'exécute correctement grâce à la conversion de type automatique d'Angular.", isCorrect: false, rationale: "TypeScript applique un contrôle de typage strict et rejette l'opération arithmétique sur l'objet fonction conteneur." }
+    ],
+    answer: "B",
+    rationale: "`compteur` est un objet conteneur réactif (`WritableSignal<number>`). L'opérateur d'addition arithmétique ne peut pas s'y appliquer directement : il faut utiliser `this.compteur.update(v => v + 1)`."
+  }
+];
+
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+let userAnswers = [];
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function formatCode(text) {
+  if (!text) return '';
+  let formatted = escapeHtml(text);
+
+  formatted = formatted.replace(/```(?:ts|typescript|js|html)?\n([\s\S]*?)```/g, '<pre class="code-box"><code>$1</code></pre>');
+  formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-term">$1</span>');
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])'([a-zA-Z0-9_\-\.\/@\(\)=]+)'/g, '<span class="code-term">$1</span>');
+
+  const parts = formatted.split(/(<pre[\s\S]*?<\/pre>)/g);
+  return parts.map(part => {
+    if (part.startsWith('<pre')) return part;
+    return part.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  }).join('');
+}
+
+function init() {
+  setupTheme();
+  setupKeyboard();
+  renderQuestion(0);
+  
+  document.getElementById('next-btn').addEventListener('click', handleNext);
+  document.getElementById('restart-btn').addEventListener('click', handleRestart);
+  document.getElementById('toggle-review-btn').addEventListener('click', handleToggleReview);
+  document.getElementById('hint-toggle-btn').addEventListener('click', toggleHint);
+}
+
+function setupTheme() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const text = document.getElementById('theme-text');
+  
+  const saved = localStorage.getItem('angular_quiz_theme_s13') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+  
+  toggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('angular_quiz_theme_s13', next);
+    updateThemeUI(next);
+  });
+  
+  function updateThemeUI(t) {
+    if (t === 'dark') {
+      icon.textContent = '☀️';
+      text.textContent = 'Mode clair';
+    } else {
+      icon.textContent = '🌙';
+      text.textContent = 'Mode sombre';
+    }
+  }
+}
+
+function renderQuestion(index) {
+  answered = false;
+  const q = quizData[index];
+  
+  const progressPct = ((index) / quizData.length) * 100;
+  document.getElementById('progress-fill').style.width = progressPct + '%';
+  document.getElementById('progress-q-label').textContent = `Question ${index + 1} sur ${quizData.length}`;
+  document.getElementById('progress-score-pill').textContent = index > 0 
+    ? `Score : ${correctCount}/${index} (${Math.round((correctCount / index) * 100)}%)` 
+    : `Score : 0/0`;
+
+  document.getElementById('q-index-badge').textContent = `Question ${index < 9 ? '0' + (index + 1) : index + 1}`;
+  document.getElementById('q-category-tag').textContent = q.category || 'Architecture Angular 22';
+  document.getElementById('q-counter').textContent = `${index + 1} / ${quizData.length}`;
+
+  document.getElementById('q-text').innerHTML = formatCode(q.question);
+
+  const hintBody = document.getElementById('hint-body');
+  hintBody.innerHTML = formatCode(q.hint);
+  hintBody.classList.remove('open');
+  document.getElementById('hint-btn-label').textContent = "Afficher un indice";
+
+  const fcard = document.getElementById('feedback-card');
+  fcard.style.display = 'none';
+  fcard.className = 'feedback-card';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'none';
+  if (index === quizData.length - 1) {
+    document.getElementById('next-btn-text').textContent = "Voir mes résultats 🎉";
+  } else {
+    document.getElementById('next-btn-text').textContent = "Question suivante";
+  }
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, optIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.type = 'button';
+    btn.dataset.idx = optIdx;
+    btn.innerHTML = `
+      <span class="opt-key-circle">${opt.label}</span>
+      <span class="opt-content">${formatCode(opt.text)}</span>
+      <span class="opt-status-icon"></span>
+    `;
+
+    btn.addEventListener('click', () => selectOption(optIdx));
+    grid.appendChild(btn);
+  });
+}
+
+function selectOption(selectedIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizData[currentQ];
+  const selectedOpt = q.options[selectedIdx];
+  const isCorrect = selectedOpt.isCorrect;
+  userAnswers[currentQ] = selectedIdx;
+
+  if (isCorrect) {
+    correctCount++;
+  }
+
+  const optionBtns = document.querySelectorAll('.option-btn');
+  optionBtns.forEach(btn => btn.disabled = true);
+
+  const selectedBtn = optionBtns[selectedIdx];
+  const selectedStatus = selectedBtn.querySelector('.opt-status-icon');
+  
+  if (isCorrect) {
+    selectedBtn.classList.add('selected-correct');
+    selectedStatus.textContent = '✓';
+  } else {
+    selectedBtn.classList.add('selected-incorrect');
+    selectedStatus.textContent = '✕';
+
+    const correctIdx = q.options.findIndex(o => o.isCorrect);
+    if (correctIdx !== -1) {
+      const correctBtn = optionBtns[correctIdx];
+      correctBtn.classList.add('revealed-correct');
+      const correctStatus = correctBtn.querySelector('.opt-status-icon');
+      correctStatus.textContent = '✓';
+    }
+  }
+
+  optionBtns.forEach(btn => {
+    if (!btn.classList.contains('selected-correct') && 
+        !btn.classList.contains('selected-incorrect') && 
+        !btn.classList.contains('revealed-correct')) {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  const fcard = document.getElementById('feedback-card');
+  const fheader = document.getElementById('feedback-header');
+  const fbody = document.getElementById('feedback-body');
+
+  fcard.style.display = 'block';
+
+  if (isCorrect) {
+    fcard.className = 'feedback-card correct';
+    fheader.innerHTML = '<span>✓</span> <span>Excellente réponse !</span>';
+    fbody.innerHTML = `<strong>Justification :</strong> ${formatCode(selectedOpt.rationale || q.rationale)}`;
+  } else {
+    fcard.className = 'feedback-card incorrect';
+    fheader.innerHTML = `<span>✕</span> <span>Ce n'est pas tout à fait ça. La bonne réponse est l'option ${q.answer}.</span>`;
+    fbody.innerHTML = `${selectedOpt.rationale ? `<div style="margin-bottom: 6px;"><strong>Votre choix :</strong> ${formatCode(selectedOpt.rationale)}</div>` : ''}<strong>Explication :</strong> ${formatCode(q.rationale)}`;
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'flex';
+  nextBtn.focus();
+}
+
+function toggleHint() {
+  const hintBody = document.getElementById('hint-body');
+  const label = document.getElementById('hint-btn-label');
+  hintBody.classList.toggle('open');
+  if (hintBody.classList.contains('open')) {
+    label.textContent = "Masquer l'indice";
+  } else {
+    label.textContent = "Afficher un indice";
+  }
+}
+
+function handleNext() {
+  currentQ++;
+  if (currentQ < quizData.length) {
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById('question-card').style.display = 'none';
+  document.getElementById('progress-container').style.display = 'none';
+  document.getElementById('results-card').style.display = 'block';
+
+  const total = quizData.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  const stroke = document.getElementById('circle-score-stroke');
+  stroke.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+  document.getElementById('score-percent-text').textContent = `${pct}%`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-incorrect').textContent = total - correctCount;
+  document.getElementById('stat-total').textContent = total;
+
+  const msgEl = document.getElementById('results-message');
+  const iconEl = document.getElementById('results-icon');
+
+  if (pct >= 90) {
+    iconEl.textContent = '🏆';
+    msgEl.innerHTML = `<strong>Excellente maîtrise !</strong> L'architecture Signal-First, les graphes DAG Zoneless et l'encapsulation POO n'ont aucun secret pour vous. Vos composants sont prêts pour la production.`;
+    launchConfetti();
+  } else if (pct >= 75) {
+    iconEl.textContent = '🚀';
+    msgEl.innerHTML = `<strong>Très bon travail !</strong> Les primitives réactives, les computed mémorisés et les signal inputs sont bien assimilés. Prenez le temps de revoir les subtilités du cycle de vie des effets.`;
+    launchConfetti();
+  } else if (pct >= 50) {
+    iconEl.textContent = '👍';
+    msgEl.innerHTML = `<strong>Bases acquises !</strong> Les principes fondamentaux sont compris, mais veillez à bien respecter l'immutabilité stricte des tableaux et à ne pas provoquer d'écritures cycliques dans les effets.`;
+  } else {
+    iconEl.textContent = '📚';
+    msgEl.innerHTML = `<strong>En cours d'apprentissage !</strong> Prenez le temps de relire le syllabus de la séance 13 sur les Signals et le mode Zoneless d'Angular 22, puis retentez votre chance !`;
+  }
+}
+
+function handleToggleReview() {
+  const container = document.getElementById('review-container');
+  const btn = document.getElementById('toggle-review-btn');
+  const list = document.getElementById('review-list');
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    btn.innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  } else {
+    container.style.display = 'block';
+    btn.innerHTML = '<span>Masquer le corrigé ▴</span>';
+
+    list.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const userIdx = userAnswers[qIdx];
+      const isGood = userIdx !== undefined && q.options[userIdx].isCorrect;
+
+      const card = document.createElement('div');
+      card.className = 'review-item';
+
+      const header = document.createElement('div');
+      header.className = 'review-item-header';
+      header.innerHTML = `
+        <div class="review-item-title">
+          <span>${isGood ? '✅' : '❌'}</span>
+          <span><strong>Q${qIdx + 1}.</strong> ${q.question.replace(/```[\s\S]*?```/g, '[Code]').substring(0, 75)}...</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);">Détails ▾</span>
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'review-item-body';
+
+      let optionsHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
+      q.options.forEach((opt, oIdx) => {
+        const wasUser = oIdx === userIdx;
+        const wasCorrect = opt.isCorrect;
+        let borderCol = 'var(--opt-border)';
+        let bgCol = 'transparent';
+        let badge = '';
+
+        if (wasCorrect) {
+          borderCol = '#10b981';
+          bgCol = 'rgba(16, 185, 129, 0.08)';
+          badge = ' <strong style="color: #10b981;">(Bonne réponse)</strong>';
+        }
+        if (wasUser && !wasCorrect) {
+          borderCol = '#ef4444';
+          bgCol = 'rgba(239, 68, 68, 0.08)';
+          badge = ' <strong style="color: #ef4444;">(Votre choix)</strong>';
+        }
+
+        optionsHtml += `
+          <div style="padding: 10px 14px; border: 1px solid ${borderCol}; background: ${bgCol}; border-radius: 8px; font-size: 13.5px;">
+            <div><strong>${opt.label}.</strong> ${formatCode(opt.text)}${badge}</div>
+            ${opt.rationale ? `<div style="font-size: 12.5px; color: var(--text-dim); margin-top: 4px;">${formatCode(opt.rationale)}</div>` : ''}
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+
+      body.innerHTML = `
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 8px;">${formatCode(q.question)}</div>
+        ${optionsHtml}
+        <div style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #6366f1; font-size: 13px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">Synthèse :</strong> ${formatCode(q.rationale)}
+        </div>
+      `;
+
+      header.addEventListener('click', () => {
+        body.classList.toggle('open');
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+  }
+}
+
+function handleRestart() {
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+  userAnswers = [];
+
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('review-container').style.display = 'none';
+  document.getElementById('toggle-review-btn').innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  document.getElementById('progress-container').style.display = 'block';
+  document.getElementById('question-card').style.display = 'block';
+
+  renderQuestion(0);
+}
+
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+
+    if (document.getElementById('results-card').style.display === 'block') {
+      if (e.key === 'Enter') handleRestart();
+      return;
+    }
+
+    if (answered) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      return;
+    }
+
+    const q = quizData[currentQ];
+    if (!q) return;
+
+    let targetIdx = -1;
+    if (key === 'A' || key === '1') targetIdx = 0;
+    else if (key === 'B' || key === '2') targetIdx = 1;
+    else if (key === 'C' || key === '3') targetIdx = 2;
+    else if (key === 'D' || key === '4') targetIdx = 3;
+
+    if (targetIdx >= 0 && targetIdx < q.options.length) {
+      e.preventDefault();
+      selectOption(targetIdx);
+    }
+
+    if (key === 'H' || key === 'I') {
+      e.preventDefault();
+      toggleHint();
+    }
+  });
+}
+
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#e11d48', '#6366f1', '#7c3aed', '#10b981', '#fbbf24', '#38bdf8'];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.015 + 0.008
+    });
+  }
+
+  let animId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25;
+      p.alpha -= p.decay;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  loop();
+}
+
+init();
+</script>
+</body>
+</html>
