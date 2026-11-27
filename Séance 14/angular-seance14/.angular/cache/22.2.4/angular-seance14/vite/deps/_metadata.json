@@ -1,0 +1,52 @@
+{
+  "hash": "5661d077",
+  "configHash": "a342f77a",
+  "lockfileHash": "d52768c4",
+  "browserHash": "0b896c79",
+  "optimized": {
+    "@angular/common": {
+      "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
+      "file": "@angular_common.js",
+      "fileHash": "70a5e46b",
+      "needsInterop": false
+    },
+    "@angular/core": {
+      "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
+      "file": "@angular_core.js",
+      "fileHash": "0502a190",
+      "needsInterop": false
+    },
+    "@angular/platform-browser": {
+      "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
+      "file": "@angular_platform-browser.js",
+      "fileHash": "c7d4c331",
+      "needsInterop": false
+    },
+    "@angular/router": {
+      "src": "../../../../../../node_modules/@angular/router/fesm2022/router.mjs",
+      "file": "@angular_router.js",
+      "fileHash": "8cdd8faa",
+      "needsInterop": false
+    },
+    "@monaco-editor/loader": {
+      "src": "../../../../../../node_modules/@monaco-editor/loader/lib/es/index.js",
+      "file": "@monaco-editor_loader.js",
+      "fileHash": "ce124d69",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "common-BOZzWu4i": {
+      "file": "common-BOZzWu4i.js",
+      "isDynamicEntry": false
+    },
+    "core-DhwtbvNY": {
+      "file": "core-DhwtbvNY.js",
+      "isDynamicEntry": false
+    },
+    "platform-browser-B3bNjQa2": {
+      "file": "platform-browser-B3bNjQa2.js",
+      "isDynamicEntry": false
+    }
+  }
+}

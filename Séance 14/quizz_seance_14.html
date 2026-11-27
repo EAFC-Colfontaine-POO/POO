@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Architecture Angular — Services, Signaux & Généricité</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      --bg-page: #090d16;
+      --bg-ambient-1: rgba(49, 120, 198, 0.16);
+      --bg-ambient-2: rgba(124, 58, 237, 0.14);
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --brand-blue: #3178c6;
+      --brand-indigo: #6366f1;
+      --brand-purple: #7c3aed;
+      --brand-gradient: linear-gradient(135deg, #3178c6 0%, #6366f1 50%, #7c3aed 100%);
+      
+      --opt-bg: rgba(255, 255, 255, 0.03);
+      --opt-border: rgba(255, 255, 255, 0.08);
+      --opt-hover-bg: rgba(255, 255, 255, 0.06);
+      --opt-hover-border: rgba(99, 102, 241, 0.45);
+      
+      --correct-bg: rgba(16, 185, 129, 0.12);
+      --correct-border: #10b981;
+      --correct-text: #34d399;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: rgba(239, 68, 68, 0.12);
+      --incorrect-border: #ef4444;
+      --incorrect-text: #f87171;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: rgba(245, 158, 11, 0.08);
+      --hint-border: rgba(245, 158, 11, 0.25);
+      --hint-text: #fbbf24;
+      
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --code-border: rgba(255, 255, 255, 0.12);
+      --code-color: #38bdf8;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8fafc;
+      --bg-ambient-1: rgba(49, 120, 198, 0.08);
+      --bg-ambient-2: rgba(124, 58, 237, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --opt-bg: #ffffff;
+      --opt-border: #e2e8f0;
+      --opt-hover-bg: #f8fafc;
+      --opt-hover-border: #3178c6;
+      
+      --correct-bg: #ecfdf5;
+      --correct-border: #10b981;
+      --correct-text: #065f46;
+      --correct-badge-bg: #10b981;
+      --correct-badge-text: #ffffff;
+      
+      --incorrect-bg: #fef2f2;
+      --incorrect-border: #ef4444;
+      --incorrect-text: #991b1b;
+      --incorrect-badge-bg: #ef4444;
+      --incorrect-badge-text: #ffffff;
+      
+      --hint-bg: #fffbeb;
+      --hint-border: #fde68a;
+      --hint-text: #92400e;
+      
+      --code-bg: #f1f5f9;
+      --code-border: #cbd5e1;
+      --code-color: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image: 
+        radial-gradient(circle at 12% 10%, var(--bg-ambient-1) 0%, transparent 45%),
+        radial-gradient(circle at 88% 90%, var(--bg-ambient-2) 0%, transparent 45%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-main);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .keyboard-badge {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+    @media (min-width: 640px) {
+      .keyboard-badge { display: inline-flex; align-items: center; gap: 6px; }
+    }
+
+    .header-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .course-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 9999px;
+      background: rgba(49, 120, 198, 0.12);
+      color: #60a5fa;
+      border: 1px solid rgba(49, 120, 198, 0.3);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #60a5fa;
+      box-shadow: 0 0 10px #60a5fa;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .quiz-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 16px;
+      font-weight: 500;
+    }
+
+    .tags-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-muted);
+    }
+
+    .progress-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-q-label {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-score-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    [data-theme="light"] .progress-track {
+      background: #e2e8f0;
+    }
+
+    .progress-bar-fill {
+      background: var(--brand-gradient);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(49, 120, 198, 0.5);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .q-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-index-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #60a5fa;
+      background: rgba(49, 120, 198, 0.12);
+      border: 1px solid rgba(49, 120, 198, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+    }
+
+    .q-category-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .q-text {
+      font-size: 18.5px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text-main);
+      margin-bottom: 22px;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-color);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #38bdf8;
+      overflow-x: auto;
+      text-align: left;
+    }
+    [data-theme="light"] .code-box {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0369a1;
+    }
+
+    .hint-container {
+      margin-bottom: 22px;
+    }
+
+    .hint-btn {
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      color: var(--hint-text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .hint-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .hint-body {
+      display: none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: var(--hint-bg);
+      border: 1px solid var(--hint-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--hint-text);
+      line-height: 1.5;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .hint-body.open {
+      display: block;
+    }
+
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 15px 18px;
+      border: 2px solid var(--opt-border);
+      background: var(--opt-bg);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      position: relative;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--opt-hover-border);
+      background: var(--opt-hover-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .opt-key-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--opt-border);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .opt-content {
+      flex: 1;
+      padding-top: 4px;
+      line-height: 1.5;
+    }
+
+    .opt-status-icon {
+      font-size: 18px;
+      margin-left: 8px;
+      display: none;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    .option-btn.selected-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .option-btn.selected-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.selected-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--incorrect-border) !important;
+      background: var(--incorrect-bg) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+    .option-btn.selected-incorrect .opt-key-circle {
+      background: var(--incorrect-badge-bg);
+      color: var(--incorrect-badge-text);
+    }
+    .option-btn.selected-incorrect .opt-status-icon {
+      display: inline-block;
+      color: var(--incorrect-text);
+    }
+
+    .option-btn.revealed-correct {
+      border-color: var(--correct-border) !important;
+      background: var(--correct-bg) !important;
+      border-style: dashed;
+    }
+    .option-btn.revealed-correct .opt-key-circle {
+      background: var(--correct-badge-bg);
+      color: var(--correct-badge-text);
+    }
+    .option-btn.revealed-correct .opt-status-icon {
+      display: inline-block;
+      color: var(--correct-text);
+    }
+
+    .option-btn.dimmed {
+      opacity: 0.45;
+    }
+
+    .feedback-card {
+      display: none;
+      margin-top: 18px;
+      padding: 18px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .feedback-card.correct {
+      background: var(--correct-bg);
+      border-left: 4px solid var(--correct-border);
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+      border-right: 1px solid rgba(16, 185, 129, 0.2);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .feedback-card.incorrect {
+      background: var(--incorrect-bg);
+      border-left: 4px solid var(--incorrect-border);
+      border-top: 1px solid rgba(239, 68, 68, 0.2);
+      border-right: 1px solid rgba(239, 68, 68, 0.2);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .feedback-header {
+      font-weight: 700;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .feedback-card.correct .feedback-header { color: var(--correct-text); }
+    .feedback-card.incorrect .feedback-header { color: var(--incorrect-text); }
+
+    .feedback-body {
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    [data-theme="light"] .feedback-body {
+      color: #334155;
+    }
+
+    .action-bar {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(49, 120, 198, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(49, 120, 198, 0.55);
+    }
+
+    .results-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .results-trophy {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .results-title {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-circle-wrapper {
+      margin: 24px auto;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-percent-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .results-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .stat-num.good { color: #10b981; }
+    .stat-num.bad { color: #ef4444; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn-secondary {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--opt-hover-bg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .review-container {
+      display: none;
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .review-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-item {
+      background: var(--opt-bg);
+      border: 1px solid var(--opt-border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .review-item-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .review-item-title {
+      font-weight: 600;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-item-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--card-border);
+    }
+    .review-item-body.open {
+      display: block;
+      padding-top: 14px;
+    }
+
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="quiz-container">
+  <div class="top-bar">
+    <div class="keyboard-badge">
+      <span>⌨️ Raccourcis : [A-D] ou [1-4] · [Entrée] · [I]</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Basculer le thème">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-text">Mode clair</span>
+    </button>
+  </div>
+
+  <div class="header-hero">
+    <div class="course-badge">
+      <span class="badge-dot"></span>
+      Programmation Orientée Objet & Frameworks · EAFC Colfontaine
+    </div>
+    <h1 class="quiz-title">Séance 14 — Architecture Angular : Services, Signaux & Généricité</h1>
+    <p class="quiz-subtitle">Services Singletons · Signaux Réactifs & Immutabilité · Encapsulation (#) · Repository&lt;T&gt; générique · Injection moderne</p>
+    <div class="tags-row">
+      <span class="tag-pill">Angular Moderne</span>
+      <span class="tag-pill">TypeScript</span>
+      <span class="tag-pill">Services & Inversion de Contrôle</span>
+      <span class="tag-pill">Signaux Réactifs</span>
+      <span class="tag-pill">Repository Pattern</span>
+      <span class="tag-pill">21 questions</span>
+    </div>
+
+    <div class="progress-section" id="progress-container">
+      <div class="progress-header">
+        <span class="progress-q-label" id="progress-q-label">Question 1 sur 21</span>
+        <span class="progress-score-pill" id="progress-score-pill">Score : 0/0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="question-card">
+    <div class="q-meta-bar">
+      <span class="q-index-badge" id="q-index-badge">Question 01</span>
+      <span class="q-category-tag" id="q-category-tag">Architecture & Responsabilités</span>
+      <span style="font-size: 12px; color: var(--text-dim);" id="q-counter">1 / 21</span>
+    </div>
+
+    <div class="q-text" id="q-text"></div>
+
+    <div class="hint-container">
+      <button class="hint-btn" id="hint-toggle-btn" type="button">
+        <span>💡</span>
+        <span id="hint-btn-label">Afficher un indice</span>
+      </button>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <div class="feedback-card" id="feedback-card">
+      <div class="feedback-header" id="feedback-header"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="next-btn" id="next-btn" style="display: none;">
+        <span id="next-btn-text">Question suivante</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card results-card" id="results-card" style="display: none;">
+    <div class="results-trophy" id="results-icon">🏆</div>
+    <h2 class="results-title" id="results-title">Quiz terminé !</h2>
+    
+    <div class="score-circle-wrapper">
+      <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <path stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path id="circle-score-stroke" stroke="url(#scoreGrad)" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3178c6" />
+            <stop offset="50%" stop-color="#6366f1" />
+            <stop offset="100%" stop-color="#7c3aed" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="score-percent-val" id="score-percent-text">0%</div>
+    </div>
+
+    <p class="results-message" id="results-message"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num good" id="stat-correct">0</div>
+        <div class="stat-label">Bonnes réponses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-incorrect">0</div>
+        <div class="stat-label">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">21</div>
+        <div class="stat-label">Questions</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="next-btn" id="restart-btn" type="button">
+        <span>🔄 Recommencer le quiz</span>
+      </button>
+      <button class="btn-secondary" id="toggle-review-btn" type="button">
+        <span>📋 Voir le corrigé complet</span>
+      </button>
+    </div>
+
+    <div class="review-container" id="review-container">
+      <div class="review-header">Détail des questions et explications</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  {
+    "number": 1,
+    "category": "Architecture & Responsabilités",
+    "question": "Dans une architecture Angular modernisée, quelle est la responsabilité principale du composant par rapport au service ?",
+    "hint": "Pensez à la métaphore séparant la partie visuelle de l'application et sa logique de calcul.",
+    "options": [
+      {"label": "A", "text": "Le composant exécute la persistance des données, tandis que le service affiche le template HTML et les styles.", "isCorrect": false, "rationale": "L'affichage HTML et les styles relèvent exclusivement du composant, pas du service."},
+      {"label": "B", "text": "Le composant est un singleton partagé, tandis que le service est réinstancié à chaque clic de l'utilisateur.", "isCorrect": false, "rationale": "C'est le service enregistré en root qui agit comme singleton partagé, et non le composant."},
+      {"label": "C", "text": "Le composant modifie directement l'état privé du service sans passer par ses méthodes publiques.", "isCorrect": false, "rationale": "L'encapsulation empêche les composants de modifier directement l'état privé d'un service ; ils doivent passer par ses méthodes publiques."},
+      {"label": "D", "text": "Le composant gère la présentation HTML et l'UI, tandis que le service gère les données, l'état réactif et les règles métier.", "isCorrect": true, "rationale": "Le composant sert d'interface visuelle pour l'utilisateur, alors que le service centralise la logique, les règles métier et les données réactives de l'application."}
+    ],
+    "answer": "D",
+    "rationale": "Le composant sert d'interface visuelle pour l'utilisateur, alors que le service centralise la logique, les règles métier et les données réactives de l'application."
+  },
+  {
+    "number": 2,
+    "category": "Services & Gestion Mémoire",
+    "question": "Qu'arrive-t-il si deux composants distincts instancient un même service via la syntaxe `panier = new PanierService()` ?",
+    "hint": "Rappelez-vous l'effet de la création d'instances séparées dans le Tas (Heap) en mémoire.",
+    "options": [
+      {"label": "A", "text": "Angular intercepte l'instruction new et renvoie automatiquement la même instance unique.", "isCorrect": false, "rationale": "L'opérateur natif JavaScript new outrepassera l'injecteur de dépendances d'Angular et créera systématiquement une nouvelle instance."},
+      {"label": "B", "text": "Chaque composant reçoit une instance distincte en mémoire, rendant l'état du panier totalement désynchronisé entre eux.", "isCorrect": true, "rationale": "L'usage de l'opérateur new crée deux objets indépendants à des adresses mémoire différentes dans le Tas, isolant leurs états réactifs."},
+      {"label": "C", "text": "Le premier composant partage son instance avec succès, mais le second reçoit la valeur undefined.", "isCorrect": false, "rationale": "L'instanciation manuelle par new fabrique bel et bien une instance valide pour le second composant, mais celle-ci demeure distincte de la première."},
+      {"label": "D", "text": "Le compilateur TypeScript lève une erreur bloquante car l'opérateur new est interdit sur les classes annotées @Injectable.", "isCorrect": false, "rationale": "TypeScript autorise la syntaxe new sur des classes ordinaires, même annotées @Injectable, mais cela rompt le mécanisme du singleton d'Angular."}
+    ],
+    "answer": "B",
+    "rationale": "L'usage de l'opérateur new crée deux objets indépendants à des adresses mémoire différentes dans le Tas, isolant leurs états réactifs."
+  },
+  {
+    "number": 3,
+    "category": "Injection de Dépendances & Singleton",
+    "question": "Quel est le rôle principal du décorateur `@Injectable({ providedIn: 'root' })` placé sur une classe de service ?",
+    "hint": "Considérez le cycle de vie du service et sa disponibilité à travers toute l'application.",
+    "options": [
+      {"label": "A", "text": "Il convertit automatiquement tous les tableaux ordinaires de la classe en signaux réactifs.", "isCorrect": false, "rationale": "La création de signaux réactifs requiert l'usage explicite de la fonction signal(), le décorateur n'effectue aucune transformation automatique de type."},
+      {"label": "B", "text": "Il enregistre le service à la racine de l'application, garantissant une instance unique (singleton) partagée partout.", "isCorrect": true, "rationale": "La configuration providedIn: 'root' enregistre le service dans l'injecteur racine, assurant qu'une seule instance existe pour l'ensemble de l'application."},
+      {"label": "C", "text": "Il rend automatiquement privées toutes les méthodes définies dans la classe du service.", "isCorrect": false, "rationale": "Le décorateur gère la fourniture et l'injection du service, sans altérer la visibilité des méthodes définies par le développeur."},
+      {"label": "D", "text": "Il force la réinstanciation complète du service à chaque changement de route ou de composant.", "isCorrect": false, "rationale": "Un singleton fourni à la racine survit aux navigations et conserve son état tout au long de la session d'utilisation."}
+    ],
+    "answer": "B",
+    "rationale": "La configuration providedIn: 'root' enregistre le service dans l'injecteur racine, assurant qu'une seule instance existe pour l'ensemble de l'application."
+  },
+  {
+    "number": 4,
+    "category": "Encapsulation & Sécurité d'État",
+    "question": "Pourquoi est-il déconseillé d'exposer directement un signal modifiable public (ex: `readonly articles = signal<Produit[]>([])`) dans un service ?",
+    "hint": "Réfléchissez au principe de POO qui préserve le contrôle des modifications à l'intérieur de la classe.",
+    "options": [
+      {"label": "A", "text": "Les signaux publics ne déclenchent pas le rafraîchissement automatique du DOM du composant.", "isCorrect": false, "rationale": "La réactivité d'un signal fonctionne peu importe sa visibilité ; la restriction est une bonne pratique d'architecture, pas une contrainte technique d'affichage."},
+      {"label": "B", "text": "Angular détruit l'instance du service si le signal est modifié en dehors du constructeur.", "isCorrect": false, "rationale": "L'instance du service ne sera pas détruite par Angular, mais les données risquent d'être corrompues par manque de validation centrale."},
+      {"label": "C", "text": "TypeScript génère une erreur de compilation dès qu'un signal modifiable est marqué comme public.", "isCorrect": false, "rationale": "TypeScript valide la syntaxe, mais c'est une faille de conception POO qui permet à du code externe d'altérer l'état à l'aveugle."},
+      {"label": "D", "text": "Tout composant externe pourrait invoquer directement .set() ou .update(), contournant le contrôle et les règles métier du service.", "isCorrect": true, "rationale": "Exposer un signal modifiable rompt le principe d'encapsulation en autorisant des modifications externes non contrôlées par la logique métier du service."}
+    ],
+    "answer": "D",
+    "rationale": "Exposer un signal modifiable rompt le principe d'encapsulation en autorisant des modifications externes non contrôlées par la logique métier du service."
+  },
+  {
+    "number": 5,
+    "category": "Signaux Réactifs & Lecture Seule",
+    "question": "Quelle est la méthode recommandée pour exposer l'état d'un signal réactif de manière sécurisée hors d'un service Angular ?",
+    "hint": "Cherchez la méthode permettant d'autoriser la lecture tout en bloquant l'usage de .set() ou .update() à l'extérieur.",
+    "options": [
+      {"label": "A", "text": "Utiliser un tableau JavaScript classique mutable exporté sous forme de variable globale.", "isCorrect": false, "rationale": "Un tableau classique ne possède pas les capacités de réactivité des signaux d'Angular pour mettre à jour automatiquement l'interface."},
+      {"label": "B", "text": "Injecter le composant directement au sein du service pour lui transmettre les valeurs par paramètre.", "isCorrect": false, "rationale": "Injecter un composant dans un service crée une dépendance circulaire et inverse les responsabilités architecturales."},
+      {"label": "C", "text": "Maintenir le signal modifiable en champ privé et exposer sa version en lecture seule grâce à la méthode .asReadonly().", "isCorrect": true, "rationale": "En associant un champ privé (ex: #articles) à une propriété publique convertie via .asReadonly(), les composants peuvent lire la donnée sans pouvoir la muter."},
+      {"label": "D", "text": "Rendre le signal privé et créer une méthode getter qui retourne le signal modifiable d'origine.", "isCorrect": false, "rationale": "Retourner le signal modifiable d'origine redonne les droits de mutation aux composants externes, annulant le bénéfice de la propriété privée."}
+    ],
+    "answer": "C",
+    "rationale": "En associant un champ privé (ex: #articles) à une propriété publique convertie via .asReadonly(), les composants peuvent lire la donnée sans pouvoir la muter."
+  },
+  {
+    "number": 6,
+    "category": "Immutabilité & Détection de Changement",
+    "question": "Si vous exécutez `this.#articles().push(nouveauProduit)` sur le tableau contenu dans un signal, quel problème survient ?",
+    "hint": "Pensez à ce que la réactivité d'un signal exige concernant la référence mémoire de la valeur.",
+    "options": [
+      {"label": "A", "text": "La référence mémoire du tableau ne changeant pas, le signal ne détecte pas la modification et l'écran ne se rafraîchit pas.", "isCorrect": true, "rationale": "Les signaux s'appuient sur l'immutabilité pour détecter les changements ; modifier le contenu d'un tableau par mutation directe (.push) conserve la même référence et n'émet aucune notification."},
+      {"label": "B", "text": "Le tableau est automatiquement vidé par le signal avant de recevoir le nouvel élément.", "isCorrect": false, "rationale": "Le tableau contiendra bien l'élément en mémoire JavaScript, mais le mécanisme de réactivité du signal manquera le changement."},
+      {"label": "C", "text": "Angular lève immédiatement une erreur de runtime de code NG0203 et interrompt l'application.", "isCorrect": false, "rationale": "L'erreur NG0203 concerne l'appel de inject() hors d'un contexte d'injection valide, non la mutation directe d'un tableau."},
+      {"label": "D", "text": "Le compilateur TypeScript lève une erreur indiquant que la méthode .push() n'existe pas sur les tableaux.", "isCorrect": false, "rationale": "La méthode .push() existe bel et bien sur l'objet tableau retourné par la lecture du signal, donc TypeScript ne signale pas d'erreur de compilation."}
+    ],
+    "answer": "A",
+    "rationale": "Les signaux s'appuient sur l'immutabilité pour détecter les changements ; modifier le contenu d'un tableau par mutation directe (.push) conserve la même référence et n'émet aucune notification."
+  },
+  {
+    "number": 7,
+    "category": "Typage Statique TypeScript",
+    "question": "Quelle est la faiblesse majeure de l'utilisation du type `any[]` pour stocker une liste d'objets dans un service centralisé ?",
+    "hint": "Réfléchissez à ce que l'on perd lors du contrôle statique par le compilateur TypeScript.",
+    "options": [
+      {"label": "A", "text": "L'autocomplétion est inexistante et le compilateur ne peut plus détecter les fautes de frappe ou erreurs de type à la compilation.", "isCorrect": true, "rationale": "En désactivant la vérification de type de TypeScript, any supprime toute protection contre les erreurs d'accès aux propriétés inexistantes."},
+      {"label": "B", "text": "Le navigateur double la quantité de mémoire vive nécessaire pour traiter chaque élément du tableau.", "isCorrect": false, "rationale": "Le type any est un concept purement TypeScript qui est effacé lors de la compilation ; il n'a aucun impact sur l'empreinte mémoire en JavaScript."},
+      {"label": "C", "text": "Angular empêche l'usage de signaux réactifs rédigés sur des structures de données typées avec any.", "isCorrect": false, "rationale": "Les signaux réactifs fonctionnent avec n'importe quel type JavaScript, y compris any, bien que cela soit fortement déconseillé pour la sécurité du code."},
+      {"label": "D", "text": "Les tableaux typés en any perdent l'accès aux méthodes natives JavaScript comme .filter() ou .map().", "isCorrect": false, "rationale": "Les méthodes natives des tableaux JavaScript restent disponibles à l'exécution, mais TypeScript n'offrira aucune aide lors de leur écriture."}
+    ],
+    "answer": "A",
+    "rationale": "En désactivant la vérification de type de TypeScript, any supprime toute protection contre les erreurs d'accès aux propriétés inexistantes."
+  },
+  {
+    "number": 8,
+    "category": "Généricité & Contraintes de Type",
+    "question": "Pourquoi le compilateur TypeScript rejette-t-il le code suivant ?\n```ts\nexport class Repository<T> {\n  private items: T[] = [];\n  supprimer(id: number): void {\n    this.items = this.items.filter(item => item.id !== id);\n  }\n}\n```",
+    "hint": "Pensez à ce que le compilateur sait (ou ne sait pas) sur un type générique `T` non restreint.",
+    "options": [
+      {"label": "A", "text": "Les tableaux déclarés en private ne peuvent pas être réassignés au sein des méthodes de la même classe.", "isCorrect": false, "rationale": "Un membre privé private peut être réassigné librement par n'importe quelle méthode interne de la classe."},
+      {"label": "B", "text": "TypeScript ne sait pas si le type inconnu T possède une propriété .id.", "isCorrect": true, "rationale": "En l'absence de contrainte, T peut être remplacé par n'importe quel type (ex: number, boolean) qui ne possède pas de propriété .id, provoquant l'erreur TS2339."},
+      {"label": "C", "text": "La méthode .filter() exige l'utilisation d'une boucle for classique lorsqu'elle s'applique sur des tableaux génériques.", "isCorrect": false, "rationale": "La méthode .filter() est une fonction standard des tableaux JavaScript qui fonctionne parfaitement avec les types génériques."},
+      {"label": "D", "text": "L'opérateur de comparaison stricte !== est incompatible avec les paramètres de type générique T.", "isCorrect": false, "rationale": "L'erreur ne provient pas de l'opérateur de comparaison, mais de l'accès à la propriété item.id sur un type T non contraint."}
+    ],
+    "answer": "B",
+    "rationale": "En l'absence de contrainte, T peut être remplacé par n'importe quel type (ex: number, boolean) qui ne possède pas de propriété .id, provoquant l'erreur TS2339."
+  },
+  {
+    "number": 9,
+    "category": "Interfaces & Contraintes (<T extends...>)",
+    "question": "Comment corriger la classe `Repository<T>` pour garantir au compilateur que tout objet manipulé par `T` possède un identifiant ?",
+    "hint": "Pensez au mot-clé utilisé pour lier un paramètre générique à un contrat ou une interface.",
+    "options": [
+      {"label": "A", "text": "Forcer le cast explicite de l'élément avec (item as any).id lors de chaque filtrage.", "isCorrect": false, "rationale": "Le casting désactive le contrôle du compilateur localement, ce qui constitue un risque d'erreur au runtime si un objet sans ID est transmis."},
+      {"label": "B", "text": "Faire hériter la classe Repository de la classe native Object.", "isCorrect": false, "rationale": "L'héritage depuis Object ne garantit en rien la présence d'une propriété spécifique .id sur les instances manipulées."},
+      {"label": "C", "text": "Remplacer l'usage de T par le type any dans l'ensemble de la classe.", "isCorrect": false, "rationale": "Remplacer T par any supprime la sécurité du typage au lieu d'exprimer correctement la contrainte de structure."},
+      {"label": "D", "text": "Appliquer une contrainte générique avec la syntaxe <T extends Identifiable>.", "isCorrect": true, "rationale": "En spécifiant T extends Identifiable, on indique au compilateur que tout type T accepté doit obligatoirement respecter le contrat de l'interface Identifiable."}
+    ],
+    "answer": "D",
+    "rationale": "En spécifiant T extends Identifiable, on indique au compilateur que tout type T accepté doit obligatoirement respecter le contrat de l'interface Identifiable."
+  },
+  {
+    "number": 10,
+    "category": "Typage Structurel & Contrats",
+    "question": "Dans l'expression `<T extends Identifiable>`, quel est le sens exact du mot-clé `extends` ?",
+    "hint": "Distinguez l'héritage de classe en POO du respect d'un contrat de structure d'interface.",
+    "options": [
+      {"label": "A", "text": "Il autorise T à faire abstraction des types autorisés pour les propriétés non listées dans Identifiable.", "isCorrect": false, "rationale": "La contrainte valide que les propriétés requises sont bien présentes, sans effacer le typage des autres propriétés spécifiques de T."},
+      {"label": "B", "text": "Il indique que la classe générique hérite des méthodes concrètes exécutables fournies par Identifiable.", "isCorrect": false, "rationale": "Une interface en TypeScript ne contient aucun code exécutable ou méthode concrète dont une classe pourrait hériter."},
+      {"label": "C", "text": "Il exige que Identifiable soit obligatoirement une classe abstraite instanciable via new.", "isCorrect": false, "rationale": "Identifiable peut être une simple interface TypeScript ; il n'est nullement nécessaire qu'il s'agisse d'une classe abstraite."},
+      {"label": "D", "text": "Il définit une contrainte de structure : T doit obligatoirement respecter le contrat imposé par Identifiable.", "isCorrect": true, "rationale": "Dans le contexte des paramètres de type génériques, extends exprime un engagement de conformité à une interface ou un type, et non un héritage de classe."}
+    ],
+    "answer": "D",
+    "rationale": "Dans le contexte des paramètres de type génériques, extends exprime un engagement de conformité à une interface ou un type, et non un héritage de classe."
+  },
+  {
+    "number": 11,
+    "category": "Types Indexés (Indexed Access T['id'])",
+    "question": "Que désigne la syntaxe `T['id']` lorsqu'elle est utilisée comme type de paramètre dans une méthode générique ?",
+    "hint": "Considérez le mécanisme de type indexé qui extrait le type d'une propriété spécifique.",
+    "options": [
+      {"label": "A", "text": "Elle crée un tableau contenant tous les identifiants déclarés au sein du type T.", "isCorrect": false, "rationale": "Cette écriture représente le type de la clé 'id' et non une structure de tableau regroupant des données."},
+      {"label": "B", "text": "Elle extrait le type exact de la propriété 'id' associée au type T donné (ex: number ou string).", "isCorrect": true, "rationale": "Il s'agit d'un type d'accès indexé qui permet de s'adapter automatiquement au type réel de l'identifiant (number pour Produit, string pour Client)."},
+      {"label": "C", "text": "Elle indique que la propriété 'id' est un champ privé accessible uniquement par le compilateur.", "isCorrect": false, "rationale": "Cette syntaxe permet de capturer le type associé à une propriété, sans lien avec son niveau d'encapsulation."},
+      {"label": "D", "text": "Elle effectue une recherche de l'indice numérique de la propriété 'id' dans un tableau interne.", "isCorrect": false, "rationale": "La syntaxe T['id'] intervient dans la signature des types lors de la compilation ; elle ne réalise aucune opération de recherche à l'exécution."}
+    ],
+    "answer": "B",
+    "rationale": "Il s'agit d'un type d'accès indexé qui permet de s'adapter automatiquement au type réel de l'identifiant (number pour Produit, string pour Client)."
+  },
+  {
+    "number": 12,
+    "category": "Vérification Statique des Contraintes",
+    "question": "Soit `Repository<T extends Identifiable>`. Pourquoi la tentative d'instanciation `new Repository<PointGeo>()` échoue-t-elle si `PointGeo` ne contient que `lat` et `lng` ?",
+    "hint": "Vérifiez si la classe `PointGeo` remplit toutes les conditions exigées par l'interface de contrainte.",
+    "options": [
+      {"label": "A", "text": "Les structures de données possédant deux propriétés numériques ne peuvent pas être stockées dans un Repository.", "isCorrect": false, "rationale": "Le nombre de propriétés d'un type importe peu, seule la présence des propriétés requises par la contrainte générique est vérifiée."},
+      {"label": "B", "text": "TypeScript interdit l'utilisation de classes concrètes comme arguments pour les paramètres de types génériques.", "isCorrect": false, "rationale": "Les classes concrètes sont totalement valides comme types arguments génériques, à condition de satisfaire les contraintes déclarées."},
+      {"label": "C", "text": "La classe PointGeo n'honore pas le contrat de l'interface Identifiable car elle ne possède pas de champ id.", "isCorrect": true, "rationale": "Le compilateur rejette l'argument de type PointGeo car la contrainte extends Identifiable exige la présence formelle d'une propriété id."},
+      {"label": "D", "text": "Seules les entités disposant d'un service Angular enregistré en 'root' peuvent être passées en paramètre générique.", "isCorrect": false, "rationale": "La généricité TypeScript est un concept du langage indépendant du système d'injection de dépendances d'Angular."}
+    ],
+    "answer": "C",
+    "rationale": "Le compilateur rejette l'argument de type PointGeo car la contrainte extends Identifiable exige la présence formelle d'une propriété id."
+  },
+  {
+    "number": 13,
+    "category": "Polymorphisme Générique & Réutilisation",
+    "question": "Comment un unique `Repository<T extends Identifiable>` parvient-il à gérer à la fois une entité `Produit` (id: number) et une entité `Client` (id: string) sans duplication de code ?",
+    "hint": "Réfléchissez à la manière dont le type générique adapte les signatures de méthodes aux entités de destination.",
+    "options": [
+      {"label": "A", "text": "Les interfaces TypeScript annulent les différences de types à la compilation pour tout transformer en type any.", "isCorrect": false, "rationale": "Les interfaces servent précisément à maintenir un contrôle strict et distinct pour chaque type d'entité, à l'opposé du fonctionnement de any."},
+      {"label": "B", "text": "TypeScript convertit silencieusement tous les identifiants numériques en chaînes de caractères lors des recherches.", "isCorrect": false, "rationale": "TypeScript conserve le typage strict des identifiants (number reste number, string reste string) sans réaliser de conversion implicite."},
+      {"label": "C", "text": "Le Repository instancie automatiquement deux tableaux internes distincts gérés par des conditions à l'exécution.", "isCorrect": false, "rationale": "L'algorithme de la classe est rédigé une seule fois pour un seul tableau ; c'est le type associé à chaque instance qui varie."},
+      {"label": "D", "text": "Le paramètre de type T adapte dynamiquement le typage des méthodes (via T['id']) selon l'entité configurée lors de l'instanciation.", "isCorrect": true, "rationale": "Grâce au paramètre de type T, le compilateur remplace T et T['id'] par les types réels spécifiques à chaque entité lors du contrôle statique."}
+    ],
+    "answer": "D",
+    "rationale": "Grâce au paramètre de type T, le compilateur remplace T et T['id'] par les types réels spécifiques à chaque entité lors du contrôle statique."
+  },
+  {
+    "number": 14,
+    "category": "Signaux Réactifs & Opérations Immuables",
+    "question": "Quelle est la syntaxe appropriée pour ajouter un élément de manière réactive et immuable dans un signal `#items = signal<T[]>([])` ?",
+    "hint": "Pensez à la méthode des signaux qui crée une nouvelle référence de tableau via l'opérateur spread.",
+    "options": [
+      {"label": "A", "text": "this.#items = [...this.#items(), element];", "isCorrect": false, "rationale": "Un signal ne peut pas être réassigné directement avec l'opérateur d'égalité = ; il faut utiliser ses méthodes dédiées (.set ou .update)."},
+      {"label": "B", "text": "this.#items.set(this.#items().push(element));", "isCorrect": false, "rationale": "La méthode .push() renvoie la nouvelle longueur du tableau (un nombre) et non le tableau mis à jour, ce qui corrompt le contenu du signal."},
+      {"label": "C", "text": "this.#items().push(element);", "isCorrect": false, "rationale": "La méthode .push() mute directement le tableau existant sans modifier sa référence mémoire, ce qui empêche le signal de notifier les changements."},
+      {"label": "D", "text": "this.#items.update(liste => [...liste, element]);", "isCorrect": true, "rationale": "L'usage de update() combiné à la création d'un nouveau tableau via l'opérateur spread (...) garantit la modification immuable nécessaire au déclenchement des signaux."}
+    ],
+    "answer": "D",
+    "rationale": "L'usage de update() combiné à la création d'un nouveau tableau via l'opérateur spread (...) garantit la modification immuable nécessaire au déclenchement des signaux."
+  },
+  {
+    "number": 15,
+    "category": "Architecture Repository (Recherche)",
+    "question": "Quelle est la signature et le comportement recommandés pour la méthode `trouverParId` dans une classe `Repository<T extends Identifiable>` ?",
+    "hint": "Considérez ce que renvoie une recherche dans un tableau si l'identifiant recherché est absent.",
+    "options": [
+      {"label": "A", "text": "trouverParId(id: number): any qui lève une exception systématique si l'identifiant n'est pas présent.", "isCorrect": false, "rationale": "Fixer l'ID à number empêche de gérer les entités avec des ID de type string, et renvoyer any supprime le bénéfice du typage générique."},
+      {"label": "B", "text": "trouverParId(id: T['id']): T | undefined qui utilise la méthode .find() sur la valeur du signal.", "isCorrect": true, "rationale": "La signature s'adapte au type d'ID exact de l'entité T et retourne l'élément trouvé ou undefined si aucun élément ne correspond."},
+      {"label": "C", "text": "trouverParId(id: string): T qui renvoie un objet vide lorsque l'identifiant n'existe pas.", "isCorrect": false, "rationale": "Forcer le retour d'un type T sans inclure undefined dans la union type masque le cas où l'élément est introuvable."},
+      {"label": "D", "text": "trouverParId(id: T): boolean qui confirme la présence de l'élément sans le retourner.", "isCorrect": false, "rationale": "Pour récupérer l'entité complète et accéder à ses propriétés, la méthode doit retourner l'instance T elle-même plutôt qu'un simple booléen."}
+    ],
+    "answer": "B",
+    "rationale": "La signature s'adapte au type d'ID exact de l'entité T et retourne l'élément trouvé ou undefined si aucun élément ne correspond."
+  },
+  {
+    "number": 16,
+    "category": "Héritage POO & Factorisation de Code",
+    "question": "Pourquoi la classe `ClientService extends Repository<Client>` peut-elle fonctionner immédiatement même si son corps de classe est complètement vide ?",
+    "hint": "Réfléchissez à la réutilisation de code offerte par la transmission des méthodes de la classe de base.",
+    "options": [
+      {"label": "A", "text": "Car Angular injecte du code JavaScript automatiquement en lisant le nom de la classe lors de la compilation.", "isCorrect": false, "rationale": "Le comportement provient de la mécanique d'héritage standard de TypeScript et ES6, et non d'une génération magique basée sur les noms de classes."},
+      {"label": "B", "text": "Car les entités utilisant des identifiants textuels (string) n'ont pas besoin d'exécuter d'instructions en mémoire.", "isCorrect": false, "rationale": "Le type de l'identifiant n'exempte pas la classe d'exécuter du code JavaScript en mémoire pour gérer la liste des clients."},
+      {"label": "C", "text": "Car le décorateur @Injectable crée dynamiquement des méthodes génériques au runtime.", "isCorrect": false, "rationale": "Le décorateur @Injectable informe le système d'injection de dépendances, mais ne crée pas de méthodes métier au runtime."},
+      {"label": "D", "text": "Car toute la logique de manipulation réactive des données (ajout, suppression, recherche) est entièrement fournie par la classe de base.", "isCorrect": true, "rationale": "L'héritage POO permet à ClientService d'assimiler l'ensemble des méthodes génériques rédigées dans Repository<T> sans aucune duplication."}
+    ],
+    "answer": "D",
+    "rationale": "L'héritage POO permet à ClientService d'assimiler l'ensemble des méthodes génériques rédigées dans Repository<T> sans aucune duplication."
+  },
+  {
+    "number": 17,
+    "category": "Angular Moderne (Fonction inject())",
+    "question": "Dans l'approche Angular modernisée (signal-first), comment un composant déclare-t-il sa dépendance vers un service ?",
+    "hint": "Pensez à la fonction globale fournie par Angular qui remplace l'injection classique par constructeur.",
+    "options": [
+      {"label": "A", "text": "En utilisant la fonction inject() lors de la déclaration des champs du composant.", "isCorrect": true, "rationale": "L'appel à inject(MonService) dans la déclaration des membres de classe est l'approche moderne préconisée par Angular pour récupérer une instance de service."},
+      {"label": "B", "text": "En important la classe du service dans le tableau imports de la métadonnée @Component.", "isCorrect": false, "rationale": "Le tableau imports du composant sert à importer d'autres composants, directives ou pipes standalones, pas à injecter des services."},
+      {"label": "C", "text": "En instanciant le service à l'aide du mot-clé new directement au sein du constructeur.", "isCorrect": false, "rationale": "Instancier un service avec new contourne l'injection de dépendances d'Angular et brise le modèle de singleton partagé."},
+      {"label": "D", "text": "En déclarant une variable globale sur l'objet window du navigateur.", "isCorrect": false, "rationale": "Utiliser des variables globales sur window détruit l'encapsulation, le typage strict et l'isolation nécessaire aux tests."}
+    ],
+    "answer": "A",
+    "rationale": "L'appel à inject(MonService) dans la déclaration des membres de classe est l'approche moderne préconisée par Angular pour récupérer une instance de service."
+  },
+  {
+    "number": 18,
+    "category": "Champs Privés Natifs ECMAScript (#)",
+    "question": "Dans la déclaration `readonly #items = signal<T[]>([]);`, quel rôle spécifique joue le symbole `#` ?",
+    "hint": "Rappelez-vous la fonctionnalité native de JavaScript pour rendre un membre strictement inaccessible depuis l'extérieur.",
+    "options": [
+      {"label": "A", "text": "Il indique à Angular qu'il s'agit d'un signal réactif fonctionnant uniquement en lecture seule.", "isCorrect": false, "rationale": "Le passage en lecture seule est réalisé par la méthode .asReadonly(), le symbole # gère exclusivement la visibilité privée du champ."},
+      {"label": "B", "text": "Il indique au compilateur TypeScript que le champ est facultatif lors de l'instanciation.", "isCorrect": false, "rationale": "Les champs facultatifs sont désignés par le symbole point d'interrogation (?), non par le dièse."},
+      {"label": "C", "text": "Il sauvegarde automatiquement le contenu du signal dans le LocalStorage du navigateur.", "isCorrect": false, "rationale": "Le symbole # ne fournit aucun mécanisme de persistance automatique dans le stockage du navigateur."},
+      {"label": "D", "text": "Il déclare un champ privé natif JavaScript, rendant la propriété strictement inaccessible depuis l'extérieur de la classe.", "isCorrect": true, "rationale": "Le préfixe # active la fonctionnalité des membres privés natifs ECMAScript, garantissant une encapsulation stricte au niveau du moteur JavaScript."}
+    ],
+    "answer": "D",
+    "rationale": "Le préfixe # active la fonctionnalité des membres privés natifs ECMAScript, garantissant une encapsulation stricte au niveau du moteur JavaScript."
+  },
+  {
+    "number": 19,
+    "category": "Intégrité des Données & Exceptions",
+    "question": "Que doit faire la méthode `ajouter(element: T)` du `Repository<T>` si un élément possédant le même identifiant existe déjà dans la liste ?",
+    "hint": "Réfléchissez aux exigences d'intégrité des données lors de l'ajout dans un dépôt.",
+    "options": [
+      {"label": "A", "text": "Attribuer automatiquement un nouvel identifiant aléatoire à l'élément entrant.", "isCorrect": false, "rationale": "Modifier l'identifiant d'une entité à l'insu de l'appelant brise les règles de gestion décidées par la couche métier."},
+      {"label": "B", "text": "Écraser silencieusement l'ancien élément sans modifier la taille du tableau.", "isCorrect": false, "rationale": "Remplacer silencieusement un élément lors d'un appel à ajouter peut masquer des bugs applicatifs majeurs ; une mise à jour doit être explicite."},
+      {"label": "C", "text": "Convertir l'élément au type string pour tenter de résoudre le conflit.", "isCorrect": false, "rationale": "Changer le type d'une donnée ne résout pas un conflit d'unicité et violerait le typage strict de TypeScript."},
+      {"label": "D", "text": "Lever une erreur explicite pour empêcher la corruption des données par doublon d'identifiant.", "isCorrect": true, "rationale": "La méthode doit contrôler l'unicité des identifiants et interrompre l'ajout en levant une exception pour protéger l'intégrité de la collection."}
+    ],
+    "answer": "D",
+    "rationale": "La méthode doit contrôler l'unicité des identifiants et interrompre l'ajout en levant une exception pour protéger l'intégrité de la collection."
+  },
+  {
+    "number": 20,
+    "category": "Encapsulation & Protection des Signaux",
+    "question": "Quel est l'intérêt principal d'utiliser `this.#items.asReadonly()` pour exposer le signal d'un service ?",
+    "hint": "Considérez le besoin d'empêcher les composants d'altérer l'état sans passer par l'API du service.",
+    "options": [
+      {"label": "A", "text": "Permettre au composant de modifier la donnée sans redéclencher les fonctions computed().", "isCorrect": false, "rationale": "Les computed() continuent de recalculer automatiquement leurs valeurs dès que le service modifie l'état interne."},
+      {"label": "B", "text": "Empêcher les composants externes de pouvoir appeler .set() ou .update() sur le signal du service.", "isCorrect": true, "rationale": "L'appel à .asReadonly() retourne un signal qui autorise la lecture des valeurs et la réactivité dans le template tout en retirant l'accès aux méthodes de mutation."},
+      {"label": "C", "text": "Transformer le signal réactif en un simple tableau JavaScript non réactif.", "isCorrect": false, "rationale": "Le signal reste un signal réactif Angular ; seule son interface de mutation est désactivée pour les consommateurs."},
+      {"label": "D", "text": "Désactiver la mise à jour de l'interface utilisateur lorsque la donnée change.", "isCorrect": false, "rationale": "Le signal en lecture seule conserve toute sa puissance réactive et met à jour l'IHM dès que le signal privé interne est modifié par le service."}
+    ],
+    "answer": "B",
+    "rationale": "L'appel à .asReadonly() retourne un signal qui autorise la lecture des valeurs et la réactivité dans le template tout en retirant l'accès aux méthodes de mutation."
+  },
+  {
+    "number": 21,
+    "category": "Immutabilité & Suppression Réactive",
+    "question": "Quelle est l'implémentation immuable correcte pour la méthode `supprimer(id: T['id'])` dans un `Repository<T extends Identifiable>` ?",
+    "hint": "Pensez à la méthode de tableau JavaScript qui retourne une nouvelle liste excluant l'élément ciblé.",
+    "options": [
+      {"label": "A", "text": "this.#items.set([]);", "isCorrect": false, "rationale": "La méthode .set([]) vide l'intégralité de la liste au lieu de retirer uniquement l'élément correspondant à l'identifiant fourni."},
+      {"label": "B", "text": "this.#items().splice(this.#items().findIndex(i => i.id === id), 1);", "isCorrect": false, "rationale": "La méthode .splice() modifie le tableau en place sans changer sa référence mémoire, ce qui empêche le signal de détecter la suppression."},
+      {"label": "C", "text": "this.#items.update(liste => liste.filter(item => item.id !== id));", "isCorrect": true, "rationale": "La méthode .filter() produit un nouveau tableau excluant l'élément ciblé, ce qui permet à la fonction .update() de notifier le signal d'un changement de référence."},
+      {"label": "D", "text": "this.#items = this.#items().filter(item => item.id !== id);", "isCorrect": false, "rationale": "Un signal réactif ne peut pas être réassigné avec l'opérateur d'égalité = ; la mise à jour exige l'utilisation de .update() ou .set()."}
+    ],
+    "answer": "C",
+    "rationale": "La méthode .filter() produit un nouveau tableau excluant l'élément ciblé, ce qui permet à la fonction .update() de notifier le signal d'un changement de référence."
+  }
+];
+
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+let userAnswers = [];
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function formatCode(text) {
+  if (!text) return '';
+  
+  // 1. Extraire et échapper le texte pour préserver <T> et le code
+  let formatted = escapeHtml(text);
+  
+  // 2. Blocs de code multi-lignes ```ts ... ```
+  formatted = formatted.replace(/```(?:ts|typescript|js)?\n([\s\S]*?)```/g, '<pre class="code-box"><code>$1</code></pre>');
+  
+  // 3. Code inline entre backticks `...`
+  formatted = formatted.replace(/`([^`]+)`/g, '<span class="code-term">$1</span>');
+  
+  // 4. Mots-clés isolés entre quotes '...', sans capturer les apostrophes de la langue française
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])&#39;([a-zA-Z0-9_\-\.\/@\(\)=]+)&#39;/g, '<span class="code-term">$1</span>');
+  formatted = formatted.replace(/(?<![a-zA-ZÀ-ÿ])'([a-zA-Z0-9_\-\.\/@\(\)=]+)'/g, '<span class="code-term">$1</span>');
+  
+  const parts = formatted.split(/(<pre[\s\S]*?<\/pre>)/g);
+  return parts.map(part => {
+    if (part.startsWith('<pre')) return part;
+    return part.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  }).join('');
+}
+
+function init() {
+  setupTheme();
+  setupKeyboard();
+  renderQuestion(0);
+  
+  document.getElementById('next-btn').addEventListener('click', handleNext);
+  document.getElementById('restart-btn').addEventListener('click', handleRestart);
+  document.getElementById('toggle-review-btn').addEventListener('click', handleToggleReview);
+  document.getElementById('hint-toggle-btn').addEventListener('click', toggleHint);
+}
+
+function setupTheme() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const text = document.getElementById('theme-text');
+  
+  const saved = localStorage.getItem('angular_quiz_theme_s14') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+  
+  toggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('angular_quiz_theme_s14', next);
+    updateThemeUI(next);
+  });
+  
+  function updateThemeUI(t) {
+    if (t === 'dark') {
+      icon.textContent = '☀️';
+      text.textContent = 'Mode clair';
+    } else {
+      icon.textContent = '🌙';
+      text.textContent = 'Mode sombre';
+    }
+  }
+}
+
+function renderQuestion(index) {
+  answered = false;
+  const q = quizData[index];
+  
+  const progressPct = (index / quizData.length) * 100;
+  document.getElementById('progress-fill').style.width = progressPct + '%';
+  document.getElementById('progress-q-label').textContent = `Question ${index + 1} sur ${quizData.length}`;
+  document.getElementById('progress-score-pill').textContent = index > 0 
+    ? `Score : ${correctCount}/${index} (${Math.round((correctCount / index) * 100)}%)` 
+    : `Score : 0/0`;
+
+  document.getElementById('q-index-badge').textContent = `Question ${index < 9 ? '0' + (index + 1) : index + 1}`;
+  document.getElementById('q-category-tag').textContent = q.category || 'Architecture Angular';
+  document.getElementById('q-counter').textContent = `${index + 1} / ${quizData.length}`;
+
+  document.getElementById('q-text').innerHTML = formatCode(q.question);
+
+  const hintBody = document.getElementById('hint-body');
+  hintBody.innerHTML = formatCode(q.hint);
+  hintBody.classList.remove('open');
+  document.getElementById('hint-btn-label').textContent = "Afficher un indice";
+
+  const fcard = document.getElementById('feedback-card');
+  fcard.style.display = 'none';
+  fcard.className = 'feedback-card';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'none';
+  if (index === quizData.length - 1) {
+    document.getElementById('next-btn-text').textContent = "Voir mes résultats 🎉";
+  } else {
+    document.getElementById('next-btn-text').textContent = "Question suivante";
+  }
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, optIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.type = 'button';
+    btn.dataset.idx = optIdx;
+    btn.innerHTML = `
+      <span class="opt-key-circle">${opt.label}</span>
+      <span class="opt-content">${formatCode(opt.text)}</span>
+      <span class="opt-status-icon"></span>
+    `;
+
+    btn.addEventListener('click', () => selectOption(optIdx));
+    grid.appendChild(btn);
+  });
+}
+
+function selectOption(selectedIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizData[currentQ];
+  const selectedOpt = q.options[selectedIdx];
+  const isCorrect = selectedOpt.isCorrect;
+  userAnswers[currentQ] = selectedIdx;
+
+  if (isCorrect) {
+    correctCount++;
+  }
+
+  const optionBtns = document.querySelectorAll('.option-btn');
+  optionBtns.forEach(btn => btn.disabled = true);
+
+  const selectedBtn = optionBtns[selectedIdx];
+  const selectedStatus = selectedBtn.querySelector('.opt-status-icon');
+  
+  const correctIdx = q.options.findIndex(o => o.isCorrect);
+  const correctOpt = q.options[correctIdx];
+
+  if (isCorrect) {
+    selectedBtn.classList.add('selected-correct');
+    selectedStatus.textContent = '✓';
+  } else {
+    selectedBtn.classList.add('selected-incorrect');
+    selectedStatus.textContent = '✕';
+
+    if (correctIdx !== -1) {
+      const correctBtn = optionBtns[correctIdx];
+      correctBtn.classList.add('revealed-correct');
+      const correctStatus = correctBtn.querySelector('.opt-status-icon');
+      correctStatus.textContent = '✓';
+    }
+  }
+
+  optionBtns.forEach(btn => {
+    if (!btn.classList.contains('selected-correct') && 
+        !btn.classList.contains('selected-incorrect') && 
+        !btn.classList.contains('revealed-correct')) {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  const fcard = document.getElementById('feedback-card');
+  const fheader = document.getElementById('feedback-header');
+  const fbody = document.getElementById('feedback-body');
+
+  fcard.style.display = 'block';
+
+  if (isCorrect) {
+    fcard.className = 'feedback-card correct';
+    fheader.innerHTML = '<span>✓</span> <span>Excellente réponse !</span>';
+    fbody.innerHTML = `<strong>Justification :</strong> ${formatCode(selectedOpt.rationale || q.rationale)}`;
+  } else {
+    fcard.className = 'feedback-card incorrect';
+    fheader.innerHTML = `<span>✕</span> <span>Ce n'est pas tout à fait ça. La bonne réponse est l'option ${correctOpt.label}.</span>`;
+    fbody.innerHTML = `
+      <div style="margin-bottom: 8px;">
+        <strong style="color: var(--incorrect-text);">Pourquoi l'option ${selectedOpt.label} est incorrecte :</strong> ${formatCode(selectedOpt.rationale)}
+      </div>
+      <div style="padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.12);">
+        <strong style="color: var(--correct-text);">Bonne réponse (${correctOpt.label}) :</strong> ${formatCode(correctOpt.rationale || q.rationale)}
+      </div>
+    `;
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'flex';
+  nextBtn.focus();
+}
+
+function toggleHint() {
+  const hintBody = document.getElementById('hint-body');
+  const label = document.getElementById('hint-btn-label');
+  hintBody.classList.toggle('open');
+  if (hintBody.classList.contains('open')) {
+    label.textContent = "Masquer l'indice";
+  } else {
+    label.textContent = "Afficher un indice";
+  }
+}
+
+function handleNext() {
+  currentQ++;
+  if (currentQ < quizData.length) {
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById('question-card').style.display = 'none';
+  document.getElementById('progress-container').style.display = 'none';
+  document.getElementById('results-card').style.display = 'block';
+
+  const total = quizData.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  const stroke = document.getElementById('circle-score-stroke');
+  stroke.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+  document.getElementById('score-percent-text').textContent = `${pct}%`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-incorrect').textContent = total - correctCount;
+  document.getElementById('stat-total').textContent = total;
+
+  const msgEl = document.getElementById('results-message');
+  const iconEl = document.getElementById('results-icon');
+
+  if (pct >= 90) {
+    iconEl.textContent = '🏆';
+    msgEl.innerHTML = `<strong>Excellente maîtrise !</strong> Vous maîtrisez parfaitement l'architecture Angular moderne, l'inversion de contrôle avec <code>inject()</code>, la réactivité immuable par signaux et le pattern Repository générique <code>Repository&lt;T&gt;</code>.`;
+    launchConfetti();
+  } else if (pct >= 75) {
+    iconEl.textContent = '🚀';
+    msgEl.innerHTML = `<strong>Très bon travail !</strong> Les notions de services singletons, d'encapsulation native (<code>#</code>), de contraintes génériques et d'immutabilité sont bien ancrées. Consultez le corrigé pour consolider les derniers détails.`;
+    launchConfetti();
+  } else if (pct >= 50) {
+    iconEl.textContent = '👍';
+    msgEl.innerHTML = `<strong>Bases comprises !</strong> La séparation entre composant et service est claire, mais veillez à bien assimiler les spécificités de la généricité (<code>T['id']</code>, <code>extends</code>) et de l'immutabilité des signaux.`;
+  } else {
+    iconEl.textContent = '📚';
+    msgEl.innerHTML = `<strong>En cours d'assimilation !</strong> Prenez le temps de revoir les points clés de la séance 14 sur l'injection de dépendances et les signaux, puis relancez le quiz !`;
+  }
+}
+
+function handleToggleReview() {
+  const container = document.getElementById('review-container');
+  const btn = document.getElementById('toggle-review-btn');
+  const list = document.getElementById('review-list');
+
+  if (container.style.display === 'block') {
+    container.style.display = 'none';
+    btn.innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  } else {
+    container.style.display = 'block';
+    btn.innerHTML = '<span>Masquer le corrigé ▴</span>';
+
+    list.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const userIdx = userAnswers[qIdx];
+      const isGood = userIdx !== undefined && q.options[userIdx].isCorrect;
+
+      const card = document.createElement('div');
+      card.className = 'review-item';
+
+      const header = document.createElement('div');
+      header.className = 'review-item-header';
+      header.innerHTML = `
+        <div class="review-item-title">
+          <span>${isGood ? '✅' : '❌'}</span>
+          <span><strong>Q${qIdx + 1}.</strong> ${q.question.replace(/```[\s\S]*?```/g, '[Code]').substring(0, 75)}...</span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-dim);">Détails ▾</span>
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'review-item-body';
+
+      let optionsHtml = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">';
+      q.options.forEach((opt, oIdx) => {
+        const wasUser = oIdx === userIdx;
+        const wasCorrect = opt.isCorrect;
+        let borderCol = 'var(--opt-border)';
+        let bgCol = 'transparent';
+        let badge = '';
+
+        if (wasCorrect) {
+          borderCol = '#10b981';
+          bgCol = 'rgba(16, 185, 129, 0.08)';
+          badge = ' <strong style="color: #10b981;">(Bonne réponse)</strong>';
+        }
+        if (wasUser && !wasCorrect) {
+          borderCol = '#ef4444';
+          bgCol = 'rgba(239, 68, 68, 0.08)';
+          badge = ' <strong style="color: #ef4444;">(Votre choix)</strong>';
+        }
+
+        optionsHtml += `
+          <div style="padding: 10px 14px; border: 1px solid ${borderCol}; background: ${bgCol}; border-radius: 8px; font-size: 13.5px;">
+            <div><strong>${opt.label}.</strong> ${formatCode(opt.text)}${badge}</div>
+            <div style="margin-top: 4px; font-size: 12.5px; color: var(--text-muted); padding-left: 6px; border-left: 2px solid ${wasCorrect ? '#10b981' : 'rgba(255,255,255,0.1)'};">
+              ${formatCode(opt.rationale)}
+            </div>
+          </div>
+        `;
+      });
+      optionsHtml += '</div>';
+
+      body.innerHTML = `
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 8px;">${formatCode(q.question)}</div>
+        ${optionsHtml}
+        <div style="margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #6366f1; font-size: 13px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">Synthèse :</strong> ${formatCode(q.rationale)}
+        </div>
+      `;
+
+      header.addEventListener('click', () => {
+        body.classList.toggle('open');
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+  }
+}
+
+function handleRestart() {
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+  userAnswers = [];
+
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('review-container').style.display = 'none';
+  document.getElementById('toggle-review-btn').innerHTML = '<span>📋 Voir le corrigé complet</span>';
+  document.getElementById('progress-container').style.display = 'block';
+  document.getElementById('question-card').style.display = 'block';
+
+  renderQuestion(0);
+}
+
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+
+    if (document.getElementById('results-card').style.display === 'block') {
+      if (e.key === 'Enter') handleRestart();
+      return;
+    }
+
+    if (answered) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      return;
+    }
+
+    const q = quizData[currentQ];
+    if (!q) return;
+
+    let targetIdx = -1;
+    if (key === 'A' || key === '1') targetIdx = 0;
+    else if (key === 'B' || key === '2') targetIdx = 1;
+    else if (key === 'C' || key === '3') targetIdx = 2;
+    else if (key === 'D' || key === '4') targetIdx = 3;
+
+    if (targetIdx >= 0 && targetIdx < q.options.length) {
+      e.preventDefault();
+      selectOption(targetIdx);
+    }
+
+    if (key === 'H' || key === 'I') {
+      e.preventDefault();
+      toggleHint();
+    }
+  });
+}
+
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#3178c6', '#6366f1', '#7c3aed', '#10b981', '#fbbf24', '#38bdf8'];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.015 + 0.008
+    });
+  }
+
+  let animId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25;
+      p.alpha -= p.decay;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animId);
+    }
+  }
+
+  loop();
+}
+
+init();
+</script>
+</body>
+</html>

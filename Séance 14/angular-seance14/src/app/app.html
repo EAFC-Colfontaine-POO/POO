@@ -1,0 +1,39 @@
+<div class="app-layout">
+  <app-navbar></app-navbar>
+
+  <div class="workspace-body">
+    <app-sidebar></app-sidebar>
+
+    <main class="content-viewport">
+      @switch (nav.activeTab()) {
+        @case ('memory-simulator') {
+          <app-memory-simulator></app-memory-simulator>
+        }
+        @case ('service-anatomy') {
+          <app-service-anatomy></app-service-anatomy>
+        }
+        @case ('code-dilemma') {
+          <app-code-dilemma></app-code-dilemma>
+        }
+        @case ('generic-box') {
+          <app-generic-box></app-generic-box>
+        }
+        @case ('generic-constraints') {
+          <app-generic-constraints></app-generic-constraints>
+        }
+        @case ('universal-repository') {
+          <app-universal-repository></app-universal-repository>
+        }
+        @case ('media-store-case') {
+          <app-media-store-case></app-media-store-case>
+        }
+        @case ('entity-factory') {
+          <app-entity-factory></app-entity-factory>
+        }
+        @case ('workshops-lab') {
+          <app-workshops-lab></app-workshops-lab>
+        }
+      }
+    </main>
+  </div>
+</div>
